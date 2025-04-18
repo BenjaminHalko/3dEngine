@@ -1,0 +1,16 @@
+#pragma once
+
+namespace Engine::Core {
+    class WindowMessageHandler {
+    public:
+        using Callback = LRESULT(CALLBACK *)(HWND, UINT, WPARAM, LPARAM);
+
+        void Hook(HWND window, Callback callback);
+        void Unhook();
+
+        LRESULT ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam) const;
+    private:
+        HWND mWindow = nullptr;
+        Callback mPreviousCallback = nullptr;
+    };
+}

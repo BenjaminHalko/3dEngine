@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(engine)
 add_subdirectory(framework)
-add_subdirectory(Examples)
+add_subdirectory(examples)
