@@ -1,8 +1,8 @@
 #pragma once
 
-#include "InputTypes.h"
+#include "input_types.h"
 
-namespace DEngine::Input
+namespace Engine::Input
 {
 	class input_system final
 	{

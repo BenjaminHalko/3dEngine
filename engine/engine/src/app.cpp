@@ -10,7 +10,7 @@ using namespace Engine::Core;
 using namespace Engine::Graphics;
 
 void App::Run(const AppConfig& config) {
-    LOG("App Started");
+    LOG("App Started: %s", config.appName.c_str());
 
     Window myWindow;
     myWindow.Initialize(
@@ -26,8 +26,6 @@ void App::Run(const AppConfig& config) {
 
     mRunning = true;
     while (mRunning) {
-        LOG("Running");
-
         myWindow.ProcessMessage();
 
         if (!myWindow.IsActive()) {

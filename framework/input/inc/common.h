@@ -1,3 +1,3 @@
 #pragma once
 
-#include <Core/Inc/Core.h>
+#include <core/inc/core.h>
