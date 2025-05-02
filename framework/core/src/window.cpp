@@ -1,11 +1,9 @@
 #include "precompiled.h"
-#include "common.h"
-
-#include "debugutil.h"
-#include "timeutil.h"
 #include "window.h"
 
-LRESULT CALLBACK WindowMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
+using namespace Engine::Core;
+
+LRESULT CALLBACK DefaultMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_DESTROY: {
             PostQuitMessage(0);
@@ -23,7 +21,7 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     WNDCLASSEX wc;
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = WindowMessageHandler;
+    wc.lpfnWndProc = DefaultMessageHandler;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = instance;
@@ -81,6 +79,10 @@ void Window::ProcessMessage() {
             mIsActive = false;
         }
     }
+}
+
+HWND Window::GetWindowHandle() const {
+    return mWindow;
 }
 
 bool Window::IsActive() const {

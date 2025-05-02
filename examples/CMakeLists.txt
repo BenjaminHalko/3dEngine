@@ -1,1 +1,2 @@
-add_subdirectory(hello_desktop)
+add_subdirectory(1_hello_desktop)
+add_subdirectory(2_hello_shapes)

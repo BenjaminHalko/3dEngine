@@ -9,7 +9,7 @@ using namespace Engine::Core;
     do {\
         char _buffer[256];\
         auto _res = snprintf(_buffer, sizeof(_buffer), "{%.3f}: "##format##"\n", TimeUtil::GetTime(), __VA_ARGS__);\
-        OutputDebugStringA(_buffer);\
+        printf_s(_buffer);\
     } while (0)
 #define ASSERT(condition, format, ...);\
     do {\
