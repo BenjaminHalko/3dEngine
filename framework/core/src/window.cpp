@@ -22,8 +22,6 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     // Debug print for window title
     std::wcout << L"[DEBUG] Window title: '" << mAppName << L"' (length: " << mAppName.length() << L")\n";
 
-    static const wchar_t* kWindowClassName = L"EngineWindowClass";
-
     WNDCLASSEXW wc;
     wc.cbSize = sizeof(WNDCLASSEXW);
     wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -36,9 +34,9 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     wc.lpszMenuName = nullptr;
-    wc.lpszClassName = kWindowClassName;
+    wc.lpszClassName = mAppName.c_str();
 
-    RegisterClassExW(&wc);
+    RegisterClassEx(&wc);
 
     mScreenRect = {0, 0, static_cast<LONG>(width), static_cast<LONG>(height)};
     AdjustWindowRect(&mScreenRect, WS_OVERLAPPEDWINDOW, false);
@@ -53,8 +51,8 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     mScreenRect.left = left;
     mScreenRect.top = top;
 
-    mWindow = CreateWindowW(
-        kWindowClassName,           // class name
+    mWindow = CreateWindow(
+        mAppName.c_str(),           // class name
         mAppName.c_str(),           // window title
         WS_OVERLAPPEDWINDOW,
         left, top,
@@ -70,8 +68,7 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
 
 void Window::Terminate() {
     DestroyWindow(mWindow);
-    static const wchar_t* kWindowClassName = L"EngineWindowClass";
-    UnregisterClassW(kWindowClassName, mInstance);
+    UnregisterClassW(mAppName.c_str(), mInstance);
     mWindow = nullptr;
     mInstance = nullptr;
     mIsActive = false;

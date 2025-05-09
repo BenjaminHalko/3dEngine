@@ -3,7 +3,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/common.cmake)
 include_directories(${CMAKE_SOURCE_DIR}/framework ${CMAKE_SOURCE_DIR}/engine ${CMAKE_SOURCE_DIR}/external)
 
 MACRO(target_set_windows_application target)
-    add_definitions(-DUNICODE -D_UNICODE)
     # copy assets directory to output folder
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -12,7 +11,6 @@ MACRO(target_set_windows_application target)
     )
 
     target_link_libraries(${target} Engine)
-    target_compile_definitions(${target} PRIVATE UNICODE _UNICODE)
     if(MSVC)
         set_target_properties(
             ${target} PROPERTIES
