@@ -2,7 +2,7 @@
 
 #include <engine/inc/engine.h>
 
-class ShapeState final : public Engine::AppState
+class ShapeState : public Engine::AppState
 {
 public:
     void Initialize() override;
@@ -10,10 +10,13 @@ public:
     void Update(float deltaTime) override;
     void Render() override;
 
-private:
+protected:
+    virtual void CreateShape();
+
     struct Vertex
     {
         Engine::Math::Vector3 position;
+        Engine::Graphics::Color color;
     };
     using Vertices = std::vector<Vertex>;
     Vertices mVertices;
@@ -22,4 +25,28 @@ private:
     ID3D11VertexShader* mVertexShader = nullptr;
     ID3D11InputLayout* mInputLayout = nullptr;
     ID3D11PixelShader* mPixelShader = nullptr;
+};
+
+class TriForce final : public ShapeState
+{
+public:
+    void Update(float deltaTime) override;
+protected:
+    void CreateShape() override;
+};
+
+class Crystal final : public ShapeState
+{
+public:
+    void Update(float deltaTime) override;
+protected:
+    void CreateShape() override;
+};
+
+class Heart final : public ShapeState
+{
+public:
+    void Update(float deltaTime) override;
+protected:
+    void CreateShape() override;
 };

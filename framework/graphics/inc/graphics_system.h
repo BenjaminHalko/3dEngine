@@ -25,7 +25,7 @@ namespace Engine::Graphics
         void BeginRender();
         void EndRender();
 
-        void ToggleFullscreen();
+        void ToggleFullScreen();
         void Resize(uint32_t width, uint32_t height);
 
         void ResetRenderTarget();

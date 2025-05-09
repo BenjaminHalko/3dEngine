@@ -75,7 +75,7 @@ void GraphicsSystem::Initialize(HWND window, bool fullscreen)
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.Windowed = !fullscreen;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
     constexpr D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
 
@@ -125,7 +125,7 @@ void GraphicsSystem::EndRender()
     mSwapChain->Present(mVSync, 0);
 }
 
-void GraphicsSystem::ToggleFullscreen()
+void GraphicsSystem::ToggleFullScreen()
 {
     BOOL fullscreen;
     mSwapChain->GetFullscreenState(&fullscreen, nullptr);

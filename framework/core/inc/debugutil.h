@@ -5,20 +5,22 @@
 using namespace Engine::Core;
 
 #ifdef _DEBUG
-#define LOG(format, ...);\
-    do {\
-        char _buffer[256];\
-        auto _res = snprintf(_buffer, sizeof(_buffer), "{%.3f}: "##format##"\n", TimeUtil::GetTime(), __VA_ARGS__);\
-        printf_s(_buffer);\
-    } while (0)
-#define ASSERT(condition, format, ...);\
-    do {\
-        if (!(condition)) {\
-            LOG("ASSERTION FAILED: %s(%d)\n"##format##, __FILE__, __LINE__, __VA_ARGS__);\
-            DebugBreak();\
-        }\
-    } while (0)
+#include <cstddef>
+#include <windows.h>
+#define LOG(format, ...) \
+    do { \
+        char _buffer[256]; \
+        int _res = snprintf(_buffer, std::size(_buffer), "{%.3f}: "##format##"\n", TimeUtil::GetTime(), __VA_ARGS__); \
+        OutputDebugStringA(_buffer); \
+    } while(false)
+#define ASSERT(condition, format, ...) \
+    do { \
+        if (!(condition)) { \
+            LOG("ASSERTION FAILED: %s(%d)\n"##format##, __FILE__, __LINE__, __VA_ARGS__); \
+            DebugBreak(); \
+        } \
+    } while(false)
 #else
 #define LOG(format, ...)
-#define ASSERT(condition, format, ...) do{ (void)sizeof(condition); } while(0)
+#define ASSERT(condition, format, ...) do{ (void)sizeof(condition); } while(false)
 #endif

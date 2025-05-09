@@ -1,5 +1,6 @@
 #include "precompiled.h"
 #include "window.h"
+#include <iostream>
 
 using namespace Engine::Core;
 
@@ -18,8 +19,13 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     mInstance = instance;
     mAppName = appName;
 
-    WNDCLASSEX wc;
-    wc.cbSize = sizeof(WNDCLASSEX);
+    // Debug print for window title
+    std::wcout << L"[DEBUG] Window title: '" << mAppName << L"' (length: " << mAppName.length() << L")\n";
+
+    static const wchar_t* kWindowClassName = L"EngineWindowClass";
+
+    WNDCLASSEXW wc;
+    wc.cbSize = sizeof(WNDCLASSEXW);
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = DefaultMessageHandler;
     wc.cbClsExtra = 0;
@@ -30,9 +36,9 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     wc.lpszMenuName = nullptr;
-    wc.lpszClassName = reinterpret_cast<LPCSTR>(mAppName.c_str());
+    wc.lpszClassName = kWindowClassName;
 
-    RegisterClassEx(&wc);
+    RegisterClassExW(&wc);
 
     mScreenRect = {0, 0, static_cast<LONG>(width), static_cast<LONG>(height)};
     AdjustWindowRect(&mScreenRect, WS_OVERLAPPEDWINDOW, false);
@@ -47,9 +53,9 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     mScreenRect.left = left;
     mScreenRect.top = top;
 
-    mWindow = CreateWindow(
-        reinterpret_cast<LPCSTR>(mAppName.c_str()),
-        reinterpret_cast<LPCSTR>(mAppName.c_str()),
+    mWindow = CreateWindowW(
+        kWindowClassName,           // class name
+        mAppName.c_str(),           // window title
         WS_OVERLAPPEDWINDOW,
         left, top,
         winWidth, winHeight,
@@ -64,7 +70,8 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
 
 void Window::Terminate() {
     DestroyWindow(mWindow);
-    UnregisterClass(reinterpret_cast<LPCSTR>(mAppName.c_str()), mInstance);
+    static const wchar_t* kWindowClassName = L"EngineWindowClass";
+    UnregisterClassW(kWindowClassName, mInstance);
     mWindow = nullptr;
     mInstance = nullptr;
     mIsActive = false;

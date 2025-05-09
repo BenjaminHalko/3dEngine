@@ -8,7 +8,7 @@ namespace Engine::Core {
         void Hook(HWND window, Callback callback);
         void Unhook();
 
-        LRESULT ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam) const;
+        LRESULT ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
     private:
         HWND mWindow = nullptr;
         Callback mPreviousCallback = nullptr;

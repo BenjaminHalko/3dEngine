@@ -1,13 +1,12 @@
 #include "precompiled.h"
 #include "app.h"
 
-#include <iostream>
-
 #include "app_state.h"
 
 using namespace Engine;
 using namespace Engine::Core;
 using namespace Engine::Graphics;
+using namespace Engine::Input;
 
 void App::Run(const AppConfig& config) {
     LOG("App Started: %s", config.appName.c_str());
@@ -20,15 +19,20 @@ void App::Run(const AppConfig& config) {
         config.winHeight);
     const auto handle = myWindow.GetWindowHandle();
     GraphicsSystem::StaticInitialize(handle, false);
+    InputSystem::StaticInitialize(handle);
 
     ASSERT(mCurrentState != nullptr, "App: need an app state to run");
     mCurrentState->Initialize();
 
+    // Process updates
+    InputSystem* input = InputSystem::Get();
     mRunning = true;
     while (mRunning) {
         myWindow.ProcessMessage();
 
-        if (!myWindow.IsActive()) {
+        input->Update();
+
+        if (!myWindow.IsActive() || input->IsKeyPressed(KeyCode::ESCAPE)) {
             Quit();
             continue;
         }
@@ -57,6 +61,8 @@ void App::Run(const AppConfig& config) {
     mCurrentState->Terminate();
 
     GraphicsSystem::StaticTerminate();
+    InputSystem::StaticTerminate();
+    
     myWindow.Terminate();
 }
 

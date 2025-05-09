@@ -29,12 +29,12 @@ class GameState final : public Engine::AppState
 public:
     void Initialize() override
     {
-        LOG("GAME STATE INITIALIZED");
+        LOG("MAIN STATE INITIALIZED");
         mLifeTime = 2.0f;
     }
     void Terminate() override
     {
-        LOG("GAME STATE TERMINATED");
+        LOG("MAIN STATE TERMINATED");
     }
     void Update(const float deltaTime) override
     {

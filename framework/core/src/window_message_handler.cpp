@@ -6,16 +6,16 @@ using namespace Engine::Core;
 
 void WindowMessageHandler::Hook(HWND window, Callback callback) {
     mWindow = window;
-    mPreviousCallback = reinterpret_cast<Callback>(GetWindowLongPtrA(window, GWLP_WNDPROC));
-    SetWindowLongPtr(window, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(callback));
+    mPreviousCallback = reinterpret_cast<Callback>(GetWindowLongPtrW(window, GWLP_WNDPROC));
+    SetWindowLongPtrW(window, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(callback));
 }
 
 void WindowMessageHandler::Unhook() {
-    SetWindowLongPtrA(mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousCallback));
+    SetWindowLongPtrW(mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousCallback));
     mWindow = nullptr;
 }
 
-LRESULT WindowMessageHandler::ForwardMessage(HWND window, const UINT message, const WPARAM wParam, const LPARAM lParam) const {
+LRESULT WindowMessageHandler::ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     ASSERT(mPreviousCallback != nullptr, "WindowMessageHandler::ForwardMessage called with nullptr");
-    return CallWindowProcA(mPreviousCallback, window, message, wParam, lParam);
+    return CallWindowProcW(mPreviousCallback, window, message, wParam, lParam);
 }

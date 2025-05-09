@@ -1,8 +1,8 @@
 #include "precompiled.h"
-#include "InputSystem.h"
+#include "input_system.h"
 
-using namespace DEngine;
-using namespace DEngine::Input;
+using namespace Engine;
+using namespace Engine::Input;
 
 namespace
 {

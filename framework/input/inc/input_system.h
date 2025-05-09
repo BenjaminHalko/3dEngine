@@ -4,19 +4,19 @@
 
 namespace Engine::Input
 {
-	class input_system final
+	class InputSystem final
 	{
 	public:
 		static void StaticInitialize(HWND window);
 		static void StaticTerminate();
-		static input_system* Get();
+		static InputSystem* Get();
 
 	public:
-		input_system() = default;
-		~input_system();
+		InputSystem() = default;
+		~InputSystem();
 
-		input_system(const input_system&) = delete;
-		input_system& operator=(const input_system&) = delete;
+		InputSystem(const InputSystem&) = delete;
+		InputSystem& operator=(const InputSystem&) = delete;
 
 		void Initialize(HWND window);
 		void Terminate();
