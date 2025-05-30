@@ -1,8 +1,8 @@
-#include "precompiled.h"
-#include "vertex_shader.h"
+#include "Precompiled.h"
+#include "VertexShader.h"
 
-#include "graphics_system.h"
-#include "vertex_types.h"
+#include "GraphicsSystem.h"
+#include "VertexTypes.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;

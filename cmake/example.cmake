@@ -10,7 +10,7 @@ MACRO(target_set_windows_application target)
         $<TARGET_FILE_DIR:${target}>/assets
     )
 
-    target_link_libraries(${target} Engine)
+    target_link_libraries(${target} Engine DirectXTK)
     if(MSVC)
         set_target_properties(
             ${target} PROPERTIES

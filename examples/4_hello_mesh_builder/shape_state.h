@@ -13,12 +13,16 @@ public:
 protected:
 	virtual void CreateShape();
 
-	Engine::Graphics::MeshPC mMesh;
+	Engine::Graphics::MeshPX mMesh;
 	Engine::Graphics::Camera mCamera;
 	Engine::Graphics::ConstantBuffer mTransformBuffer;
 	Engine::Graphics::MeshBuffer mMeshbuffer;
 	Engine::Graphics::VertexShader mVertexShader;
 	Engine::Graphics::PixelShader mPixelShader;
+
+	// New Texture Items
+	Engine::Graphics::Texture mTexture;
+	Engine::Graphics::Sampler mSampler;
 };
 
 class CubeState : public ShapeState

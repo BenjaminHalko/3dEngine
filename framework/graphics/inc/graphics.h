@@ -2,8 +2,30 @@
 
 #include "common.h"
 
-#include "graphics_system.h"
-#include "color.h"
-#include "mesh_buffer.h"
-#include "vertex_shader.h"
-#include "vertex_types.h"
+#include "GraphicsSystem.h"
+
+#include "Color.h"
+
+#include "MeshBuffer.h"
+
+#include "VertexShader.h"
+
+#include "PixelShader.h"
+
+#include "VertexTypes.h"
+
+#include "Camera.h"
+
+#include "ConstantBuffer.h"
+
+#include "MeshTypes.h"
+
+#include "MeshBuilder.h"
+
+#include "Texture.h"
+
+#include "Sampler.h"
+
+#include "DebugUI.h"
+
+#include "SimpleDraw.h"
