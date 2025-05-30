@@ -1,5 +1,5 @@
-#include "precompiled.h"
-#include "dwmath.h"
+#include "Precompiled.h"
+#include "DWMath.h"
 
 using namespace Engine::Math;
 
@@ -145,7 +145,7 @@ Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t
         q1Scale = -1.0f;
     }
     
-    if (dot > 0.9999f)
+    if (dot > 0.999999f)
     {
         return Normalize(Lerp(q0, q1, t));
     }

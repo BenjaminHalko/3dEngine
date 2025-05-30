@@ -1,9 +1,11 @@
 #pragma once
 
-#include "common.h"
-#include "app.h"
-#include "app_state.h"
+#include "Common.h"
 
-namespace Engine {
-    App& MainApp();
+#include "App.h"
+#include "AppState.h"
+
+namespace Engine
+{
+	App& MainApp();
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 
-#include "input_system.h"
-#include "input_types.h"
+#include "InputSystem.h"
+#include "InputTypes.h"

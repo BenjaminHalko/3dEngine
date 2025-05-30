@@ -1,6 +1,10 @@
 #pragma once
 
-#include <core/inc/core.h>
-#include <math/inc/dwmath.h>
-#include <graphics/inc/graphics.h>
-#include <input/inc/input.h>
+// Include External Libraries
+#include <Core/Inc/Core.h> 
+
+#include <Math/Inc/DWMath.h>
+
+#include <Graphics/Inc/Graphics.h>
+
+#include <Input/Inc/Input.h>

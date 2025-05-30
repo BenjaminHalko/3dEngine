@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/inc/core.h>
+#include <Core/Inc/Core.h>
 
 #include <cmath>
 #include <numeric>

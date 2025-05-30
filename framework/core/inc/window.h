@@ -1,20 +1,25 @@
 #pragma once
 
-namespace Engine::Core {
-    class Window {
-    public:
-        void Initialize(HINSTANCE instance, const std::wstring& appName, uint32_t width, uint32_t height);
-        void Terminate();
+namespace Engine::Core
+{
+	class Window
+	{
+	public:
+		void Initialize(HINSTANCE instance, const std::wstring& appName, uint32_t width, uint32_t height);
 
-        void ProcessMessage();
+		void Terminate();
 
-        [[nodiscard]] HWND GetWindowHandle() const;
-        [[nodiscard]] bool IsActive() const;
-    private:
-        HINSTANCE mInstance = nullptr;
-        HWND mWindow = nullptr;
-        RECT mScreenRect{};
-        std::wstring mAppName;
-        bool mIsActive = false;
-    };
+		void ProcessMessage();
+
+		HWND GetWindowHandle() const;
+
+		bool IsActive() const;
+	
+	private:
+		HINSTANCE mInstance = nullptr;
+		HWND mWindow = nullptr;
+		RECT mScreenRect{};
+		std::wstring mAppName;
+		bool mIsActive = false;
+	};
 }

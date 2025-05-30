@@ -1,13 +1,13 @@
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 
-#include "constants.h"
-#include "vector2.h"
-#include "vector3.h"
-#include "vector4.h"
-#include "quaternion.h"
-#include "matrix4.h"
+#include "Constants.h"
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Quaternion.h"
+#include "Matrix4.h"
 
 namespace Engine::Math
 {

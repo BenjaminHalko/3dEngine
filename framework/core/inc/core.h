@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 
-#include "debugutil.h"
-#include "timeutil.h"
-#include "window.h"
-#include "window_message_handler.h"
+#include "DebugUtil.h"
+#include "TimeUtil.h"
+#include "Window.h"
+#include "WindowMessageHandler.h"

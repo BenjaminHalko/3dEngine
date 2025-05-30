@@ -1,7 +1,7 @@
 #pragma once
 
 // External Libraries
-#include <Core/Inc/Core.h>
+#include <Core/Inc\Core.h>
 #include <Math/Inc/DWMath.h>
 
 // DirectX 11
