@@ -13,7 +13,7 @@ void GameState::Initialize() {
     mRenderTargetCamera.SetAspectRatio(1.0f);
 
     // Initialize GPU Communication
-    std::filesystem::path shaderFile = L"../../Assets/Shaders/DoTexture.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/DoTexture.fx";
     mVertexShader.Initialize<VertexPX>(shaderFile);
     mPixelShader.Initialize(shaderFile);
     mSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Wrap);

@@ -1,6 +1,6 @@
+#include "Precompiled.h"
 #include "MeshBuffer.h"
 #include "GraphicsSystem.h"
-#include "Precompiled.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;

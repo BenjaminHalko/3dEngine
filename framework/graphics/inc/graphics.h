@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Common.h"
 #include "BlendState.h"
 #include "Camera.h"
 #include "Color.h"
-#include "Common.h"
 #include "ConstantBuffer.h"
 #include "DebugUI.h"
 #include "GraphicsSystem.h"

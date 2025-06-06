@@ -1,4 +1,4 @@
-#include <Engine/Inc/Engine.h>
+#include <Engine/inc/Engine.h>
 
 class MainState : public Engine::AppState {
   public:

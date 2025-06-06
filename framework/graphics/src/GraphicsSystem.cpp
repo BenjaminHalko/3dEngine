@@ -1,5 +1,5 @@
-#include "GraphicsSystem.h"
 #include "Precompiled.h"
+#include "GraphicsSystem.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;

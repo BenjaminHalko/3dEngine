@@ -1,5 +1,5 @@
-#include "MeshBuilder.h"
 #include "Precompiled.h"
+#include "MeshBuilder.h"
 
 using namespace Engine;
 using namespace Engine::Math;

@@ -1,6 +1,6 @@
+#include "Precompiled.h"
 #include "App.h"
 #include "AppState.h"
-#include "Precompiled.h"
 
 using namespace Engine;
 using namespace Engine::Core;

@@ -1,6 +1,6 @@
+#include "Precompiled.h"
 #include "RenderTarget.h"
 #include "GraphicsSystem.h"
-#include "Precompiled.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;

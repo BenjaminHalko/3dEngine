@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Engine/Inc/Engine.h>
+#include <Engine/inc/Engine.h>
 
 class GameState : public Engine::AppState {
   public:

@@ -1,5 +1,5 @@
-#include "TimeUtil.h"
 #include "Precompiled.h"
+#include "TimeUtil.h"
 
 using namespace Engine;
 using namespace Engine::Core;

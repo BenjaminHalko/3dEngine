@@ -1,6 +1,6 @@
+#include "Precompiled.h"
 #include "WindowMessageHandler.h"
 #include "DebugUtil.h"
-#include "Precompiled.h"
 
 using namespace Engine;
 using namespace Engine::Core;

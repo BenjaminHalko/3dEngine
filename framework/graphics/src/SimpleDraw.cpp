@@ -1,6 +1,6 @@
+#include "Precompiled.h"
 #include "SimpleDraw.h"
 #include "Camera.h"
-#include "Precompiled.h"
 // Includes needed for Rendering Effect:
 #include "BlendState.h"
 #include "ConstantBuffer.h"

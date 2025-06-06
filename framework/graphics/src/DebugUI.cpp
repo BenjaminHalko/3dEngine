@@ -1,5 +1,5 @@
-#include "DebugUI.h"
 #include "Precompiled.h"
+#include "DebugUI.h"
 
 #include "GraphicsSystem.h"
 

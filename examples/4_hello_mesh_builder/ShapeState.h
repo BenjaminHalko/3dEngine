@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Engine/Inc/Engine.h>
+#include <Engine/inc/Engine.h>
 
 class ShapeState : public Engine::AppState {
   public:

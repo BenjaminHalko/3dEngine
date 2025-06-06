@@ -1,6 +1,5 @@
-#include "Texture.h"
 #include "Precompiled.h"
-
+#include "Texture.h"
 #include "GraphicsSystem.h"
 #include <DirectXTK/Inc/WICTextureLoader.h>
 

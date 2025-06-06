@@ -1,5 +1,5 @@
-#include "Sampler.h"
 #include "Precompiled.h"
+#include "Sampler.h"
 
 #include "GraphicsSystem.h"
 
