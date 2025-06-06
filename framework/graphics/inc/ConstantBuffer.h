@@ -1,22 +1,20 @@
 #pragma once
 
-namespace Engine::Graphics
-{
-    class ConstantBuffer
-    {
-    public:
-        ConstantBuffer() = default;
-        virtual ~ConstantBuffer();
+namespace Engine::Graphics {
+class ConstantBuffer {
+  public:
+    ConstantBuffer() = default;
+    virtual ~ConstantBuffer();
 
-        void Initialize(uint32_t bufferSize);
-        void Terminate();
+    void Initialize(uint32_t bufferSize);
+    void Terminate();
 
-        void Update(const void* data) const;
+    void Update(const void *data) const;
 
-        void BindVS(uint32_t slot) const;
-        void BindPS(uint32_t slot) const;
+    void BindVS(uint32_t slot) const;
+    void BindPS(uint32_t slot) const;
 
-    private:
-        ID3D11Buffer* mConstantBuffer = nullptr;
-    };
-}
+  private:
+    ID3D11Buffer *mConstantBuffer = nullptr;
+};
+} // namespace Engine::Graphics

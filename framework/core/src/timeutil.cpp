@@ -1,25 +1,25 @@
-#include "Precompiled.h"
 #include "TimeUtil.h"
+#include "Precompiled.h"
 
 using namespace Engine;
 using namespace Engine::Core;
 
-float TimeUtil::GetTime()
-{
-	static const auto startTime = std::chrono::high_resolution_clock::now();
-	const auto currentTime = std::chrono::high_resolution_clock::now();
-	const auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count();
+float TimeUtil::GetTime() {
+    static const auto startTime = std::chrono::high_resolution_clock::now();
+    const auto currentTime = std::chrono::high_resolution_clock::now();
+    const auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count();
 
-	return milliseconds / 1000.0f;
+    return milliseconds / 1000.0f;
 }
 
-float TimeUtil::GetDeltaTime()
-{
-	static auto lastCallTime = std::chrono::high_resolution_clock::now();
-	const auto currentTime = std::chrono::high_resolution_clock::now();
-	const auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastCallTime).count();
+float TimeUtil::GetDeltaTime() {
+    static auto lastCallTime = std::chrono::high_resolution_clock::now();
+    const auto currentTime = std::chrono::high_resolution_clock::now();
+    const auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastCallTime).count();
 
-	lastCallTime = currentTime;
+    lastCallTime = currentTime;
 
-	return milliseconds / 1000.0f;
+    return milliseconds / 1000.0f;
 }

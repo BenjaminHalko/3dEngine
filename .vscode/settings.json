@@ -1,5 +1,7 @@
 {
     "files.associations": {
         "vector": "cpp"
-    }
+    },
+    "editor.formatOnSave": true,
+    "clang-format.executable": "C:\\Users\\lcv2342534\\scoop\\apps\\llvm\\current\\bin\\clang-format.exe"
 }

@@ -1,12 +1,11 @@
-#include <Engine/Inc/Engine.h>
 #include "ShapeState.h"
+#include <Engine/Inc/Engine.h>
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
-{
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int) {
     Engine::AppConfig config;
     config.appName = L"Hello Cube";
 
-    Engine::App& myApp = Engine::MainApp();
+    Engine::App &myApp = Engine::MainApp();
 
     myApp.AddState<ShapeState>("ShapeState");
     myApp.AddState<CubeState>("Cube");

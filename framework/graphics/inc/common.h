@@ -16,12 +16,9 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
 
-template<class T>
-inline void SafeRelease(T*& ptr)
-{
-	if (ptr != nullptr)
-	{
-		ptr->Release();
-		ptr = nullptr;
-	}
+template <class T> inline void SafeRelease(T *&ptr) {
+    if (ptr != nullptr) {
+        ptr->Release();
+        ptr = nullptr;
+    }
 }

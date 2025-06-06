@@ -1,51 +1,49 @@
-#include "Precompiled.h"
 #include "Sampler.h"
+#include "Precompiled.h"
 
 #include "GraphicsSystem.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;
 
-namespace
-{
-    D3D11_FILTER GetFilter(Sampler::Filter filter)
-    {
-        switch (filter)
-        {
-        case Sampler::Filter::Point: return D3D11_FILTER_MIN_MAG_MIP_POINT;
-        case Sampler::Filter::Linear: return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        case Sampler::Filter::Anisotropic: return D3D11_FILTER_ANISOTROPIC;
-
-        default:
-            ASSERT(false, "Filter: Missing filter type");
-            break;
-        }
+namespace {
+D3D11_FILTER GetFilter(Sampler::Filter filter) {
+    switch (filter) {
+    case Sampler::Filter::Point:
         return D3D11_FILTER_MIN_MAG_MIP_POINT;
-    }
-    D3D11_TEXTURE_ADDRESS_MODE GetAddressMode(Sampler::AddressMode addressMode)
-    {
-        switch (addressMode)
-        {
-        case Sampler::AddressMode::Border: return D3D11_TEXTURE_ADDRESS_BORDER;
-        case Sampler::AddressMode::Clamp: return D3D11_TEXTURE_ADDRESS_CLAMP;
-        case Sampler::AddressMode::Mirror: return D3D11_TEXTURE_ADDRESS_MIRROR;
-        case Sampler::AddressMode::Wrap: return D3D11_TEXTURE_ADDRESS_WRAP;
+    case Sampler::Filter::Linear:
+        return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    case Sampler::Filter::Anisotropic:
+        return D3D11_FILTER_ANISOTROPIC;
 
-        default:
-            ASSERT(false, "AddressMode: Missing address mode");
-            break;
-        }
+    default:
+        ASSERT(false, "Filter: Missing filter type");
+        break;
+    }
+    return D3D11_FILTER_MIN_MAG_MIP_POINT;
+}
+D3D11_TEXTURE_ADDRESS_MODE GetAddressMode(Sampler::AddressMode addressMode) {
+    switch (addressMode) {
+    case Sampler::AddressMode::Border:
         return D3D11_TEXTURE_ADDRESS_BORDER;
+    case Sampler::AddressMode::Clamp:
+        return D3D11_TEXTURE_ADDRESS_CLAMP;
+    case Sampler::AddressMode::Mirror:
+        return D3D11_TEXTURE_ADDRESS_MIRROR;
+    case Sampler::AddressMode::Wrap:
+        return D3D11_TEXTURE_ADDRESS_WRAP;
+
+    default:
+        ASSERT(false, "AddressMode: Missing address mode");
+        break;
     }
+    return D3D11_TEXTURE_ADDRESS_BORDER;
 }
+} // namespace
 
-Sampler::~Sampler()
-{
-    ASSERT(mSampler == nullptr, "Sampler: Terminate must be called");
-}
+Sampler::~Sampler() { ASSERT(mSampler == nullptr, "Sampler: Terminate must be called"); }
 
-void Sampler::Initialize(Filter filter, AddressMode addressMode)
-{
+void Sampler::Initialize(Filter filter, AddressMode addressMode) {
     auto d3dFilter = GetFilter(filter);
     auto d3dAddressMode = GetAddressMode(addressMode);
 
@@ -67,19 +65,14 @@ void Sampler::Initialize(Filter filter, AddressMode addressMode)
     ASSERT(SUCCEEDED(hr), "Sampler: Failed to create sampler state");
 }
 
-void Sampler::Terminate()
-{
-    SafeRelease(mSampler);
-}
+void Sampler::Terminate() { SafeRelease(mSampler); }
 
-void Sampler::BindVS(uint32_t slot) const
-{
+void Sampler::BindVS(uint32_t slot) const {
     auto context = GraphicsSystem::Get()->GetContext();
     context->VSSetSamplers(slot, 1, &mSampler);
 }
 
-void Sampler::BindPS(uint32_t slot) const
-{
+void Sampler::BindPS(uint32_t slot) const {
     auto context = GraphicsSystem::Get()->GetContext();
     context->PSSetSamplers(slot, 1, &mSampler);
 }

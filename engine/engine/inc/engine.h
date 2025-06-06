@@ -5,7 +5,6 @@
 #include "App.h"
 #include "AppState.h"
 
-namespace Engine
-{
-	App& MainApp();
+namespace Engine {
+App &MainApp();
 }

@@ -1,33 +1,31 @@
 #pragma once
 
-namespace Engine::Graphics
-{
-    class Texture
-    {
-    public:
-        static void UnbindPS(uint32_t slot);
+namespace Engine::Graphics {
+class Texture {
+  public:
+    static void UnbindPS(uint32_t slot);
 
-        Texture() = default;
-        ~Texture();
+    Texture() = default;
+    virtual ~Texture();
 
-        // Delete Copy
-        Texture(const Texture&) = delete;
-        Texture& operator = (const Texture&) = delete;
+    // Delete Copy
+    Texture(const Texture &) = delete;
+    Texture &operator=(const Texture &) = delete;
 
-        // Allow Move
-        Texture(Texture&& rhs) noexcept;
-        Texture& operator = (Texture&& rhs) noexcept;
+    // Allow Move
+    Texture(Texture &&rhs) noexcept;
+    Texture &operator=(Texture &&rhs) noexcept;
 
-        void Initialize(const std::filesystem::path& fileName);
+    virtual void Initialize(const std::filesystem::path &fileName);
 
-        void Terminate();
+    virtual void Terminate();
 
-        void BindVS(uint32_t slot) const;
-        void BindPS(uint32_t slot) const;
+    void BindVS(uint32_t slot) const;
+    void BindPS(uint32_t slot) const;
 
-        void* GetRawData() const;
+    [[nodiscard]] void *GetRawData() const;
 
-    private:
-        ID3D11ShaderResourceView* mShaderResourceView = nullptr;
-    };
-}
+  protected:
+    ID3D11ShaderResourceView *mShaderResourceView = nullptr;
+};
+} // namespace Engine::Graphics

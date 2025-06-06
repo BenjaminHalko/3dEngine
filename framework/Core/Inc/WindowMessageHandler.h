@@ -1,19 +1,17 @@
 #pragma once
 
-namespace Engine::Core
-{
-	class WindowMessageHandler
-	{
-	public:
-		using Callback = LRESULT(CALLBACK*)(HWND, UINT, WPARAM, LPARAM);
+namespace Engine::Core {
+class WindowMessageHandler {
+  public:
+    using Callback = LRESULT(CALLBACK *)(HWND, UINT, WPARAM, LPARAM);
 
-		void Hook(HWND window, Callback cb);
-		void Unhook();
+    void Hook(HWND window, Callback cb);
+    void Unhook();
 
-		LRESULT ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
-		
-	private:
-		HWND mWindow = nullptr;
-		Callback mPreviousCallback = nullptr;
-	};
-}
+    LRESULT ForwardMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+
+  private:
+    HWND mWindow = nullptr;
+    Callback mPreviousCallback = nullptr;
+};
+} // namespace Engine::Core

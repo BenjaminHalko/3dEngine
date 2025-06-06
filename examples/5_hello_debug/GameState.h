@@ -2,21 +2,20 @@
 
 #include <Engine/Inc/Engine.h>
 
-class GameState : public Engine::AppState
-{
-public:
-	void Initialize() override;
+class GameState : public Engine::AppState {
+  public:
+    void Initialize() override;
 
-	void Terminate() override;
-	
-	void Update(float deltaTime) override;
+    void Terminate() override;
 
-	void Render() override;
+    void Update(float deltaTime) override;
 
-	void DebugUI() override;
+    void Render() override;
 
-private:
-	void UpdateCamera(float deltaTime);
+    void DebugUI() override;
 
-	Engine::Graphics::Camera mCamera;
+  private:
+    void UpdateCamera(float deltaTime);
+
+    Engine::Graphics::Camera mCamera;
 };
