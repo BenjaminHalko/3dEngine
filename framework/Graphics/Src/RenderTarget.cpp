@@ -1,6 +1,7 @@
 #include "Precompiled.h"
-#include "RenderTarget.h"
+
 #include "GraphicsSystem.h"
+#include "RenderTarget.h"
 
 using namespace Engine;
 using namespace Engine::Graphics;
@@ -22,7 +23,7 @@ DXGI_FORMAT GetDXGIFormat(RenderTarget::Format format) {
 
 RenderTarget::~RenderTarget() {
     ASSERT(mRenderTargetView == nullptr && mDepthStencilView == nullptr,
-           "RenderTarget: must call Terminate ");
+           "RenderTarget: Must call Terminate!");
 }
 
 void RenderTarget::Initialize(const std::filesystem::path &fileName) {
