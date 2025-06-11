@@ -2,6 +2,7 @@
 
 using namespace Engine;
 using namespace Engine::Graphics;
+using namespace Engine::Input;
 
 void GameState::Initialize() {
     // Initialize cameras
@@ -9,6 +10,7 @@ void GameState::Initialize() {
     mMainCamera.SetLookAt({0.0f, 0.0f, 0.0f});
     mPlanetCamera.SetPosition({0.0f, 0.0f, -10.0f});
     mPlanetCamera.SetLookAt({0.0f, 0.0f, 0.0f});
+    mPlanetCamera.SetAspectRatio(1.0f);
 
     // Initialize GPU Communication
     std::filesystem::path shaderFile = L"Assets/Shaders/DoTexture.fx";
@@ -23,155 +25,170 @@ void GameState::Initialize() {
     // Initialize UI state
     mSelectedPlanetIndex = 0;
     mShowOrbits = true;
-    mGlobalSpeedMultiplier = 1.0f;
+    mGlobalSpeedMultiplier = 5.0f;
     mShowPlanetView = true;
 
     // Create sky sphere
-    CreateSkySphere();
+    MeshPX spaceSphere = MeshBuilder::CreateSkySpherePX(30, 30, 250.0f);
+    mSkySphere.mesh.Initialize(spaceSphere);
+    mSkySphere.textureId = TextureManager::Get()->LoadTexture(L"space.jpg");
+    mSkySphere.matWorld = Math::Matrix4::Identity;
 
     // Create sun
-    CreateSun();
+    MeshPX sunSphere = MeshBuilder::CreateSpherePX(32, 32, 10.0f);
+    mSun.mesh.Initialize(sunSphere);
+    mSun.textureId = TextureManager::Get()->LoadTexture(L"sun.jpg");
+    mSun.matWorld = Math::Matrix4::Identity;
 
     // Create planets
-    CreatePlanets();
+    const std::vector<std::tuple<std::string, float, float, float, float, std::wstring>>
+        planetData = {
+            std::make_tuple("Mercury", 2.0f, 0.387f, 0.24f * 2.0f, 58.6f, L"planets/mercury.jpg"),
+            std::make_tuple("Venus", 3.0f, 0.723f, 0.62f * 2.0f, -243.0f, L"planets/venus.jpg"),
+            std::make_tuple("Earth", 3.5f, 1.0f, 1.0f * 2.0f, 1.0f, L"planets/earth/earth.jpg"),
+            std::make_tuple("Mars", 2.5f, 1.524f, 1.88f * 2.0f, 1.03f, L"planets/mars.jpg"),
+            std::make_tuple("Jupiter", 12.0f, 5.203f, 11.86f * 2.0f, 0.41f, L"planets/jupiter.jpg"),
+            std::make_tuple("Saturn", 10.0f, 9.537f, 29.46f * 2.0f, 0.45f, L"planets/saturn.jpg"),
+            std::make_tuple("Uranus", 7.0f, 19.191f, 84.01f * 2.0f, -0.72f, L"planets/uranus.jpg"),
+            std::make_tuple("Neptune", 7.0f, 30.069f, 164.79f * 2.0f, 0.67f,
+                            L"planets/neptune.jpg"),
+            std::make_tuple("Pluto", 1.5f, 39.482f, 248.54f * 2.0f, -6.39f, L"planets/pluto.jpg")};
+
+    for (const auto &[name, size, orbitRadius, orbitSpeed, rotationSpeed, textureFile] :
+         planetData) {
+        PlanetData planet;
+        MeshPX sphere = MeshBuilder::CreateSpherePX(32, 32, size);
+        planet.object.mesh.Initialize(sphere);
+        planet.object.textureId = TextureManager::Get()->LoadTexture(textureFile);
+        planet.orbitRadius = orbitRadius * 5.0f;
+        planet.orbitSpeed = orbitSpeed;
+        planet.rotationSpeed = rotationSpeed;
+        planet.object.matWorld = Math::Matrix4::Translation(planet.orbitRadius, 0.0f, 0.0f);
+        mPlanets.push_back(std::move(planet));
+
+        // Add moon for Earth
+        if (name == "Earth") {
+            auto moon = std::make_unique<RenderObject>();
+            MeshPX moonSphere = MeshBuilder::CreateSpherePX(32, 32, 1.0f);
+            moon->mesh.Initialize(moonSphere);
+            moon->textureId = TextureManager::Get()->LoadTexture(L"planets/pluto.jpg");
+            moon->matWorld = Math::Matrix4::Translation(1.5f, 0.0f, 0.0f);
+            mMoons.push_back(std::move(moon));
+        }
+    }
 }
 
 void GameState::Terminate() {
     mPlanetRenderTarget.Terminate();
-    mSkySphere.Terminate();
+
+    // Release textures
+    TextureManager::Get()->ReleaseTexture(mSkySphere.textureId);
+    TextureManager::Get()->ReleaseTexture(mSun.textureId);
+
+    // Terminate mesh buffers
+    mSkySphere.mesh.Terminate();
     mSun.mesh.Terminate();
-    mSun.texture.Terminate();
     for (auto &planet : mPlanets) {
-        planet.mesh.Terminate();
-        planet.texture.Terminate();
-        if (planet.moon) {
-            planet.moon->mesh.Terminate();
-            planet.moon->texture.Terminate();
-        }
+        TextureManager::Get()->ReleaseTexture(planet.object.textureId);
+        planet.object.mesh.Terminate();
+    }
+    for (auto &moon : mMoons) {
+        TextureManager::Get()->ReleaseTexture(moon->textureId);
+        moon->mesh.Terminate();
     }
 
+    // Terminate GPU components
     mTransformBuffer.Terminate();
-    mSampler.Terminate();
-    mPixelShader.Terminate();
     mVertexShader.Terminate();
-}
-
-void GameState::CreateSkySphere() {
-    // Create a large sphere for the sky
-    mSkySphere.Initialize(MeshBuilder::CreateSkySpherePX(32, 32, 1000.0f));
-    mSkyTexture.Initialize("../../Assets/Textures/space.jpg");
-}
-
-void GameState::CreateSun() {
-    mSun.name = "Sun";
-    mSun.mesh.Initialize(MeshBuilder::CreateSpherePX(32, 32, 10.0f));
-    mSun.texture.Initialize("../../Assets/Textures/sun.jpg");
-    mSun.orbitRadius = 0.0f;
-    mSun.orbitSpeed = 0.0f;
-    mSun.rotationSpeed = 0.1f;
-    mSun.orbitAngle = 0.0f;
-    mSun.rotationAngle = 0.0f;
-    mSun.showOrbit = false;
-}
-
-void GameState::CreatePlanets() {
-    // Mercury
-    mPlanets.push_back(CreatePlanet("Mercury", 5.0f, 0.387f, 0.24f, 58.6f, "mercury.jpg"));
-
-    // Venus
-    mPlanets.push_back(CreatePlanet("Venus", 6.0f, 0.723f, 0.62f, -243.0f, "venus.jpg"));
-
-    // Earth
-    auto &earth = CreatePlanet("Earth", 7.0f, 1.0f, 1.0f, 1.0f, "earth.jpg");
-    // Add moon
-    earth.moon = std::make_unique<CelestialBody>();
-    earth.moon->name = "Moon";
-    earth.moon->mesh.Initialize(MeshBuilder::CreateSpherePX(32, 32, 1.5f));
-    earth.moon->texture.Initialize("../../Assets/Textures/moon.jpg");
-    earth.moon->orbitRadius = 3.0f;
-    earth.moon->orbitSpeed = 27.3f;
-    earth.moon->rotationSpeed = 27.3f;
-    earth.moon->orbitAngle = 0.0f;
-    earth.moon->rotationAngle = 0.0f;
-    earth.moon->showOrbit = true;
-    mPlanets.push_back(std::move(earth));
-
-    // Mars
-    mPlanets.push_back(CreatePlanet("Mars", 5.5f, 1.524f, 1.88f, 1.03f, "mars.jpg"));
-
-    // Jupiter
-    mPlanets.push_back(CreatePlanet("Jupiter", 15.0f, 5.203f, 11.86f, 0.41f, "jupiter.jpg"));
-
-    // Saturn
-    mPlanets.push_back(CreatePlanet("Saturn", 12.0f, 9.537f, 29.46f, 0.45f, "saturn.jpg"));
-
-    // Uranus
-    mPlanets.push_back(CreatePlanet("Uranus", 8.0f, 19.191f, 84.01f, -0.72f, "uranus.jpg"));
-
-    // Neptune
-    mPlanets.push_back(CreatePlanet("Neptune", 8.0f, 30.069f, 164.79f, 0.67f, "neptune.jpg"));
-
-    // Pluto
-    mPlanets.push_back(CreatePlanet("Pluto", 3.0f, 39.482f, 248.54f, -6.39f, "pluto.jpg"));
-}
-
-CelestialBody GameState::CreatePlanet(const std::string &name, float size, float orbitRadius,
-                                      float orbitSpeed, float rotationSpeed,
-                                      const std::string &textureFile) {
-    CelestialBody planet;
-    planet.name = name;
-    planet.mesh.Initialize(MeshBuilder::CreateSpherePX(32, 32, size));
-    planet.texture.Initialize("../../Assets/Textures/" + textureFile);
-    planet.orbitRadius = orbitRadius * 10.0f; // Scale up for better visualization
-    planet.orbitSpeed = orbitSpeed;
-    planet.rotationSpeed = rotationSpeed;
-    planet.orbitAngle = 0.0f;
-    planet.rotationAngle = 0.0f;
-    planet.showOrbit = true;
-    planet.moon = nullptr; // Explicitly initialize moon pointer
-    return planet;
+    mPixelShader.Terminate();
+    mSampler.Terminate();
 }
 
 void GameState::Update(float deltaTime) {
-    //     // Update sun rotation
-    //     mSun.rotationAngle += mSun.rotationSpeed * deltaTime * mGlobalSpeedMultiplier;
-    //     mSun.transform.rotation =
-    //         Math::Quaternion::CreateFromYawPitchRoll(mSun.rotationAngle, 0.0f, 0.0f);
+    UpdateCamera(deltaTime);
 
-    //     // Update planets
-    //     for (auto &planet : mPlanets) {
-    //         UpdateCelestialBody(planet, deltaTime);
-    //     }
-}
+    // Update sun rotation
+    mSun.matWorld = Math::Matrix4::RotationY(deltaTime * 0.1f * mGlobalSpeedMultiplier);
 
-void GameState::UpdateCelestialBody(CelestialBody &body, float deltaTime) {
-    // Update orbit
-    body.orbitAngle += body.orbitSpeed * deltaTime * mGlobalSpeedMultiplier;
-    float x = body.orbitRadius * cos(body.orbitAngle);
-    float z = body.orbitRadius * sin(body.orbitAngle);
-    body.transform.position = {x, 0.0f, z};
-
-    // Update rotation
-    body.rotationAngle += body.rotationSpeed * deltaTime * mGlobalSpeedMultiplier;
-    body.transform.rotation =
-        Math::Quaternion::CreateFromYawPitchRoll(body.rotationAngle, 0.0f, 0.0f);
-
-    // Update moon if exists
-    if (body.moon) {
-        body.moon->orbitAngle += body.moon->orbitSpeed * deltaTime * mGlobalSpeedMultiplier;
-        float moonX = body.moon->orbitRadius * cos(body.moon->orbitAngle);
-        float moonZ = body.moon->orbitRadius * sin(body.moon->orbitAngle);
-        body.moon->transform.position = body.transform.position + Math::Vector3{moonX, 0.0f, moonZ};
-        body.moon->rotationAngle += body.moon->rotationSpeed * deltaTime * mGlobalSpeedMultiplier;
-        body.moon->transform.rotation =
-            Math::Quaternion::CreateFromYawPitchRoll(body.moon->rotationAngle, 0.0f, 0.0f);
+    // Update planets
+    for (size_t i = 0; i < mPlanets.size(); ++i) {
+        UpdateCelestialBody(mPlanets[i], deltaTime);
+        if (i == 2 && !mMoons.empty()) { // Earth's moon
+            // Update moon orbit and rotation around Earth
+            float moonOrbitSpeed = 4.0f;
+            float moonRotationSpeed = 2.0f;
+            static float moonOrbitAngle = 0.0f;
+            static float moonRotationAngle = 0.0f;
+            moonOrbitAngle += deltaTime * moonOrbitSpeed * mGlobalSpeedMultiplier;
+            moonRotationAngle += deltaTime * moonRotationSpeed * mGlobalSpeedMultiplier;
+            Math::Matrix4 moonOrbit = Math::Matrix4::RotationY(moonOrbitAngle) *
+                                      Math::Matrix4::Translation(1.5f, 0.0f, 0.0f);
+            Math::Matrix4 moonRotation = Math::Matrix4::RotationY(moonRotationAngle);
+            mMoons[0]->matWorld = moonRotation * moonOrbit * mPlanets[2].object.matWorld;
+        }
     }
 }
 
-void GameState::RenderObject(const CelestialBody &body, const Camera &camera) {
+void GameState::UpdateCelestialBody(PlanetData &body, float deltaTime) {
+    // Update orbit and rotation angles
+    body.orbitAngle += deltaTime * body.orbitSpeed * mGlobalSpeedMultiplier;
+    body.rotationAngle += deltaTime * body.rotationSpeed * mGlobalSpeedMultiplier;
+
+    Math::Matrix4 orbit = Math::Matrix4::RotationY(body.orbitAngle) *
+                          Math::Matrix4::Translation(body.orbitRadius, 0.0f, 0.0f);
+    Math::Matrix4 rotation = Math::Matrix4::RotationY(body.rotationAngle);
+    body.object.matWorld = rotation * orbit;
+}
+
+void GameState::DrawOrbit(const PlanetData &body) {
+    const int segments = 100;
+    const float angleStep = Math::Constants::TwoPi / segments;
+    float radius = body.orbitRadius;
+    for (int i = 0; i < segments; ++i) {
+        float angle1 = i * angleStep;
+        float angle2 = (i + 1) * angleStep;
+
+        float x1 = radius * cos(angle1);
+        float z1 = radius * sin(angle1);
+        float x2 = radius * cos(angle2);
+        float z2 = radius * sin(angle2);
+
+        SimpleDraw::AddLine({x1, 0.0f, z1}, {x2, 0.0f, z2}, Colors::White);
+    }
+}
+
+void GameState::Render() {
+    SimpleDraw::AddGroundPlane(20.0f, Colors::Wheat);
+    SimpleDraw::Render(mMainCamera);
+
+    // Render to Render Target
+    mPlanetRenderTarget.BeginRender();
+    if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
+        RenderMesh(mPlanets[mSelectedPlanetIndex].object, mPlanetCamera);
+        if (mSelectedPlanetIndex == 2 && !mMoons.empty()) { // Earth's moon
+            RenderMesh(*mMoons[0], mPlanetCamera);
+        }
+    }
+    mPlanetRenderTarget.EndRender();
+
+    // Render to Scene
+    RenderMesh(mSkySphere, mMainCamera);
+    RenderMesh(mSun, mMainCamera);
+    for (size_t i = 0; i < mPlanets.size(); ++i) {
+        RenderMesh(mPlanets[i].object, mMainCamera);
+        if (mShowOrbits) {
+            DrawOrbit(mPlanets[i]);
+        }
+        if (i == 2 && !mMoons.empty()) { // Earth's moon
+            RenderMesh(*mMoons[0], mMainCamera);
+        }
+    }
+}
+
+void GameState::RenderMesh(const RenderObject &object, const Camera &camera) {
     const Math::Matrix4 matView = camera.GetViewMatrix();
     const Math::Matrix4 matProj = camera.GetProjectionMatrix();
-    const Math::Matrix4 matFinal = body.transform.Apply() * matView * matProj;
+    const Math::Matrix4 matFinal = object.matWorld * matView * matProj;
     const Math::Matrix4 wvp = Math::Transpose(matFinal);
     mTransformBuffer.Update(&wvp);
 
@@ -180,84 +197,8 @@ void GameState::RenderObject(const CelestialBody &body, const Camera &camera) {
     mSampler.BindPS(0);
     mTransformBuffer.BindVS(0);
 
-    body.texture.BindPS(0);
-    body.mesh.Render();
-}
-
-void GameState::Render() {
-    // Render sky sphere
-    mSkyTexture.BindPS(0);
-    auto skyTransform = Math::Matrix4::Identity;
-    SimpleDraw::AddTransform(skyTransform);
-    mSkySphere.Render();
-
-    // Render sun
-    RenderObject(mSun, mMainCamera);
-
-    // Render planets
-    for (const auto &planet : mPlanets) {
-        RenderObject(planet, mMainCamera);
-
-        // Render moon if exists
-        if (planet.moon) {
-            RenderObject(*planet.moon, mMainCamera);
-        }
-
-        // Draw orbit if enabled
-        if (mShowOrbits && planet.showOrbit) {
-            DrawOrbit(planet);
-        }
-    }
-
-    // Render planet view if enabled
-    if (mShowPlanetView && mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
-        RenderPlanetView();
-    }
-}
-
-void GameState::DrawOrbit(const CelestialBody &body) {
-    const int segments = 100;
-    const float angleStep = Math::Constants::TwoPi / segments;
-
-    for (int i = 0; i < segments; ++i) {
-        float angle1 = i * angleStep;
-        float angle2 = (i + 1) * angleStep;
-
-        float x1 = body.orbitRadius * cos(angle1);
-        float z1 = body.orbitRadius * sin(angle1);
-        float x2 = body.orbitRadius * cos(angle2);
-        float z2 = body.orbitRadius * sin(angle2);
-
-        SimpleDraw::AddLine({x1, 0.0f, z1}, {x2, 0.0f, z2}, Colors::White);
-    }
-}
-
-void GameState::RenderPlanetView() {
-    if (mSelectedPlanetIndex < 0 || mSelectedPlanetIndex >= mPlanets.size())
-        return;
-
-    const auto &planet = mPlanets[mSelectedPlanetIndex];
-
-    // Update planet camera position
-    Math::Vector3 cameraPos = planet.transform.position + Math::Vector3{0.0f, 0.0f, -20.0f};
-    mPlanetCamera.SetPosition(cameraPos);
-    mPlanetCamera.SetLookAt(planet.transform.position);
-
-    // Render to planet view render target
-    mPlanetRenderTarget.BeginRender();
-    {
-        // Clear the render target
-        GraphicsSystem::Get()->BeginRender();
-
-        // Render planet
-        RenderObject(planet, mPlanetCamera);
-
-        // Render moon if exists
-        if (planet.moon) {
-            RenderObject(*planet.moon, mPlanetCamera);
-        }
-    }
-    mPlanetRenderTarget.EndRender();
+    TextureManager::Get()->BindPS(object.textureId, 0);
+    object.mesh.Render();
 }
 
 void GameState::DebugUI() {
@@ -280,15 +221,31 @@ void GameState::DebugUI() {
         ImGui::EndChild();
     }
 
-    // Individual planet controls
-    if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
-        auto &planet = mPlanets[mSelectedPlanetIndex];
-        ImGui::Separator();
-        ImGui::Text("Planet: %s", planet.name.c_str());
-        ImGui::SliderFloat("Orbit Speed", &planet.orbitSpeed, 0.0f, 2.0f);
-        ImGui::SliderFloat("Rotation Speed", &planet.rotationSpeed, -2.0f, 2.0f);
-        ImGui::Checkbox("Show Orbit", &planet.showOrbit);
+    ImGui::End();
+}
+
+void GameState::UpdateCamera(float deltaTime) {
+    // Camera Controls:
+    InputSystem *input = InputSystem::Get();
+    const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 10.0f : 4.0f;
+    const float turnSpeed = 0.5f;
+
+    if (input->IsKeyDown(KeyCode::W)) {
+        mMainCamera.Walk(moveSpeed * deltaTime);
+    } else if (input->IsKeyDown(KeyCode::S)) {
+        mMainCamera.Walk(-moveSpeed * deltaTime);
+    } else if (input->IsKeyDown(KeyCode::D)) {
+        mMainCamera.Strafe(moveSpeed * deltaTime);
+    } else if (input->IsKeyDown(KeyCode::A)) {
+        mMainCamera.Strafe(-moveSpeed * deltaTime);
+    } else if (input->IsKeyDown(KeyCode::E)) {
+        mMainCamera.Rise(moveSpeed * deltaTime);
+    } else if (input->IsKeyDown(KeyCode::Q)) {
+        mMainCamera.Rise(-moveSpeed * deltaTime);
     }
 
-    ImGui::End();
+    if (input->IsMouseDown(MouseButton::RBUTTON)) {
+        mMainCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
+        mMainCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
+    }
 }

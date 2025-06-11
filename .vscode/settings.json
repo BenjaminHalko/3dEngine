@@ -73,7 +73,8 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "iostream": "cpp"
     },
     "editor.formatOnSave": true,
     "clang-format.executable": "C:\\Users\\lcv2342534\\scoop\\apps\\llvm\\current\\bin\\clang-format.exe"

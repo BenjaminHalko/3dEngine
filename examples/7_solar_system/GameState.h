@@ -16,18 +16,19 @@ struct Transform {
     }
 };
 
-struct CelestialBody {
-    std::string name;
+struct RenderObject {
+    Math::Matrix4 matWorld = Math::Matrix4::Identity;
     MeshBuffer mesh;
-    Texture texture;
-    Transform transform;
+    TextureId textureId = 0;
+};
+
+struct PlanetData {
+    RenderObject object;
     float orbitRadius;
-    float orbitSpeed;    // Year
-    float rotationSpeed; // Day
-    float orbitAngle;
-    float rotationAngle;
-    bool showOrbit;
-    std::unique_ptr<CelestialBody> moon;
+    float orbitSpeed;
+    float rotationSpeed;
+    float orbitAngle = 0.0f;
+    float rotationAngle = 0.0f;
 };
 
 class GameState : public AppState {
@@ -39,31 +40,27 @@ class GameState : public AppState {
     void DebugUI() override;
 
   private:
-    void CreateSkySphere();
-    void CreateSun();
-    void CreatePlanets();
-    CelestialBody CreatePlanet(const std::string &name, float size, float orbitRadius,
-                               float orbitSpeed, float rotationSpeed,
-                               const std::string &textureFile);
-    void UpdateCelestialBody(CelestialBody &body, float deltaTime);
-    void DrawOrbit(const CelestialBody &body);
-    void RenderPlanetView();
-    void RenderObject(const CelestialBody &body, const Camera &camera);
+    void UpdateCamera(float deltaTime);
+    void UpdateCelestialBody(PlanetData &body, float deltaTime);
+    void DrawOrbit(const PlanetData &body);
+    void RenderMesh(const RenderObject &object, const Camera &camera);
 
     // Core components
     Camera mMainCamera;
     Camera mPlanetCamera;
     RenderTarget mPlanetRenderTarget;
-    MeshBuffer mSkySphere;
-    Texture mSkyTexture;
-    CelestialBody mSun;
-    std::vector<CelestialBody> mPlanets;
 
     // GPU Communication
     ConstantBuffer mTransformBuffer;
     VertexShader mVertexShader;
     PixelShader mPixelShader;
     Sampler mSampler;
+
+    // Render Objects
+    RenderObject mSkySphere;
+    RenderObject mSun;
+    std::vector<PlanetData> mPlanets;
+    std::vector<std::unique_ptr<RenderObject>> mMoons;
 
     // UI state
     int mSelectedPlanetIndex;
