@@ -181,9 +181,22 @@ void GameState::Render() {
     // Render to Render Target
     mPlanetRenderTarget.BeginRender();
     if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
-        RenderMesh(mPlanets[mSelectedPlanetIndex].object, mPlanetCamera);
-        if (mSelectedPlanetIndex == 2 && !mMoons.empty()) { // Earth's moon
-            RenderMesh(*mMoons[0], mPlanetCamera);
+        // Render the selected planet at the origin for the preview
+        RenderMeshAtOrigin(mPlanets[mSelectedPlanetIndex].object, mPlanetCamera);
+        // Optionally, render the moon at a fixed offset (not orbiting)
+        if (mSelectedPlanetIndex == 2 && !mMoons.empty()) {
+            Math::Matrix4 matWorld = Math::Matrix4::Translation(2.5f, 0.0f, 0.0f);
+            const Math::Matrix4 matView = mPlanetCamera.GetViewMatrix();
+            const Math::Matrix4 matProj = mPlanetCamera.GetProjectionMatrix();
+            const Math::Matrix4 matFinal = matWorld * matView * matProj;
+            const Math::Matrix4 wvp = Math::Transpose(matFinal);
+            mTransformBuffer.Update(&wvp);
+            mVertexShader.Bind();
+            mPixelShader.Bind();
+            mSampler.BindPS(0);
+            mTransformBuffer.BindVS(0);
+            TextureManager::Get()->BindPS(mMoons[0]->textureId, 0);
+            mMoons[0]->mesh.Render();
         }
     }
     mPlanetRenderTarget.EndRender();
@@ -206,6 +219,26 @@ void GameState::RenderMesh(const RenderObject &object, const Camera &camera) {
     const Math::Matrix4 matView = camera.GetViewMatrix();
     const Math::Matrix4 matProj = camera.GetProjectionMatrix();
     const Math::Matrix4 matFinal = object.matWorld * matView * matProj;
+    const Math::Matrix4 wvp = Math::Transpose(matFinal);
+    mTransformBuffer.Update(&wvp);
+
+    mVertexShader.Bind();
+    mPixelShader.Bind();
+    mSampler.BindPS(0);
+    mTransformBuffer.BindVS(0);
+
+    TextureManager::Get()->BindPS(object.textureId, 0);
+    object.mesh.Render();
+}
+
+// Helper to render a planet at the origin for ImGui preview
+void GameState::RenderMeshAtOrigin(const RenderObject &object, const Camera &camera) {
+    // Make the planet spin in the preview
+    float spin = ImGui::GetTime();
+    const Math::Matrix4 matWorld = Math::Matrix4::RotationY(spin);
+    const Math::Matrix4 matView = camera.GetViewMatrix();
+    const Math::Matrix4 matProj = camera.GetProjectionMatrix();
+    const Math::Matrix4 matFinal = matWorld * matView * matProj;
     const Math::Matrix4 wvp = Math::Transpose(matFinal);
     mTransformBuffer.Update(&wvp);
 

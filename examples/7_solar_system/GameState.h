@@ -45,6 +45,7 @@ class GameState : public AppState {
     void UpdateCelestialBody(PlanetData &body, float deltaTime);
     void DrawOrbit(const PlanetData &body);
     void RenderMesh(const RenderObject &object, const Camera &camera);
+    void RenderMeshAtOrigin(const RenderObject &object, const Camera &camera);
 
     // Core components
     Camera mMainCamera;
