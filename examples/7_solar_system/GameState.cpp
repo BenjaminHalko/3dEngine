@@ -183,9 +183,14 @@ void GameState::Render() {
     if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
         // Render the selected planet at the origin for the preview
         RenderMeshAtOrigin(mPlanets[mSelectedPlanetIndex].object, mPlanetCamera);
-        // Optionally, render the moon at a fixed offset (not orbiting)
+        // If Earth is selected, render the moon orbiting it in the preview
         if (mSelectedPlanetIndex == 2 && !mMoons.empty()) {
-            Math::Matrix4 matWorld = Math::Matrix4::Translation(2.5f, 0.0f, 0.0f);
+            float planetRadius = mPlanets[mSelectedPlanetIndex].radius;
+            float moonOrbit = planetRadius * 2.5f;
+            float moonAngle = ImGui::GetTime();
+            Math::Matrix4 matWorld = Math::Matrix4::Translation(0.0f, 0.0f, 0.0f) *
+                                     Math::Matrix4::RotationY(moonAngle) *
+                                     Math::Matrix4::Translation(moonOrbit, 0.0f, 0.0f);
             const Math::Matrix4 matView = mPlanetCamera.GetViewMatrix();
             const Math::Matrix4 matProj = mPlanetCamera.GetProjectionMatrix();
             const Math::Matrix4 matFinal = matWorld * matView * matProj;
@@ -262,11 +267,11 @@ void GameState::DebugUI() {
     // Planet selection
     const char *planetNames[] = {"Mercury", "Venus",  "Earth",   "Mars", "Jupiter",
                                  "Saturn",  "Uranus", "Neptune", "Pluto"};
-    ImGui::Combo("Select Planet", &mSelectedPlanetIndex, planetNames, IM_ARRAYSIZE(planetNames));
+    static int planetCount = 9;
+    ImGui::Combo("Select Planet", &mSelectedPlanetIndex, planetNames, planetCount);
 
     // Planet view
-    if (mShowPlanetView && mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
-        // Dynamically set camera distance based on planet size
+    if (mShowPlanetView && mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < planetCount) {
         float planetRadius = mPlanets[mSelectedPlanetIndex].radius;
         float camDist = planetRadius * 2.5f + 0.5f;
         mPlanetCamera.SetPosition({0.0f, 0.0f, -camDist});
