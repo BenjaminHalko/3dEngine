@@ -26,9 +26,11 @@ class MeshBuilder {
     // Sphere
     static MeshPC CreateSpherePC(int slices, int rings, float radius);
     static MeshPX CreateSpherePX(int slices, int rings, float radius);
+    static Mesh CreateSphere(int slices, int rings, float radius);
 
     // Sky Sphere/ 'Box'
     static MeshPX CreateSkySpherePX(int slices, int rings, float radius);
+    static Mesh CreateSkySphere(int slices, int rings, float radius);
 
     // Load 3D Obj
     static MeshPX CreateOBJPX(const std::filesystem::path &filePath, float scale);

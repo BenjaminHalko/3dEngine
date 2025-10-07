@@ -322,6 +322,44 @@ MeshPX MeshBuilder::CreateSpherePX(int slices, int rings, float radius) {
     return mesh;
 }
 
+Mesh MeshBuilder::CreateSphere(int slices, int rings, float radius) {
+    Mesh mesh;
+
+    float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
+    float horzRotation = (Math::Constants::TwoPi / static_cast<float>(slices));
+
+    float uStep = 1.0f / static_cast<float>(slices);
+    float vStep = 1.0f / static_cast<float>(rings);
+
+    for (int r = 0; r <= rings; ++r) {
+        auto ring = static_cast<float>(r);
+        float phi = ring * vertRotation;
+
+        for (int s = 0; s <= slices; ++s) {
+            const auto slice = static_cast<float>(s);
+            const float rot = slice * horzRotation;
+            const float u = 1.0f - (uStep * slice);
+            const float v = vStep * ring;
+
+            const float x = radius * sin(rot)* sin(phi);
+            const float y = radius * cos(phi);
+            const float z = radius * cos(rot) * sin(phi);
+
+            Math::Vector3 pos = { x, y, z };
+            Math::Vector3 norm = Math::Normalize(pos);
+            Math::Vector3 tan = Math::Normalize({ -z, 0.0f, x });
+            Math::Vector2 uvCoord = { u,v };
+
+            mesh.vertices.push_back({pos, norm, tan, uvCoord});
+        }
+    }
+
+    CreatePlaneIndices(mesh.indices, rings, slices);
+
+    return mesh;
+}
+
+
 MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
     MeshPX mesh;
 
@@ -350,6 +388,41 @@ MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
     }
 
     CreatePlaneIndices(mesh.indices, rings, slices);
+
+    return mesh;
+}
+
+Mesh MeshBuilder::CreateSkySphere(int slices, int rings, float radius) {
+    Mesh mesh;
+
+    const float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
+    const float horzRotation = (Math::Constants::TwoPi / static_cast<float>(slices));
+    const float uInc = 1.0f / static_cast<float>(slices);
+    const float vInc = 1.0f / static_cast<float>(rings);
+
+    for (uint32_t r = 0; r <= rings; ++r)
+    {
+        const float ring = static_cast<float>(r);
+        const float phi = ring * vertRotation;
+        for (uint32_t s = 0; s <= slices; ++s)
+        {
+            const float slice = static_cast<float>(s);
+            const float rot = slice * horzRotation;
+            const float u = 1.0f - (uInc * slice);
+            const float v = vInc * ring;
+
+            const float x = radius * cos(rot) * sin(phi);
+            const float y = radius * cos(phi);
+            const float z = radius * sin(rot)* sin(phi);
+
+            Math::Vector3 pos = { x, y, z };
+            Math::Vector3 norm = Math::Normalize(pos);
+            Math::Vector3 tan = Math::Normalize({ -z, 0.0f, x });
+            Math::Vector2 uvCoord = { u,v };
+
+            mesh.vertices.push_back({ pos, norm, tan, uvCoord });
+        }
+    }
 
     return mesh;
 }
