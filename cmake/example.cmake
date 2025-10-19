@@ -12,7 +12,14 @@ MACRO(target_set_windows_application target)
 
     target_link_libraries(${target} Engine DirectXTK)
     if(WIN32)
-        set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE TRUE)
+        # Use console subsystem with WinMain entry point for debug builds
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set_target_properties(${target} PROPERTIES
+                LINK_FLAGS "-Xlinker /SUBSYSTEM:CONSOLE -Xlinker /ENTRY:WinMainCRTStartup"
+            )
+        else()
+            set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE TRUE)
+        endif()
         target_link_libraries(${target} d3dcompiler d3d11)
     endif()
 endmacro()
