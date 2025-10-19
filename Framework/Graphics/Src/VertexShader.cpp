@@ -86,7 +86,7 @@ void VertexShader::Initialize(const std::filesystem::path& shaderPath, uint32_t 
 
     if (errorBlob != nullptr && errorBlob->GetBufferPointer() != nullptr)
     {
-        LOG("%s", static_cast<const char*>(errorBlob->GetBufferPointer()));
+        LOG("Vertex Shader Error: %s", static_cast<const char*>(errorBlob->GetBufferPointer()));
     }
     ASSERT(SUCCEEDED(hr), "Failed to create Vertex Shader");
 
