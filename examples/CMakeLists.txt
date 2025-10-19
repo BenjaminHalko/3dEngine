@@ -1,8 +1,0 @@
-add_subdirectory(1_hello_desktop)
-add_subdirectory(2_hello_shapes)
-add_subdirectory(3_hello_cube)
-add_subdirectory(4_hello_mesh_builder)
-add_subdirectory(5_hello_debug)
-add_subdirectory(6_hello_render_target)
-add_subdirectory(7_solar_system)
-add_subdirectory(8_hello_lighting)
