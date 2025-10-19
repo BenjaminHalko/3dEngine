@@ -1,6 +1,6 @@
 #pragma once
 
-#include "color.h"
+#include "Color.h"
 
 namespace Engine::Graphics
 {

@@ -76,7 +76,7 @@ void GameState::Initialize() {
 
         // Add moon for Earth
         if (name == "Earth") {
-            auto moon = std::make_unique<RenderObject>();
+            auto moon = std::make_unique<PlanetObject>();
             MeshPX moonSphere = MeshBuilder::CreateSpherePX(32, 32, 0.2724f * visualScale);
             moon->mesh.Initialize(moonSphere);
             moon->textureId = TextureManager::Get()->LoadTexture(L"planets/pluto.jpg");
@@ -220,7 +220,7 @@ void GameState::Render() {
     }
 }
 
-void GameState::RenderMesh(const RenderObject &object, const Camera &camera) {
+void GameState::RenderMesh(const PlanetObject &object, const Camera &camera) {
     const Math::Matrix4 matView = camera.GetViewMatrix();
     const Math::Matrix4 matProj = camera.GetProjectionMatrix();
     const Math::Matrix4 matFinal = object.matWorld * matView * matProj;
@@ -237,7 +237,7 @@ void GameState::RenderMesh(const RenderObject &object, const Camera &camera) {
 }
 
 // Helper to render a planet at the origin for ImGui preview
-void GameState::RenderMeshAtOrigin(const RenderObject &object, const Camera &camera) {
+void GameState::RenderMeshAtOrigin(const PlanetObject &object, const Camera &camera) {
     // Make the planet spin in the preview
     float spin = ImGui::GetTime();
     const Math::Matrix4 matWorld = Math::Matrix4::RotationY(spin);

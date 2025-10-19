@@ -1,4 +1,4 @@
-#include "precompiled.h"
+#include "Precompiled.h"
 #include "StandardEffect.h"
 
 #include "VertexTypes.h"

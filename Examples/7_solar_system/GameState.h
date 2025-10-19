@@ -16,14 +16,14 @@ struct Transform {
     }
 };
 
-struct RenderObject {
+struct PlanetObject {
     Math::Matrix4 matWorld = Math::Matrix4::Identity;
     MeshBuffer mesh;
     TextureId textureId = 0;
 };
 
 struct PlanetData {
-    RenderObject object;
+    PlanetObject object;
     float orbitRadius;
     float orbitSpeed;
     float rotationSpeed;
@@ -44,8 +44,8 @@ class GameState : public AppState {
     void UpdateCamera(float deltaTime);
     void UpdateCelestialBody(PlanetData &body, float deltaTime);
     void DrawOrbit(const PlanetData &body);
-    void RenderMesh(const RenderObject &object, const Camera &camera);
-    void RenderMeshAtOrigin(const RenderObject &object, const Camera &camera);
+    void RenderMesh(const PlanetObject &object, const Camera &camera);
+    void RenderMeshAtOrigin(const PlanetObject &object, const Camera &camera);
 
     // Core components
     Camera mMainCamera;
@@ -59,10 +59,10 @@ class GameState : public AppState {
     Sampler mSampler;
 
     // Render Objects
-    RenderObject mSkySphere;
-    RenderObject mSun;
+    PlanetObject mSkySphere;
+    PlanetObject mSun;
     std::vector<PlanetData> mPlanets;
-    std::vector<std::unique_ptr<RenderObject>> mMoons;
+    std::vector<std::unique_ptr<PlanetObject>> mMoons;
 
     // UI state
     int mSelectedPlanetIndex;

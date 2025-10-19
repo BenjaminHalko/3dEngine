@@ -1,7 +1,7 @@
 #pragma once
 
 // External Libraries
-#include <Core/Inc\Core.h>
+#include <Core/Inc/Core.h>
 #include <Math/Inc/DWMath.h>
 
 // DirectX 11
@@ -10,7 +10,7 @@
 
 #include <DirectXTK/Inc/CommonStates.h>
 
-#include <ImGui/Inc/imgui.h>
+#include <ImGui/inc/imgui.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")

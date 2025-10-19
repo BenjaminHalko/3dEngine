@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 #include "ConstantBuffer.h"
 #include "PixelShader.h"
 #include "VertexShader.h"

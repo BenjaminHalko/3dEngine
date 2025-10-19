@@ -3,8 +3,8 @@
 
 #include "GraphicsSystem.h"
 
-#include <ImGui/Inc/imgui_impl_dx11.h>
-#include <ImGui/Inc/imgui_impl_win32.h>
+#include <ImGui/inc/imgui_impl_dx11.h>
+#include <ImGui/inc/imgui_impl_win32.h>
 
 using namespace Engine;
 using namespace Engine::Core;
