@@ -10,7 +10,7 @@ using namespace Engine::Core;
     ;                                                                                              \
     do {                                                                                           \
         char _buffer[256];                                                                         \
-        int _res = snprintf(_buffer, std::size(_buffer), "{%.3f}: "##format##"\n",                 \
+        int _res = snprintf(_buffer, std::size(_buffer), "{%.3f}: " format "\n",                 \
                             TimeUtil::GetTime(), __VA_ARGS__);                                     \
         std::cout << _buffer;                                                                      \
     } while (false)
@@ -18,7 +18,7 @@ using namespace Engine::Core;
 #define ASSERT(condition, format, ...)                                                             \
     do {                                                                                           \
         if (!(condition)) {                                                                        \
-            LOG("ASSERT! %s(%d)\n"##format##, __FILE__, __LINE__, __VA_ARGS__);                    \
+            LOG("ASSERT! %s(%d)\n" format, __FILE__, __LINE__, __VA_ARGS__);                    \
             DebugBreak();                                                                          \
         }                                                                                          \
     } while (false)

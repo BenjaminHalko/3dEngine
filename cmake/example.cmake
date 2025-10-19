@@ -11,14 +11,8 @@ MACRO(target_set_windows_application target)
     )
 
     target_link_libraries(${target} Engine DirectXTK)
-    if(MSVC)
-        set_target_properties(
-            ${target} PROPERTIES
-            LINK_FLAGS_DEBUG "/ENTRY:WinMainCRTStartup"
-            LINK_FLAGS_RELEASE "/ENTRY:WinMainCRTStartup"
-            LINK_FLAGS_RELWITHDEBINFO "/ENTRY:WinMainCRTStartup"
-            LINK_FLAGS_MINSIZEREL "/ENTRY:WinMainCRTStartup"
-        )
+    if(WIN32)
+        set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE TRUE)
         target_link_libraries(${target} d3dcompiler d3d11)
     endif()
 endmacro()
