@@ -1,22 +1,24 @@
 #pragma once
 
-#include <Engine/inc/Engine.h>
+#include <engine/inc/engine.h>
 
-class GameState : public AppState {
-  public:
-    void Initialize() override;
+namespace Engine
+{
+    class GameState : public AppState
+    {
+    public:
+        void Initialize() override;
+        void Terminate() override;
+        void Update(float deltaTime) override;
+        void Render() override;
+        void DebugUI() override;
 
-    void Terminate() override;
+    private:
+        void UpdateCamera(float deltaTime);
 
-    void Update(float deltaTime) override;
-
-    void Render() override;
-
-    void DebugUI() override;
-
-  private:
-    void UpdateCamera(float deltaTime);
-
-    Graphics::Camera mCamera;
-    Graphics::RenderObject mRenderObject;
-};
+        Graphics::Camera mCamera;
+        Graphics::DirectionalLight mDirectionalLight;
+        Graphics::RenderObject mRenderObject;
+        Graphics::StandardEffect mStandardEffect;
+    };
+}

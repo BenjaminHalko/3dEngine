@@ -1,36 +1,40 @@
 #pragma once
 
-namespace Engine::Graphics {
-class ConstantBuffer {
-  public:
-    ConstantBuffer() = default;
-    virtual ~ConstantBuffer();
+#include "common.h"
 
-    void Initialize(uint32_t bufferSize);
-    void Terminate();
-
-    void Update(const void *data) const;
-
-    void BindVS(uint32_t slot) const;
-    void BindPS(uint32_t slot) const;
-
-  private:
-    ID3D11Buffer *mConstantBuffer = nullptr;
-};
-
-template<class DataType>
-        class TypeConstantBuffer final : public ConstantBuffer
+namespace Engine::Graphics
 {
-public:
-    void Initialize()
-    {
-        static_assert(sizeof(DataType) % 16 == 0, "Data type must be 16 byte aligned");
-        ConstantBuffer::Initialize(sizeof(DataType));
-    }
+	class ConstantBuffer
+	{
+	public:
+		ConstantBuffer() = default;
+		virtual ~ConstantBuffer();
 
-    void Update(const DataType& data) const
-    {
-        ConstantBuffer::Update(&data);
-    }
-};
-} // namespace Engine::Graphics
+		void Initialize(uint32_t bufferSize);
+		void Terminate();
+
+		void Update(const void* data) const;
+
+		void BindVS(uint32_t slot) const;
+		void BindPS(uint32_t slot) const;
+
+	private:
+		ID3D11Buffer* mConstantBuffer = nullptr;
+	};
+
+	template <class DataType>
+	class TypedConstantBuffer final : public ConstantBuffer
+	{
+	public:
+		void Initialize()
+		{
+			static_assert(sizeof(DataType) % 16 == 0, "Data type must be 16 byte aligned");
+			ConstantBuffer::Initialize(sizeof(DataType));
+		}
+
+		void Update(const DataType& data) const
+		{
+			ConstantBuffer::Update(&data);
+		}
+	};
+}

@@ -1,23 +1,23 @@
 #pragma once
 
 #include "MeshBuffer.h"
-#include "Texture.h"
 #include "Transform.h"
 #include "Material.h"
+#include "TextureManager.h"
 
 namespace Engine::Graphics
 {
-struct RenderObject
-{
-    MeshBuffer meshBuffer;
-    Texture texture;
-    Material material;
-    Transform transform;
-
-    void Terminate()
+    class RenderObject
     {
-        meshBuffer.Terminate();
-        texture.Terminate();
-    }
-};
+    public:
+        void Terminate();
+
+        Transform transform;
+        MeshBuffer meshBuffer;
+        Material material;
+        TextureId diffuseMapId;
+        TextureId specMapId;
+        TextureId normalMapId;
+        TextureId bumpMapId;
+    };
 }
