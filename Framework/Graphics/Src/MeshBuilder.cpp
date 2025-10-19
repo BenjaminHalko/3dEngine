@@ -5,8 +5,10 @@ using namespace Engine;
 using namespace Engine::Math;
 using namespace Engine::Graphics;
 
-namespace {
-Color GetNextColor(int &index) {
+namespace
+{
+Color GetNextColor(int& index)
+{
     constexpr Color colorTable[] = {
         Colors::Blue,
         Colors::DarkBlue,
@@ -17,24 +19,58 @@ Color GetNextColor(int &index) {
     return colorTable[index];
 }
 
-void CreateCubeIndices(std::vector<uint32_t> &indices) {
+void CreateCubeIndices(std::vector<uint32_t>& indices)
+{
     indices = {// Front
-               0, 1, 2, 0, 2, 3,
+               0,
+               1,
+               2,
+               0,
+               2,
+               3,
                // Back
-               7, 5, 4, 7, 6, 5,
+               7,
+               5,
+               4,
+               7,
+               6,
+               5,
                // Right
-               3, 2, 6, 3, 6, 7,
+               3,
+               2,
+               6,
+               3,
+               6,
+               7,
                // Left
-               4, 5, 1, 4, 1, 0,
+               4,
+               5,
+               1,
+               4,
+               1,
+               0,
                // Top
-               1, 5, 6, 1, 6, 2,
+               1,
+               5,
+               6,
+               1,
+               6,
+               2,
                // Bottom
-               0, 3, 7, 0, 7, 4};
+               0,
+               3,
+               7,
+               0,
+               7,
+               4};
 }
 
-void CreatePlaneIndices(std::vector<uint32_t> &indices, int numRows, int numColums) {
-    for (int r = 0; r < numRows; ++r) {
-        for (int c = 0; c < numColums; ++c) {
+void CreatePlaneIndices(std::vector<uint32_t>& indices, int numRows, int numColums)
+{
+    for (int r = 0; r < numRows; ++r)
+    {
+        for (int c = 0; c < numColums; ++c)
+        {
             int i = (r * (numColums + 1)) + c;
 
             // Triangle 0
@@ -50,8 +86,10 @@ void CreatePlaneIndices(std::vector<uint32_t> &indices, int numRows, int numColu
     }
 }
 
-void CreateCapIndices(std::vector<uint32_t> &indices, int slices, int topIndex, int bottomIndex) {
-    for (int s = 0; s < slices; ++s) {
+void CreateCapIndices(std::vector<uint32_t>& indices, int slices, int topIndex, int bottomIndex)
+{
+    for (int s = 0; s < slices; ++s)
+    {
         // Botoom Triangle
         indices.push_back(bottomIndex);
         indices.push_back(s);
@@ -67,7 +105,8 @@ void CreateCapIndices(std::vector<uint32_t> &indices, int slices, int topIndex, 
 
 } // namespace
 
-MeshPC MeshBuilder::CreateCubePC(float size, const Color &color) {
+MeshPC MeshBuilder::CreateCubePC(float size, const Color& color)
+{
     MeshPC mesh;
 
     const float hs = size * 0.5f;
@@ -90,7 +129,8 @@ MeshPC MeshBuilder::CreateCubePC(float size, const Color &color) {
 }
 
 // To Make Vertices Random Colors
-MeshPC MeshBuilder::CreateCubePC(float size) {
+MeshPC MeshBuilder::CreateCubePC(float size)
+{
     MeshPC mesh;
 
     int index = rand() % 100; // To Identify Vertices easier
@@ -114,13 +154,15 @@ MeshPC MeshBuilder::CreateCubePC(float size) {
     return mesh;
 }
 
-MeshPX MeshBuilder::CreateCubePX(float size) {
+MeshPX MeshBuilder::CreateCubePX(float size)
+{
     MeshPX mesh;
 
     return mesh;
 }
 
-MeshPC MeshBuilder::CreatePyramidPC(float size) {
+MeshPC MeshBuilder::CreatePyramidPC(float size)
+{
     MeshPC mesh;
 
     int index = rand() % 100;
@@ -139,18 +181,32 @@ MeshPC MeshBuilder::CreatePyramidPC(float size) {
     // All Indices for a Pyramid:
     mesh.indices = {
         // Base
-        1, 2, 0, 2, 3, 0,
+        1,
+        2,
+        0,
+        2,
+        3,
+        0,
         // Sides
-        1, 0, 4, // Back Face
-        2, 1, 4, // Right Face
-        3, 2, 4, // Front Face
-        0, 3, 4  // Left Face
+        1,
+        0,
+        4, // Back Face
+        2,
+        1,
+        4, // Right Face
+        3,
+        2,
+        4, // Front Face
+        0,
+        3,
+        4 // Left Face
     };
 
     return mesh;
 }
 
-MeshPC MeshBuilder::CreateRectanglePC(float width, float height, float depth) {
+MeshPC MeshBuilder::CreateRectanglePC(float width, float height, float depth)
+{
     MeshPC mesh;
 
     int index = rand() % 100;
@@ -177,7 +233,8 @@ MeshPC MeshBuilder::CreateRectanglePC(float width, float height, float depth) {
     return mesh;
 }
 
-MeshPC MeshBuilder::CreatePlanePC(int numRows, int numColums, float spacing, bool horizontal) {
+MeshPC MeshBuilder::CreatePlanePC(int numRows, int numColums, float spacing, bool horizontal)
+{
     MeshPC mesh;
 
     int index = rand() % 100;
@@ -188,8 +245,10 @@ MeshPC MeshBuilder::CreatePlanePC(int numRows, int numColums, float spacing, boo
     float w = -hpw;
     float h = -hph;
 
-    for (int r = 0; r <= numRows; ++r) {
-        for (int c = 0; c <= numColums; ++c) {
+    for (int r = 0; r <= numRows; ++r)
+    {
+        for (int c = 0; c <= numColums; ++c)
+        {
             Math::Vector3 pos =
                 (horizontal) ? Math::Vector3(w, 0.0f, h) : Math::Vector3(w, h, 0.0f);
             mesh.vertices.push_back({pos, GetNextColor(index)});
@@ -204,7 +263,8 @@ MeshPC MeshBuilder::CreatePlanePC(int numRows, int numColums, float spacing, boo
     return mesh;
 }
 
-MeshPX MeshBuilder::CreatePlanePX(int numRows, int numColums, float spacing, bool horizontal) {
+MeshPX MeshBuilder::CreatePlanePX(int numRows, int numColums, float spacing, bool horizontal)
+{
     MeshPX mesh;
 
     const float hpw = static_cast<float>(numColums) * spacing * 0.5f;
@@ -217,8 +277,10 @@ MeshPX MeshBuilder::CreatePlanePX(int numRows, int numColums, float spacing, boo
     float u = 0.0f;
     float v = 1.0f;
 
-    for (int r = 0; r <= numRows; ++r) {
-        for (int c = 0; c <= numColums; ++c) {
+    for (int r = 0; r <= numRows; ++r)
+    {
+        for (int c = 0; c <= numColums; ++c)
+        {
             Math::Vector3 pos =
                 (horizontal) ? Math::Vector3(w, 0.0f, h) : Math::Vector3(w, h, 0.0f);
             mesh.vertices.push_back({pos, {u, v}});
@@ -236,7 +298,8 @@ MeshPX MeshBuilder::CreatePlanePX(int numRows, int numColums, float spacing, boo
     return mesh;
 }
 
-MeshPC MeshBuilder::CreateCylinderPC(int slices, int rings) {
+MeshPC MeshBuilder::CreateCylinderPC(int slices, int rings)
+{
     MeshPC mesh;
 
     int index = rand() % 100;
@@ -244,9 +307,11 @@ MeshPC MeshBuilder::CreateCylinderPC(int slices, int rings) {
     const float hh = static_cast<float>(rings) * 0.5f;
     const float fSlices = static_cast<float>(slices);
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         float ring = static_cast<float>(r);
-        for (int s = 0; s <= slices; ++s) {
+        for (int s = 0; s <= slices; ++s)
+        {
             float slice = static_cast<float>(s);
             float rotation = (slice / fSlices) * Math::Constants::TwoPi;
 
@@ -264,7 +329,8 @@ MeshPC MeshBuilder::CreateCylinderPC(int slices, int rings) {
     return mesh;
 }
 
-MeshPC MeshBuilder::CreateSpherePC(int slices, int rings, float radius) {
+MeshPC MeshBuilder::CreateSpherePC(int slices, int rings, float radius)
+{
     MeshPC mesh;
 
     int index = rand() % 100;
@@ -272,15 +338,18 @@ MeshPC MeshBuilder::CreateSpherePC(int slices, int rings, float radius) {
     float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
     float horzRotation = (Math::Constants::TwoPi / static_cast<float>(slices));
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         float ring = static_cast<float>(r);
         float phi = ring * vertRotation;
 
-        for (int s = 0; s <= slices; ++s) {
+        for (int s = 0; s <= slices; ++s)
+        {
             float slice = static_cast<float>(s);
             float rotation = slice * horzRotation;
 
-            mesh.vertices.push_back({{radius * sin(rotation) * sin(phi), radius * cos(phi),
+            mesh.vertices.push_back({{radius * sin(rotation) * sin(phi),
+                                      radius * cos(phi),
                                       radius * cos(rotation) * sin(phi)},
                                      GetNextColor(index)});
         }
@@ -291,7 +360,8 @@ MeshPC MeshBuilder::CreateSpherePC(int slices, int rings, float radius) {
     return mesh;
 }
 
-MeshPX MeshBuilder::CreateSpherePX(int slices, int rings, float radius) {
+MeshPX MeshBuilder::CreateSpherePX(int slices, int rings, float radius)
+{
     MeshPX mesh;
 
     float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
@@ -300,18 +370,21 @@ MeshPX MeshBuilder::CreateSpherePX(int slices, int rings, float radius) {
     float uStep = 1.0f / static_cast<float>(slices);
     float vStep = 1.0f / static_cast<float>(rings);
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         float ring = static_cast<float>(r);
         float phi = ring * vertRotation;
 
-        for (int s = 0; s <= slices; ++s) {
+        for (int s = 0; s <= slices; ++s)
+        {
             float slice = static_cast<float>(s);
             float rotation = slice * horzRotation;
 
             float u = uStep * slice;
             float v = vStep * ring;
 
-            mesh.vertices.push_back({{radius * sin(rotation) * sin(phi), radius * cos(phi),
+            mesh.vertices.push_back({{radius * sin(rotation) * sin(phi),
+                                      radius * cos(phi),
                                       radius * cos(rotation) * sin(phi)},
                                      {u, v}});
         }
@@ -322,7 +395,8 @@ MeshPX MeshBuilder::CreateSpherePX(int slices, int rings, float radius) {
     return mesh;
 }
 
-Mesh MeshBuilder::CreateSphere(int slices, int rings, float radius) {
+Mesh MeshBuilder::CreateSphere(int slices, int rings, float radius)
+{
     Mesh mesh;
 
     float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
@@ -331,24 +405,26 @@ Mesh MeshBuilder::CreateSphere(int slices, int rings, float radius) {
     float uStep = 1.0f / static_cast<float>(slices);
     float vStep = 1.0f / static_cast<float>(rings);
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         auto ring = static_cast<float>(r);
         float phi = ring * vertRotation;
 
-        for (int s = 0; s <= slices; ++s) {
+        for (int s = 0; s <= slices; ++s)
+        {
             const auto slice = static_cast<float>(s);
             const float rot = slice * horzRotation;
             const float u = 1.0f - (uStep * slice);
             const float v = vStep * ring;
 
-            const float x = radius * sin(rot)* sin(phi);
+            const float x = radius * sin(rot) * sin(phi);
             const float y = radius * cos(phi);
             const float z = radius * cos(rot) * sin(phi);
 
-            Math::Vector3 pos = { x, y, z };
+            Math::Vector3 pos = {x, y, z};
             Math::Vector3 norm = Math::Normalize(pos);
-            Math::Vector3 tan = Math::Normalize({ -z, 0.0f, x });
-            Math::Vector2 uvCoord = { u,v };
+            Math::Vector3 tan = Math::Normalize({-z, 0.0f, x});
+            Math::Vector2 uvCoord = {u, v};
 
             mesh.vertices.push_back({pos, norm, tan, uvCoord});
         }
@@ -359,8 +435,8 @@ Mesh MeshBuilder::CreateSphere(int slices, int rings, float radius) {
     return mesh;
 }
 
-
-MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
+MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius)
+{
     MeshPX mesh;
 
     float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
@@ -369,11 +445,13 @@ MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
     float uStep = 1.0f / static_cast<float>(slices);
     float vStep = 1.0f / static_cast<float>(rings);
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         float ring = static_cast<float>(r);
         float phi = ring * vertRotation;
 
-        for (int s = 0; s <= slices; ++s) {
+        for (int s = 0; s <= slices; ++s)
+        {
             float slice = static_cast<float>(s);
             float rotation = slice * horzRotation;
 
@@ -381,7 +459,8 @@ MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
             float v = vStep * ring;
 
             mesh.vertices.push_back(
-                {{radius * cos(rotation) * sin(phi), radius * cos(phi),
+                {{radius * cos(rotation) * sin(phi),
+                  radius * cos(phi),
                   radius * sin(rotation) * sin(phi)}, // X & Z values switched to Invert Normals
                  {u, v}});
         }
@@ -392,7 +471,8 @@ MeshPX MeshBuilder::CreateSkySpherePX(int slices, int rings, float radius) {
     return mesh;
 }
 
-Mesh MeshBuilder::CreateSkySphere(int slices, int rings, float radius) {
+Mesh MeshBuilder::CreateSkySphere(int slices, int rings, float radius)
+{
     Mesh mesh;
 
     const float vertRotation = (Math::Constants::Pi / static_cast<float>(rings));
@@ -413,23 +493,24 @@ Mesh MeshBuilder::CreateSkySphere(int slices, int rings, float radius) {
 
             const float x = radius * cos(rot) * sin(phi);
             const float y = radius * cos(phi);
-            const float z = radius * sin(rot)* sin(phi);
+            const float z = radius * sin(rot) * sin(phi);
 
-            Math::Vector3 pos = { x, y, z };
+            Math::Vector3 pos = {x, y, z};
             Math::Vector3 norm = Math::Normalize(pos);
-            Math::Vector3 tan = Math::Normalize({ -z, 0.0f, x });
-            Math::Vector2 uvCoord = { u,v };
+            Math::Vector3 tan = Math::Normalize({-z, 0.0f, x});
+            Math::Vector2 uvCoord = {u, v};
 
-            mesh.vertices.push_back({ pos, norm, tan, uvCoord });
+            mesh.vertices.push_back({pos, norm, tan, uvCoord});
         }
     }
 
     return mesh;
 }
 
-MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path &filePath, float scale) {
+MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path& filePath, float scale)
+{
     MeshPX mesh;
-    FILE *file = nullptr;
+    FILE* file = nullptr;
     fopen_s(&file, filePath.u8string().c_str(), "r");
     ASSERT(file != nullptr, "MeshBuilder: Can't open file %s", filePath.u8string().c_str());
 
@@ -439,31 +520,50 @@ MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path &filePath, float sca
     std::vector<uint32_t> positionIndices;
     std::vector<uint32_t> uvIndices;
 
-    while (true) {
+    while (true)
+    {
         char buffer[128];
-        int result = fscanf_s(file, "%s", buffer, (uint32_t)std::size(buffer));
-        if (result == EOF) {
+        int result = fscanf_s(file, "%s", buffer, (uint32_t) std::size(buffer));
+        if (result == EOF)
+        {
             break;
         }
-        if (strcmp(buffer, "v") == 0) {
+        if (strcmp(buffer, "v") == 0)
+        {
             float x, y, z = 0.0f;
             fscanf_s(file, "%f %f %f\n", &x, &y, &z);
             positions.push_back({x, y, z});
-        } else if (strcmp(buffer, "vt") == 0) {
+        }
+        else if (strcmp(buffer, "vt") == 0)
+        {
             float u, v = 0.0f;
             fscanf_s(file, "%f %f\n", &u, &v);
             uvCoords.push_back({u, 1.0f - v});
-        } else if (strcmp(buffer, "f") == 0) {
+        }
+        else if (strcmp(buffer, "f") == 0)
+        {
             uint32_t p[4];
             uint32_t uv[4];
-            int count = fscanf_s(file, "%d/%d/%*d %d/%d/%*d %d/%d/%*d %d/%d/%*d\n", &p[0], &uv[0],
-                                 &p[1], &uv[1], &p[2], &uv[2], &p[3], &uv[3]);
-            if (count % 3 == 0) {
-                for (uint32_t i = 0; i < 3; ++i) {
+            int count = fscanf_s(file,
+                                 "%d/%d/%*d %d/%d/%*d %d/%d/%*d %d/%d/%*d\n",
+                                 &p[0],
+                                 &uv[0],
+                                 &p[1],
+                                 &uv[1],
+                                 &p[2],
+                                 &uv[2],
+                                 &p[3],
+                                 &uv[3]);
+            if (count % 3 == 0)
+            {
+                for (uint32_t i = 0; i < 3; ++i)
+                {
                     positionIndices.push_back(p[i] - 1);
                     uvIndices.push_back(uv[i] - 1);
                 }
-            } else {
+            }
+            else
+            {
                 // If we have 4 vertices, we need to create two triangles
                 // Most Obj Files use quads, so this makes the Engine understand them
                 // Triangle 1
@@ -489,11 +589,14 @@ MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path &filePath, float sca
     }
     fclose(file);
     mesh.vertices.resize(positions.size());
-    for (uint32_t i = 0; i < positions.size(); ++i) {
+    for (uint32_t i = 0; i < positions.size(); ++i)
+    {
         mesh.vertices[i].position = positions[i] * scale;
     }
-    if (uvCoords.size() > 0) {
-        for (uint32_t i = 0; i < uvIndices.size(); ++i) {
+    if (uvCoords.size() > 0)
+    {
+        for (uint32_t i = 0; i < uvIndices.size(); ++i)
+        {
             mesh.vertices[positionIndices[i]].uvCoord = uvCoords[uvIndices[i]];
         }
     }

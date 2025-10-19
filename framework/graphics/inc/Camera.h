@@ -1,17 +1,23 @@
 #pragma once
 
-namespace Engine::Graphics {
-class Camera {
+namespace Engine::Graphics
+{
+class Camera
+{
   public:
-    enum class ProjectionMode { Perspective, Orthographic };
+    enum class ProjectionMode
+    {
+        Perspective,
+        Orthographic
+    };
 
     void SetMode(ProjectionMode mode);
 
-    void SetPosition(const Math::Vector3 &position);
+    void SetPosition(const Math::Vector3& position);
 
-    void SetDirection(const Math::Vector3 &direction);
+    void SetDirection(const Math::Vector3& direction);
 
-    void SetLookAt(const Math::Vector3 &target);
+    void SetLookAt(const Math::Vector3& target);
 
     // Perspective Params
     void SetFOV(float fov);
@@ -37,8 +43,8 @@ class Camera {
     void Zoom(float amount);
 
     // Getters
-    const Math::Vector3 &GetPosition() const;
-    const Math::Vector3 &GetDirection() const;
+    const Math::Vector3& GetPosition() const;
+    const Math::Vector3& GetDirection() const;
 
     Math::Matrix4 GetViewMatrix() const;
     Math::Matrix4 GetProjectionMatrix() const;

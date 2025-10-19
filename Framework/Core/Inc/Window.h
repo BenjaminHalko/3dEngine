@@ -1,9 +1,13 @@
 #pragma once
 
-namespace Engine::Core {
-class Window {
+namespace Engine::Core
+{
+class Window
+{
   public:
-    void Initialize(HINSTANCE instance, const std::wstring &appName, uint32_t width,
+    void Initialize(HINSTANCE instance,
+                    const std::wstring& appName,
+                    uint32_t width,
                     uint32_t height);
 
     void Terminate();

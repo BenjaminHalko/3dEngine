@@ -6,11 +6,13 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-ConstantBuffer::~ConstantBuffer() {
+ConstantBuffer::~ConstantBuffer()
+{
     ASSERT(mConstantBuffer == nullptr, "ConstantBuffer: Terminate must be called");
 }
 
-void ConstantBuffer::Initialize(uint32_t bufferSize) {
+void ConstantBuffer::Initialize(uint32_t bufferSize)
+{
     auto device = GraphicsSystem::Get()->GetDevice();
 
     D3D11_BUFFER_DESC desc{};
@@ -25,19 +27,25 @@ void ConstantBuffer::Initialize(uint32_t bufferSize) {
     ASSERT(SUCCEEDED(hr), "ConstantBuffer: Failed to create Constant Buffer");
 }
 
-void ConstantBuffer::Terminate() { SafeRelease(mConstantBuffer); }
+void ConstantBuffer::Terminate()
+{
+    SafeRelease(mConstantBuffer);
+}
 
-void ConstantBuffer::Update(const void *data) const {
+void ConstantBuffer::Update(const void* data) const
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->UpdateSubresource(mConstantBuffer, 0, nullptr, data, 0, 0);
 }
 
-void ConstantBuffer::BindVS(uint32_t slot) const {
+void ConstantBuffer::BindVS(uint32_t slot) const
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->VSSetConstantBuffers(slot, 1, &mConstantBuffer);
 }
 
-void ConstantBuffer::BindPS(uint32_t slot) const {
+void ConstantBuffer::BindPS(uint32_t slot) const
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->PSSetConstantBuffers(slot, 1, &mConstantBuffer);
 }

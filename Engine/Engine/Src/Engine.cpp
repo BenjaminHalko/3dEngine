@@ -3,6 +3,6 @@
 
 Engine::App& Engine::MainApp()
 {
-	static App sApp;
-	return sApp;
+    static App sApp;
+    return sApp;
 }

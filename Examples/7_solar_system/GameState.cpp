@@ -4,7 +4,8 @@ using namespace Engine;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
 
-void GameState::Initialize() {
+void GameState::Initialize()
+{
     // Initialize GPU Communication
     std::filesystem::path shaderFile = L"Assets/Shaders/DoTexture.fx";
     mVertexShader.Initialize<VertexPX>(shaderFile);
@@ -38,29 +39,50 @@ void GameState::Initialize() {
 
     // Create planets
     const std::vector<std::tuple<std::string, float, float, float, float, std::wstring>>
-        planetData = {std::make_tuple("Mercury", 0.383f * visualScale, 0.387f, 0.24f * 2.0f, 58.6f,
-                                      L"planets/mercury.jpg"),
-                      std::make_tuple("Venus", 0.949f * visualScale, 0.723f, 0.62f * 2.0f, -243.0f,
-                                      L"planets/venus.jpg"),
-                      std::make_tuple("Earth", 1.0f * visualScale, 1.0f, 1.0f * 2.0f, 1.0f,
-                                      L"planets/earth/earth.jpg"),
-                      std::make_tuple("Mars", 0.532f * visualScale, 1.524f, 1.88f * 2.0f, 1.03f,
-                                      L"planets/mars.jpg"),
-                      std::make_tuple("Jupiter", 11.21f * visualScale, 5.203f, 11.86f * 2.0f, 0.41f,
-                                      L"planets/jupiter.jpg"),
-                      std::make_tuple("Saturn", 9.45f * visualScale, 9.537f, 29.46f * 2.0f, 0.45f,
-                                      L"planets/saturn.jpg"),
-                      std::make_tuple("Uranus", 4.01f * visualScale, 19.191f, 84.01f * 2.0f, -0.72f,
-                                      L"planets/uranus.jpg"),
-                      std::make_tuple("Neptune", 3.88f * visualScale, 30.069f, 164.79f * 2.0f,
-                                      0.67f, L"planets/neptune.jpg"),
-                      std::make_tuple("Pluto", 0.187f * visualScale, 39.482f, 248.54f * 2.0f,
-                                      -6.39f, L"planets/pluto.jpg")};
+        planetData = {
+            std::make_tuple("Mercury",
+                            0.383f * visualScale,
+                            0.387f,
+                            0.24f * 2.0f,
+                            58.6f,
+                            L"planets/mercury.jpg"),
+            std::make_tuple(
+                "Venus", 0.949f * visualScale, 0.723f, 0.62f * 2.0f, -243.0f, L"planets/venus.jpg"),
+            std::make_tuple(
+                "Earth", 1.0f * visualScale, 1.0f, 1.0f * 2.0f, 1.0f, L"planets/earth/earth.jpg"),
+            std::make_tuple(
+                "Mars", 0.532f * visualScale, 1.524f, 1.88f * 2.0f, 1.03f, L"planets/mars.jpg"),
+            std::make_tuple("Jupiter",
+                            11.21f * visualScale,
+                            5.203f,
+                            11.86f * 2.0f,
+                            0.41f,
+                            L"planets/jupiter.jpg"),
+            std::make_tuple(
+                "Saturn", 9.45f * visualScale, 9.537f, 29.46f * 2.0f, 0.45f, L"planets/saturn.jpg"),
+            std::make_tuple("Uranus",
+                            4.01f * visualScale,
+                            19.191f,
+                            84.01f * 2.0f,
+                            -0.72f,
+                            L"planets/uranus.jpg"),
+            std::make_tuple("Neptune",
+                            3.88f * visualScale,
+                            30.069f,
+                            164.79f * 2.0f,
+                            0.67f,
+                            L"planets/neptune.jpg"),
+            std::make_tuple("Pluto",
+                            0.187f * visualScale,
+                            39.482f,
+                            248.54f * 2.0f,
+                            -6.39f,
+                            L"planets/pluto.jpg")};
 
     constexpr float orbitScale = 10.0f; // scale AU distances for visualization
 
-    for (const auto &[name, size, orbitRadius, orbitSpeed, rotationSpeed, textureFile] :
-         planetData) {
+    for (const auto& [name, size, orbitRadius, orbitSpeed, rotationSpeed, textureFile] : planetData)
+    {
         PlanetData planet;
         MeshPX sphere = MeshBuilder::CreateSpherePX(32, 32, size);
         planet.object.mesh.Initialize(sphere);
@@ -75,7 +97,8 @@ void GameState::Initialize() {
         mPlanets.push_back(std::move(planet));
 
         // Add moon for Earth
-        if (name == "Earth") {
+        if (name == "Earth")
+        {
             auto moon = std::make_unique<PlanetObject>();
             MeshPX moonSphere = MeshBuilder::CreateSpherePX(32, 32, 0.2724f * visualScale);
             moon->mesh.Initialize(moonSphere);
@@ -96,7 +119,8 @@ void GameState::Initialize() {
     mPlanetCamera.SetAspectRatio(1.0f);
 }
 
-void GameState::Terminate() {
+void GameState::Terminate()
+{
     mPlanetRenderTarget.Terminate();
 
     // Release textures
@@ -106,11 +130,13 @@ void GameState::Terminate() {
     // Terminate mesh buffers
     mSkySphere.mesh.Terminate();
     mSun.mesh.Terminate();
-    for (auto &planet : mPlanets) {
+    for (auto& planet : mPlanets)
+    {
         TextureManager::Get()->ReleaseTexture(planet.object.textureId);
         planet.object.mesh.Terminate();
     }
-    for (auto &moon : mMoons) {
+    for (auto& moon : mMoons)
+    {
         TextureManager::Get()->ReleaseTexture(moon->textureId);
         moon->mesh.Terminate();
     }
@@ -122,16 +148,19 @@ void GameState::Terminate() {
     mSampler.Terminate();
 }
 
-void GameState::Update(float deltaTime) {
+void GameState::Update(float deltaTime)
+{
     UpdateCamera(deltaTime);
 
     // Update sun rotation
     mSun.matWorld = Math::Matrix4::RotationY(deltaTime * 0.1f * mGlobalSpeedMultiplier);
 
     // Update planets
-    for (size_t i = 0; i < mPlanets.size(); ++i) {
+    for (size_t i = 0; i < mPlanets.size(); ++i)
+    {
         UpdateCelestialBody(mPlanets[i], deltaTime);
-        if (i == 2 && !mMoons.empty()) { // Earth's moon
+        if (i == 2 && !mMoons.empty())
+        { // Earth's moon
             // Update moon orbit and rotation around Earth
             float moonOrbitSpeed = 4.0f;
             float moonRotationSpeed = 2.0f;
@@ -147,7 +176,8 @@ void GameState::Update(float deltaTime) {
     }
 }
 
-void GameState::UpdateCelestialBody(PlanetData &body, float deltaTime) {
+void GameState::UpdateCelestialBody(PlanetData& body, float deltaTime)
+{
     // Update orbit and rotation angles
     body.orbitAngle += deltaTime * body.orbitSpeed * mGlobalSpeedMultiplier;
     body.rotationAngle += deltaTime * body.rotationSpeed * mGlobalSpeedMultiplier;
@@ -157,11 +187,13 @@ void GameState::UpdateCelestialBody(PlanetData &body, float deltaTime) {
                            Math::Matrix4::RotationY(body.rotationAngle);
 }
 
-void GameState::DrawOrbit(const PlanetData &body) {
+void GameState::DrawOrbit(const PlanetData& body)
+{
     const int segments = 100;
     const float angleStep = Math::Constants::TwoPi / segments;
     float radius = body.orbitRadius;
-    for (int i = 0; i < segments; ++i) {
+    for (int i = 0; i < segments; ++i)
+    {
         float angle1 = i * angleStep;
         float angle2 = (i + 1) * angleStep;
 
@@ -174,17 +206,20 @@ void GameState::DrawOrbit(const PlanetData &body) {
     }
 }
 
-void GameState::Render() {
+void GameState::Render()
+{
     SimpleDraw::AddGroundPlane(20.0f, Colors::Wheat);
     SimpleDraw::Render(mMainCamera);
 
     // Render to Render Target
     mPlanetRenderTarget.BeginRender();
-    if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size()) {
+    if (mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < mPlanets.size())
+    {
         // Render the selected planet at the origin for the preview
         RenderMeshAtOrigin(mPlanets[mSelectedPlanetIndex].object, mPlanetCamera);
         // If Earth is selected, render the moon orbiting it in the preview
-        if (mSelectedPlanetIndex == 2 && !mMoons.empty()) {
+        if (mSelectedPlanetIndex == 2 && !mMoons.empty())
+        {
             float planetRadius = mPlanets[mSelectedPlanetIndex].radius;
             float moonOrbit = planetRadius * 2.5f;
             float moonAngle = ImGui::GetTime();
@@ -209,18 +244,22 @@ void GameState::Render() {
     // Render to Scene
     RenderMesh(mSkySphere, mMainCamera);
     RenderMesh(mSun, mMainCamera);
-    for (size_t i = 0; i < mPlanets.size(); ++i) {
+    for (size_t i = 0; i < mPlanets.size(); ++i)
+    {
         RenderMesh(mPlanets[i].object, mMainCamera);
-        if (mShowOrbits) {
+        if (mShowOrbits)
+        {
             DrawOrbit(mPlanets[i]);
         }
-        if (i == 2 && !mMoons.empty()) { // Earth's moon
+        if (i == 2 && !mMoons.empty())
+        { // Earth's moon
             RenderMesh(*mMoons[0], mMainCamera);
         }
     }
 }
 
-void GameState::RenderMesh(const PlanetObject &object, const Camera &camera) {
+void GameState::RenderMesh(const PlanetObject& object, const Camera& camera)
+{
     const Math::Matrix4 matView = camera.GetViewMatrix();
     const Math::Matrix4 matProj = camera.GetProjectionMatrix();
     const Math::Matrix4 matFinal = object.matWorld * matView * matProj;
@@ -237,7 +276,8 @@ void GameState::RenderMesh(const PlanetObject &object, const Camera &camera) {
 }
 
 // Helper to render a planet at the origin for ImGui preview
-void GameState::RenderMeshAtOrigin(const PlanetObject &object, const Camera &camera) {
+void GameState::RenderMeshAtOrigin(const PlanetObject& object, const Camera& camera)
+{
     // Make the planet spin in the preview
     float spin = ImGui::GetTime();
     const Math::Matrix4 matWorld = Math::Matrix4::RotationY(spin);
@@ -256,7 +296,8 @@ void GameState::RenderMeshAtOrigin(const PlanetObject &object, const Camera &cam
     object.mesh.Render();
 }
 
-void GameState::DebugUI() {
+void GameState::DebugUI()
+{
     ImGui::Begin("Solar System Controls", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     // Global controls
@@ -265,13 +306,14 @@ void GameState::DebugUI() {
     ImGui::Checkbox("Show Planet View", &mShowPlanetView);
 
     // Planet selection
-    const char *planetNames[] = {"Mercury", "Venus",  "Earth",   "Mars", "Jupiter",
-                                 "Saturn",  "Uranus", "Neptune", "Pluto"};
+    const char* planetNames[] = {
+        "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"};
     static int planetCount = 9;
     ImGui::Combo("Select Planet", &mSelectedPlanetIndex, planetNames, planetCount);
 
     // Planet view
-    if (mShowPlanetView && mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < planetCount) {
+    if (mShowPlanetView && mSelectedPlanetIndex >= 0 && mSelectedPlanetIndex < planetCount)
+    {
         float planetRadius = mPlanets[mSelectedPlanetIndex].radius;
         float camDist = planetRadius * 2.5f + 0.5f;
         mPlanetCamera.SetPosition({0.0f, 0.0f, -camDist});
@@ -284,27 +326,40 @@ void GameState::DebugUI() {
     ImGui::End();
 }
 
-void GameState::UpdateCamera(float deltaTime) {
+void GameState::UpdateCamera(float deltaTime)
+{
     // Camera Controls:
-    InputSystem *input = InputSystem::Get();
+    InputSystem* input = InputSystem::Get();
     const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 30.0f : 10.0f;
     const float turnSpeed = 0.5f;
 
-    if (input->IsKeyDown(KeyCode::W)) {
+    if (input->IsKeyDown(KeyCode::W))
+    {
         mMainCamera.Walk(moveSpeed * deltaTime);
-    } else if (input->IsKeyDown(KeyCode::S)) {
+    }
+    else if (input->IsKeyDown(KeyCode::S))
+    {
         mMainCamera.Walk(-moveSpeed * deltaTime);
-    } else if (input->IsKeyDown(KeyCode::D)) {
+    }
+    else if (input->IsKeyDown(KeyCode::D))
+    {
         mMainCamera.Strafe(moveSpeed * deltaTime);
-    } else if (input->IsKeyDown(KeyCode::A)) {
+    }
+    else if (input->IsKeyDown(KeyCode::A))
+    {
         mMainCamera.Strafe(-moveSpeed * deltaTime);
-    } else if (input->IsKeyDown(KeyCode::E)) {
+    }
+    else if (input->IsKeyDown(KeyCode::E))
+    {
         mMainCamera.Rise(moveSpeed * deltaTime);
-    } else if (input->IsKeyDown(KeyCode::Q)) {
+    }
+    else if (input->IsKeyDown(KeyCode::Q))
+    {
         mMainCamera.Rise(-moveSpeed * deltaTime);
     }
 
-    if (input->IsMouseDown(MouseButton::RBUTTON)) {
+    if (input->IsMouseDown(MouseButton::RBUTTON))
+    {
         mMainCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
         mMainCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
     }

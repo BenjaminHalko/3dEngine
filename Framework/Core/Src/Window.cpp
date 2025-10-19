@@ -4,9 +4,12 @@
 using namespace Engine;
 using namespace Engine::Core;
 
-LRESULT CALLBACK WindowMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
-    switch (msg) {
-    case WM_DESTROY: {
+LRESULT CALLBACK WindowMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+    {
         PostQuitMessage(0);
         break;
     }
@@ -17,8 +20,11 @@ LRESULT CALLBACK WindowMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPAR
     return DefWindowProc(handle, msg, wParam, lParam);
 }
 
-void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_t width,
-                        uint32_t height) {
+void Window::Initialize(HINSTANCE instance,
+                        const std::wstring& appName,
+                        uint32_t width,
+                        uint32_t height)
+{
     mInstance = instance;
     mAppName = appName;
 
@@ -32,13 +38,13 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wcex.hCursor = LoadCursor(nullptr, IDC_CROSS);
     wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-    wcex.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wcex.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
     wcex.lpszMenuName = nullptr;
     wcex.lpszClassName = mAppName.c_str();
 
     RegisterClassEx(&wcex);
 
-    mScreenRect = {0, 0, (LONG)width, (LONG)height};
+    mScreenRect = {0, 0, (LONG) width, (LONG) height};
     AdjustWindowRect(&mScreenRect, WS_OVERLAPPEDWINDOW, FALSE);
 
     const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -54,15 +60,25 @@ void Window::Initialize(HINSTANCE instance, const std::wstring &appName, uint32_
     mScreenRect.left = left;
     mScreenRect.top = top;
 
-    mWindow = CreateWindow(mAppName.c_str(), mAppName.c_str(), WS_OVERLAPPEDWINDOW, left, top,
-                           winWidth, winHeight, nullptr, nullptr, instance, nullptr);
+    mWindow = CreateWindow(mAppName.c_str(),
+                           mAppName.c_str(),
+                           WS_OVERLAPPEDWINDOW,
+                           left,
+                           top,
+                           winWidth,
+                           winHeight,
+                           nullptr,
+                           nullptr,
+                           instance,
+                           nullptr);
 
     ShowWindow(mWindow, SW_SHOWNORMAL);
     SetCursorPos(screenWidth / 2, screenHeight / 2);
     mIsActive = (mWindow != nullptr);
 }
 
-void Window::Terminate() {
+void Window::Terminate()
+{
     DestroyWindow(mWindow);
     UnregisterClass(mAppName.c_str(), mInstance);
     mWindow = nullptr;
@@ -70,17 +86,26 @@ void Window::Terminate() {
     mIsActive = false;
 }
 
-void Window::ProcessMessage() {
+void Window::ProcessMessage()
+{
     MSG msg{};
-    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        if (WM_QUIT == msg.message) {
+        if (WM_QUIT == msg.message)
+        {
             mIsActive = false;
         }
     }
 }
 
-HWND Window::GetWindowHandle() const { return mWindow; }
+HWND Window::GetWindowHandle() const
+{
+    return mWindow;
+}
 
-bool Window::IsActive() const { return mIsActive; }
+bool Window::IsActive() const
+{
+    return mIsActive;
+}

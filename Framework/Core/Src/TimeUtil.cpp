@@ -4,7 +4,8 @@
 using namespace Engine;
 using namespace Engine::Core;
 
-float TimeUtil::GetTime() {
+float TimeUtil::GetTime()
+{
     static const auto startTime = std::chrono::high_resolution_clock::now();
     const auto currentTime = std::chrono::high_resolution_clock::now();
     const auto milliseconds =
@@ -13,7 +14,8 @@ float TimeUtil::GetTime() {
     return milliseconds / 1000.0f;
 }
 
-float TimeUtil::GetDeltaTime() {
+float TimeUtil::GetDeltaTime()
+{
     static auto lastCallTime = std::chrono::high_resolution_clock::now();
     const auto currentTime = std::chrono::high_resolution_clock::now();
     const auto milliseconds =

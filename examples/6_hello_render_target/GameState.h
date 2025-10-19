@@ -2,7 +2,8 @@
 
 #include <Engine/Inc/Engine.h>
 
-class GameState : public Engine::AppState {
+class GameState : public Engine::AppState
+{
   public:
     void Initialize() override;
 
@@ -15,7 +16,8 @@ class GameState : public Engine::AppState {
     void DebugUI() override;
 
   private:
-    struct Object {
+    struct Object
+    {
         Engine::Math::Matrix4 worldMat = Engine::Math::Matrix4::Identity;
         Engine::Graphics::MeshBuffer meshBuffer;
         Engine::Graphics::TextureId textureId = 0;
@@ -23,7 +25,7 @@ class GameState : public Engine::AppState {
 
     void UpdateCamera(float deltaTime);
 
-    void RenderObject(const Object &object, const Engine::Graphics::Camera &camera);
+    void RenderObject(const Object& object, const Engine::Graphics::Camera& camera);
 
     Engine::Graphics::Camera mCamera;
     Engine::Graphics::Camera mRenderTargetCamera;

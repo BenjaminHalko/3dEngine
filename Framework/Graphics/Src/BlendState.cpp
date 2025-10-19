@@ -6,9 +6,12 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-namespace {
-D3D11_BLEND GetSrcBlend(BlendState::Mode mode) {
-    switch (mode) {
+namespace
+{
+D3D11_BLEND GetSrcBlend(BlendState::Mode mode)
+{
+    switch (mode)
+    {
     case BlendState::Mode::Opaque:
         return D3D11_BLEND_SRC1_ALPHA;
     case BlendState::Mode::AlphaBlend:
@@ -24,8 +27,10 @@ D3D11_BLEND GetSrcBlend(BlendState::Mode mode) {
     }
     return D3D11_BLEND_ONE;
 }
-D3D11_BLEND GetDestBlend(BlendState::Mode mode) {
-    switch (mode) {
+D3D11_BLEND GetDestBlend(BlendState::Mode mode)
+{
+    switch (mode)
+    {
     case BlendState::Mode::Opaque:
         return D3D11_BLEND_ONE;
     case BlendState::Mode::AlphaBlend:
@@ -43,15 +48,20 @@ D3D11_BLEND GetDestBlend(BlendState::Mode mode) {
 }
 } // namespace
 
-void BlendState::ClearState() {
+void BlendState::ClearState()
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->OMSetBlendState(nullptr, nullptr, UINT_MAX);
     context->OMSetDepthStencilState(nullptr, 0);
 }
 
-BlendState::~BlendState() { ASSERT(mBlendState == nullptr, "BlendState: Must call Terminate!"); }
+BlendState::~BlendState()
+{
+    ASSERT(mBlendState == nullptr, "BlendState: Must call Terminate!");
+}
 
-void BlendState::Initialize(Mode mode) {
+void BlendState::Initialize(Mode mode)
+{
     D3D11_BLEND srcBlend = GetSrcBlend(mode);
     D3D11_BLEND destBlend = GetDestBlend(mode);
 
@@ -78,12 +88,14 @@ void BlendState::Initialize(Mode mode) {
     ASSERT(SUCCEEDED(hr), "BlendState: Failed to create depth stencil state!");
 }
 
-void BlendState::Terminate() {
+void BlendState::Terminate()
+{
     SafeRelease(mBlendState);
     SafeRelease(mDepthStencilState);
 }
 
-void BlendState::Set() {
+void BlendState::Set()
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->OMSetBlendState(mBlendState, nullptr, UINT_MAX);
     context->OMSetDepthStencilState(mDepthStencilState, 0);

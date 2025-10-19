@@ -5,20 +5,30 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-void MeshBuffer::Initialize(const void *vertices, uint32_t vertexSize, uint32_t vertexCount) {
+void MeshBuffer::Initialize(const void* vertices, uint32_t vertexSize, uint32_t vertexCount)
+{
     CreateVertexBuffer(vertices, vertexSize, vertexCount);
 }
 
-void MeshBuffer::Initialize(const void *vertices, uint32_t vertexSize, uint32_t vertexCount,
-                            const void *indices, uint32_t indexCount) {
+void MeshBuffer::Initialize(const void* vertices,
+                            uint32_t vertexSize,
+                            uint32_t vertexCount,
+                            const void* indices,
+                            uint32_t indexCount)
+{
     CreateVertexBuffer(vertices, vertexSize, vertexCount);
     CreateIndexBuffer(indices, indexCount);
 }
 
-void MeshBuffer::Terminate() { SafeRelease(mVertexBuffer); }
+void MeshBuffer::Terminate()
+{
+    SafeRelease(mVertexBuffer);
+}
 
-void MeshBuffer::SetTopology(Topology topology) {
-    switch (topology) {
+void MeshBuffer::SetTopology(Topology topology)
+{
+    switch (topology)
+    {
     case Topology::Points:
         mTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
         break;
@@ -33,7 +43,8 @@ void MeshBuffer::SetTopology(Topology topology) {
     }
 }
 
-void MeshBuffer::Update(const void *vertices, uint32_t vertexCount) {
+void MeshBuffer::Update(const void* vertices, uint32_t vertexCount)
+{
     mVertexCount = vertexCount;
     auto context = GraphicsSystem::Get()->GetContext();
 
@@ -43,23 +54,27 @@ void MeshBuffer::Update(const void *vertices, uint32_t vertexCount) {
     context->Unmap(mVertexBuffer, 0);
 }
 
-void MeshBuffer::Render() const {
+void MeshBuffer::Render() const
+{
     auto context = GraphicsSystem::Get()->GetContext();
 
     context->IASetPrimitiveTopology(mTopology);
     UINT offset = 0;
     context->IASetVertexBuffers(0, 1, &mVertexBuffer, &mVertexSize, &offset);
 
-    if (mIndexBuffer != nullptr) {
+    if (mIndexBuffer != nullptr)
+    {
         context->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        context->DrawIndexed((UINT)mIndexCount, 0, 0);
-    } else {
+        context->DrawIndexed((UINT) mIndexCount, 0, 0);
+    }
+    else
+    {
         context->Draw(static_cast<UINT>(mVertexCount), 0);
     }
 }
 
-void MeshBuffer::CreateVertexBuffer(const void *vertices, uint32_t vertexSize,
-                                    uint32_t vertexCount) {
+void MeshBuffer::CreateVertexBuffer(const void* vertices, uint32_t vertexSize, uint32_t vertexCount)
+{
     mVertexSize = vertexSize;
     mVertexCount = vertexCount;
 
@@ -84,8 +99,10 @@ void MeshBuffer::CreateVertexBuffer(const void *vertices, uint32_t vertexSize,
     ASSERT(SUCCEEDED(hr), "Failed to create vertex buffer");
 }
 
-void Engine::Graphics::MeshBuffer::CreateIndexBuffer(const void *indices, uint32_t indexCount) {
-    if (indexCount == 0) {
+void Engine::Graphics::MeshBuffer::CreateIndexBuffer(const void* indices, uint32_t indexCount)
+{
+    if (indexCount == 0)
+    {
         return;
     }
 

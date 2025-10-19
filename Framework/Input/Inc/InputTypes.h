@@ -1,7 +1,9 @@
 #pragma once
 
-namespace Engine::Input {
-enum class KeyCode : uint32_t {
+namespace Engine::Input
+{
+enum class KeyCode : uint32_t
+{
     // Keyboard roll 1
     ESCAPE = VK_ESCAPE,
     F1 = VK_F1,
@@ -124,7 +126,8 @@ enum class KeyCode : uint32_t {
     RIGHT = VK_RIGHT,
 };
 
-enum class MouseButton : uint32_t {
+enum class MouseButton : uint32_t
+{
     LBUTTON = 0,
     RBUTTON = 1,
     MBUTTON = 2,

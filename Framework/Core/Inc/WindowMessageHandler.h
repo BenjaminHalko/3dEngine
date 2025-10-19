@@ -1,9 +1,11 @@
 #pragma once
 
-namespace Engine::Core {
-class WindowMessageHandler {
+namespace Engine::Core
+{
+class WindowMessageHandler
+{
   public:
-    using Callback = LRESULT(CALLBACK *)(HWND, UINT, WPARAM, LPARAM);
+    using Callback = LRESULT(CALLBACK*)(HWND, UINT, WPARAM, LPARAM);
 
     void Hook(HWND window, Callback cb);
     void Unhook();

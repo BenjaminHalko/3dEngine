@@ -4,12 +4,12 @@ using namespace Engine;
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
 {
-	AppConfig config;
-	config.appName = L"Hello Lighting";
+    AppConfig config;
+    config.appName = L"Hello Lighting";
 
-	App& myApp = MainApp();
-	myApp.AddState<GameState>("GameState");
-	myApp.Run(config);
+    App& myApp = MainApp();
+    myApp.AddState<GameState>("GameState");
+    myApp.Run(config);
 
-	return 0;
+    return 0;
 }

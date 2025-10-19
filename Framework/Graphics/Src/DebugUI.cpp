@@ -10,14 +10,19 @@ using namespace Engine;
 using namespace Engine::Core;
 using namespace Engine::Graphics;
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
+                                                             UINT msg,
+                                                             WPARAM wParam,
                                                              LPARAM lParam);
 
-namespace {
+namespace
+{
 WindowMessageHandler sWindowMessageHandler;
 
-bool IsMouseInput(UINT msg) {
-    switch (msg) {
+bool IsMouseInput(UINT msg)
+{
+    switch (msg)
+    {
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
     case WM_LBUTTONUP:
@@ -39,8 +44,10 @@ bool IsMouseInput(UINT msg) {
     return false;
 }
 
-bool IsKeyboardMessage(UINT msg) {
-    switch (msg) {
+bool IsKeyboardMessage(UINT msg)
+{
+    switch (msg)
+    {
     case WM_CHAR:
     case WM_KEYUP:
     case WM_KEYDOWN:
@@ -53,20 +60,24 @@ bool IsKeyboardMessage(UINT msg) {
     return false;
 }
 
-LRESULT CALLBACK DebugUIMessageHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    ImGuiIO &io = ImGui::GetIO();
+LRESULT CALLBACK DebugUIMessageHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    ImGuiIO& io = ImGui::GetIO();
     // Does ImGui want to capture the mouse & is it a mouse message
-    if (io.WantCaptureMouse && IsMouseInput(msg)) {
+    if (io.WantCaptureMouse && IsMouseInput(msg))
+    {
         return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
     }
 
     // Does ImGui want to capture key input & is it a key message
-    if (io.WantCaptureMouse && IsKeyboardMessage(msg)) {
+    if (io.WantCaptureMouse && IsKeyboardMessage(msg))
+    {
         return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
     }
 
     LRESULT result = ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-    if (result != 0) {
+    if (result != 0)
+    {
         return result;
     }
 
@@ -74,15 +85,18 @@ LRESULT CALLBACK DebugUIMessageHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 }
 } // namespace
 
-void DebugUI::StaticInitialize(HWND window, bool docking, bool multiViewport) {
+void DebugUI::StaticInitialize(HWND window, bool docking, bool multiViewport)
+{
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGuiIO &io = ImGui::GetIO();
-    if (docking) {
+    ImGuiIO& io = ImGui::GetIO();
+    if (docking)
+    {
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
-    if (multiViewport) {
+    if (multiViewport)
+    {
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     }
 
@@ -94,24 +108,30 @@ void DebugUI::StaticInitialize(HWND window, bool docking, bool multiViewport) {
     sWindowMessageHandler.Hook(window, DebugUIMessageHandler);
 }
 
-void DebugUI::StaticTerminate() {
+void DebugUI::StaticTerminate()
+{
     sWindowMessageHandler.Unhook();
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 }
 
-void DebugUI::SetTheme(Theme theme) {
-    switch (theme) {
-    case Theme::Classic: {
+void DebugUI::SetTheme(Theme theme)
+{
+    switch (theme)
+    {
+    case Theme::Classic:
+    {
         ImGui::StyleColorsClassic();
         break;
     }
-    case Theme::Dark: {
+    case Theme::Dark:
+    {
         ImGui::StyleColorsDark();
         break;
     }
-    case Theme::Light: {
+    case Theme::Light:
+    {
         ImGui::StyleColorsLight();
         break;
     }
@@ -121,18 +141,21 @@ void DebugUI::SetTheme(Theme theme) {
     }
 }
 
-void DebugUI::BeginRender() {
+void DebugUI::BeginRender()
+{
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 }
 
-void DebugUI::EndRender() {
+void DebugUI::EndRender()
+{
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-    ImGuiIO &io = ImGui::GetIO();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }

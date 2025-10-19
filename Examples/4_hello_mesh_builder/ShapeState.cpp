@@ -5,7 +5,8 @@ using namespace Engine::Math;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
 
-void ShapeState::Initialize() {
+void ShapeState::Initialize()
+{
     mCamera.SetPosition({0.0f, 1.0f, -3.0f});
     mCamera.SetLookAt({0.0f, 0.0f, 0.0f});
 
@@ -23,7 +24,8 @@ void ShapeState::Initialize() {
     mSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Wrap);
 }
 
-void ShapeState::Terminate() {
+void ShapeState::Terminate()
+{
     mTransformBuffer.Terminate();
     mPixelShader.Terminate();
     mVertexShader.Terminate();
@@ -32,56 +34,68 @@ void ShapeState::Terminate() {
     mTexture.Terminate();
 }
 
-void ShapeState::Update(float deltaTime) {
+void ShapeState::Update(float deltaTime)
+{
     // Camera Controls:
-    InputSystem *input = InputSystem::Get();
+    InputSystem* input = InputSystem::Get();
     const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 10.0f : 4.0f;
     const float turnSpeed = 0.5f;
 
-    if (input->IsKeyDown(KeyCode::W)) {
+    if (input->IsKeyDown(KeyCode::W))
+    {
         mCamera.Walk(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::S)) {
+    else if (input->IsKeyDown(KeyCode::S))
+    {
         mCamera.Walk(-moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::D)) {
+    else if (input->IsKeyDown(KeyCode::D))
+    {
         mCamera.Strafe(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::A)) {
+    else if (input->IsKeyDown(KeyCode::A))
+    {
         mCamera.Strafe(-moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::E)) {
+    else if (input->IsKeyDown(KeyCode::E))
+    {
         mCamera.Rise(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::Q)) {
+    else if (input->IsKeyDown(KeyCode::Q))
+    {
         mCamera.Rise(-moveSpeed * deltaTime);
     }
 
-    if (input->IsMouseDown(MouseButton::RBUTTON)) {
+    if (input->IsMouseDown(MouseButton::RBUTTON))
+    {
         mCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
         mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
     }
 
     // Scene Change Controls:
-    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::UP)) {
+    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::UP))
+    {
         Engine::MainApp().ChangeState("Pyramid");
     }
 
-    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::LEFT)) {
+    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::LEFT))
+    {
         Engine::MainApp().ChangeState("Cube");
     }
 
-    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::RIGHT)) {
+    if (Input::InputSystem::Get()->IsKeyPressed(Input::KeyCode::RIGHT))
+    {
         Engine::MainApp().ChangeState("Rectangle");
     }
 }
 
-void ShapeState::Render() {
+void ShapeState::Render()
+{
     // Prepare GPU
     mVertexShader.Bind();
     mPixelShader.Bind();
@@ -104,7 +118,8 @@ void ShapeState::Render() {
     mMeshbuffer.Render();
 }
 
-void ShapeState::CreateShape() {
+void ShapeState::CreateShape()
+{
     // mMesh = MeshBuilder::CreateRectanglePC(2.0f, 1.0f, 2.0f);
     // mMesh = MeshBuilder::CreateCubePC(4.0f);
     // mMesh = MeshBuilder::CreatePyramidPC(5.0f);

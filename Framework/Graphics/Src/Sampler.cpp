@@ -6,9 +6,12 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-namespace {
-D3D11_FILTER GetFilter(Sampler::Filter filter) {
-    switch (filter) {
+namespace
+{
+D3D11_FILTER GetFilter(Sampler::Filter filter)
+{
+    switch (filter)
+    {
     case Sampler::Filter::Point:
         return D3D11_FILTER_MIN_MAG_MIP_POINT;
     case Sampler::Filter::Linear:
@@ -22,8 +25,10 @@ D3D11_FILTER GetFilter(Sampler::Filter filter) {
     }
     return D3D11_FILTER_MIN_MAG_MIP_POINT;
 }
-D3D11_TEXTURE_ADDRESS_MODE GetAddressMode(Sampler::AddressMode addressMode) {
-    switch (addressMode) {
+D3D11_TEXTURE_ADDRESS_MODE GetAddressMode(Sampler::AddressMode addressMode)
+{
+    switch (addressMode)
+    {
     case Sampler::AddressMode::Border:
         return D3D11_TEXTURE_ADDRESS_BORDER;
     case Sampler::AddressMode::Clamp:
@@ -41,9 +46,13 @@ D3D11_TEXTURE_ADDRESS_MODE GetAddressMode(Sampler::AddressMode addressMode) {
 }
 } // namespace
 
-Sampler::~Sampler() { ASSERT(mSampler == nullptr, "Sampler: Terminate must be called"); }
+Sampler::~Sampler()
+{
+    ASSERT(mSampler == nullptr, "Sampler: Terminate must be called");
+}
 
-void Sampler::Initialize(Filter filter, AddressMode addressMode) {
+void Sampler::Initialize(Filter filter, AddressMode addressMode)
+{
     auto d3dFilter = GetFilter(filter);
     auto d3dAddressMode = GetAddressMode(addressMode);
 
@@ -65,14 +74,19 @@ void Sampler::Initialize(Filter filter, AddressMode addressMode) {
     ASSERT(SUCCEEDED(hr), "Sampler: Failed to create sampler state");
 }
 
-void Sampler::Terminate() { SafeRelease(mSampler); }
+void Sampler::Terminate()
+{
+    SafeRelease(mSampler);
+}
 
-void Sampler::BindVS(uint32_t slot) const {
+void Sampler::BindVS(uint32_t slot) const
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->VSSetSamplers(slot, 1, &mSampler);
 }
 
-void Sampler::BindPS(uint32_t slot) const {
+void Sampler::BindPS(uint32_t slot) const
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->PSSetSamplers(slot, 1, &mSampler);
 }

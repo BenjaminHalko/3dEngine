@@ -2,8 +2,10 @@
 
 #include "VertexTypes.h"
 
-namespace Engine::Graphics {
-template <class VertexT> struct MeshBase {
+namespace Engine::Graphics
+{
+template <class VertexT> struct MeshBase
+{
     using VertexType = VertexT;
     std::vector<VertexType> vertices;
     std::vector<uint32_t> indices;

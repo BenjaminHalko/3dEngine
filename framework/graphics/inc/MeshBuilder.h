@@ -2,11 +2,13 @@
 
 #include "MeshTypes.h"
 
-namespace Engine::Graphics {
-class MeshBuilder {
+namespace Engine::Graphics
+{
+class MeshBuilder
+{
   public:
     // Cube
-    static MeshPC CreateCubePC(float size, const Color &color);
+    static MeshPC CreateCubePC(float size, const Color& color);
     static MeshPC CreateCubePC(float size);
     static MeshPX CreateCubePX(float size);
 
@@ -33,6 +35,6 @@ class MeshBuilder {
     static Mesh CreateSkySphere(int slices, int rings, float radius);
 
     // Load 3D Obj
-    static MeshPX CreateOBJPX(const std::filesystem::path &filePath, float scale);
+    static MeshPX CreateOBJPX(const std::filesystem::path& filePath, float scale);
 };
 } // namespace Engine::Graphics

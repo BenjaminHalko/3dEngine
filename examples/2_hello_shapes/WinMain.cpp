@@ -1,14 +1,15 @@
 #include "ShapeState.h"
 #include <Engine/Inc/Engine.h>
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
+{
     Engine::AppConfig config;
     config.appName = L"Hello Shapes";
 
     config.winWidth = 1200;
     config.winHeight = 720;
 
-    Engine::App &myApp = Engine::MainApp();
+    Engine::App& myApp = Engine::MainApp();
 
     myApp.AddState<TriForce>("TriForce");
     myApp.AddState<House>("House");

@@ -7,12 +7,15 @@
 #include "TextureManager.h"
 #include "VertexShader.h"
 
-namespace Engine::Graphics {
+namespace Engine::Graphics
+{
 class Camera;
 
-class SimpleTextureEffect {
+class SimpleTextureEffect
+{
   public:
-    struct RenderData {
+    struct RenderData
+    {
         MeshBuffer mesh;
         Math::Matrix4 matWorld;
         TextureId textureId;
@@ -24,9 +27,9 @@ class SimpleTextureEffect {
     void Begin();
     void End();
 
-    void Render(const RenderData &renderData);
+    void Render(const RenderData& renderData);
 
-    void SetCamera(const Camera &camera);
+    void SetCamera(const Camera& camera);
 
   private:
     ConstantBuffer mTransformBuffer;
@@ -34,6 +37,6 @@ class SimpleTextureEffect {
     PixelShader mPixelShader;
     Sampler mSampler;
 
-    const Camera *mCamera = nullptr;
+    const Camera* mCamera = nullptr;
 };
 } // namespace Engine::Graphics

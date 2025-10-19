@@ -6,6 +6,6 @@
 
 namespace Engine
 {
-	class App; // Forward declaration
-	App& MainApp();
-}
+class App; // Forward declaration
+App& MainApp();
+} // namespace Engine

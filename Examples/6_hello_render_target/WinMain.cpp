@@ -2,11 +2,12 @@
 
 using namespace Engine;
 
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+{
     AppConfig config;
     config.appName = L"Hello Render Target";
 
-    App &myApp = MainApp();
+    App& myApp = MainApp();
 
     myApp.AddState<GameState>("GameState");
 

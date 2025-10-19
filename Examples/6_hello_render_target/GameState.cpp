@@ -4,7 +4,8 @@ using namespace Engine;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
 
-void GameState::Initialize() {
+void GameState::Initialize()
+{
     mCamera.SetPosition({0.0f, 1.0f, -3.0f});
     mCamera.SetLookAt({0.0f, 0.0f, 0.0f});
 
@@ -39,7 +40,8 @@ void GameState::Initialize() {
     mRenderTarget.Initialize(size, size, RenderTarget::Format::RGBA_U32);
 }
 
-void GameState::Terminate() {
+void GameState::Terminate()
+{
     TextureManager::Get()->ReleaseTexture(mSpace.textureId);
     TextureManager::Get()->ReleaseTexture(mEarth.textureId);
     TextureManager::Get()->ReleaseTexture(mSun.textureId);
@@ -54,31 +56,47 @@ void GameState::Terminate() {
     mRenderTarget.Terminate();
 }
 
-void GameState::Update(float deltaTime) { UpdateCamera(deltaTime); }
+void GameState::Update(float deltaTime)
+{
+    UpdateCamera(deltaTime);
+}
 
-enum class PlanetRenderTargets { Space, Earth, Sun };
-const char *gPlanetNames[] = {"Space", "Earth", "Sun"};
+enum class PlanetRenderTargets
+{
+    Space,
+    Earth,
+    Sun
+};
+const char* gPlanetNames[] = {"Space", "Earth", "Sun"};
 PlanetRenderTargets gCurrentPlanet = PlanetRenderTargets::Space;
 
-void GameState::Render() {
+void GameState::Render()
+{
     SimpleDraw::AddGroundPlane(20.0f, Colors::Wheat);
     SimpleDraw::Render(mCamera);
 
     // Render to Render Target ImGui Image
     mRenderTarget.BeginRender();
-    if (gCurrentPlanet == PlanetRenderTargets::Space) {
+    if (gCurrentPlanet == PlanetRenderTargets::Space)
+    {
         RenderObject(mSpace, mRenderTargetCamera);
         mRenderTargetCamera.SetPosition({0.0f, 1.0f, -3.0f});
         mRenderTargetCamera.SetLookAt({0.0f, 0.0f, 0.0f});
-    } else if (gCurrentPlanet == PlanetRenderTargets::Earth) {
+    }
+    else if (gCurrentPlanet == PlanetRenderTargets::Earth)
+    {
         RenderObject(mEarth, mRenderTargetCamera);
         mRenderTargetCamera.SetPosition({0.0f, 1.0f, -3.0f});
         mRenderTargetCamera.SetLookAt({3.0f, 0.0f, 0.0f});
-    } else if (gCurrentPlanet == PlanetRenderTargets::Sun) {
+    }
+    else if (gCurrentPlanet == PlanetRenderTargets::Sun)
+    {
         RenderObject(mSun, mRenderTargetCamera);
         mRenderTargetCamera.SetPosition({0.0f, 1.0f, -3.0f});
         mRenderTargetCamera.SetLookAt({0.0f, 0.0f, 0.0f});
-    } else {
+    }
+    else
+    {
         RenderObject(mSpace, mRenderTargetCamera);
     }
     mRenderTarget.EndRender();
@@ -89,7 +107,8 @@ void GameState::Render() {
     RenderObject(mSun, mCamera);
 }
 
-void GameState::RenderObject(const Object &object, const Engine::Graphics::Camera &camera) {
+void GameState::RenderObject(const Object& object, const Engine::Graphics::Camera& camera)
+{
     const Math::Matrix4 matView = mCamera.GetViewMatrix();
     const Math::Matrix4 matProj = mCamera.GetProjectionMatrix();
     const Math::Matrix4 matFinal = object.worldMat * matView * matProj;
@@ -118,12 +137,22 @@ float sphereRadius = 1.0f;
 Color sphereColor = Colors::White;
 Math::Vector3 sphereOrigin = Math::Vector3::Zero;
 
-enum class Shape { None, AABB, AABBFilled, Sphere, GroundPlane, GroundCircle, Transform };
-const char *gShapeNames[] = {"None",        "AABB",         "AABBFilled", "Sphere",
-                             "GroundPlane", "GroundCircle", "Transform"};
+enum class Shape
+{
+    None,
+    AABB,
+    AABBFilled,
+    Sphere,
+    GroundPlane,
+    GroundCircle,
+    Transform
+};
+const char* gShapeNames[] =
+    {"None", "AABB", "AABBFilled", "Sphere", "GroundPlane", "GroundCircle", "Transform"};
 Shape gCurrentShape = Shape::None;
 
-void GameState::DebugUI() {
+void GameState::DebugUI()
+{
     ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("Im Skylar White, YO!");
@@ -134,18 +163,21 @@ void GameState::DebugUI() {
     ImGui::DragFloat3("[V2] YEAH SCIENCE!", &gV2.x, 0.1f);
     ImGui::ColorEdit4("Walter...?", &gColor.r);
 
-    int currentShape = (int)gCurrentShape;
-    int currentPlanet = (int)gCurrentPlanet;
+    int currentShape = (int) gCurrentShape;
+    int currentPlanet = (int) gCurrentPlanet;
 
-    if (ImGui::Combo("Shape", &currentShape, gShapeNames, std::size(gShapeNames))) {
-        gCurrentShape = (Shape)currentShape;
+    if (ImGui::Combo("Shape", &currentShape, gShapeNames, std::size(gShapeNames)))
+    {
+        gCurrentShape = (Shape) currentShape;
     }
 
-    switch (gCurrentShape) {
+    switch (gCurrentShape)
+    {
     case Shape::None:
         break;
 
-    case Shape::AABB: {
+    case Shape::AABB:
+    {
         ImGui::Text("Non-Filled AABB Menu:");
         ImGui::DragFloat3("V0", &gV0.x, 0.1);
         ImGui::DragFloat3("V1", &gV1.x, 0.1);
@@ -155,7 +187,8 @@ void GameState::DebugUI() {
         break;
     }
 
-    case Shape::AABBFilled: {
+    case Shape::AABBFilled:
+    {
         ImGui::Text("Filled AABB Menu:");
         ImGui::DragFloat3("V0", &gV0.x, 0.1);
         ImGui::DragFloat3("V1", &gV1.x, 0.1);
@@ -165,7 +198,8 @@ void GameState::DebugUI() {
         break;
     }
 
-    case Shape::Sphere: {
+    case Shape::Sphere:
+    {
         ImGui::Text("Sphere Menu:");
         ImGui::DragInt("Slices", &sphereSlices, 1, 3, 100);
         ImGui::DragInt("Rings", &sphereRings, 1, 3, 100);
@@ -176,7 +210,8 @@ void GameState::DebugUI() {
         SimpleDraw::AddSphere(sphereSlices, sphereRings, sphereRadius, sphereColor, sphereOrigin);
         break;
     }
-    case Shape::GroundPlane: {
+    case Shape::GroundPlane:
+    {
         ImGui::Text("Ground Plane Menu:");
         ImGui::DragFloat("Size", &gFloatVal, 1, 1, 100);
         ImGui::ColorEdit4("Color", &gColor.r);
@@ -185,7 +220,8 @@ void GameState::DebugUI() {
         break;
     }
 
-    case Shape::GroundCircle: {
+    case Shape::GroundCircle:
+    {
         ImGui::Text("Ground Circle Menu:");
         ImGui::DragInt("Slices", &sphereSlices, 1, 3, 100);
         ImGui::DragFloat("Radius", &sphereRadius, 0.1f, 0.1f, 100.0f);
@@ -196,57 +232,66 @@ void GameState::DebugUI() {
         break;
     }
 
-    case Shape::Transform: {
+    case Shape::Transform:
+    {
         SimpleDraw::AddTransform(Math::Matrix4::Identity);
         break;
     }
     }
 
     // To Render specific planet to the render target GUI Window
-    if (ImGui::Combo("Planet Render Target", &currentPlanet, gPlanetNames,
-                     std::size(gPlanetNames))) {
-        gCurrentPlanet = (PlanetRenderTargets)currentPlanet;
+    if (ImGui::Combo("Planet Render Target", &currentPlanet, gPlanetNames, std::size(gPlanetNames)))
+    {
+        gCurrentPlanet = (PlanetRenderTargets) currentPlanet;
     }
 
     ImGui::Separator();
     ImGui::Text("RenderTarget");
-    ImGui::Image(mRenderTarget.GetRawData(), {128, 128}, {0, 0}, {1, 1}, {1, 1, 1, 1},
-                 {1, 1, 1, 1});
+    ImGui::Image(
+        mRenderTarget.GetRawData(), {128, 128}, {0, 0}, {1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1});
 
     ImGui::End();
 }
 
-void GameState::UpdateCamera(float deltaTime) {
+void GameState::UpdateCamera(float deltaTime)
+{
     // Camera Controls:
-    InputSystem *input = InputSystem::Get();
+    InputSystem* input = InputSystem::Get();
     const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 10.0f : 4.0f;
     const float turnSpeed = 0.5f;
 
-    if (input->IsKeyDown(KeyCode::W)) {
+    if (input->IsKeyDown(KeyCode::W))
+    {
         mCamera.Walk(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::S)) {
+    else if (input->IsKeyDown(KeyCode::S))
+    {
         mCamera.Walk(-moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::D)) {
+    else if (input->IsKeyDown(KeyCode::D))
+    {
         mCamera.Strafe(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::A)) {
+    else if (input->IsKeyDown(KeyCode::A))
+    {
         mCamera.Strafe(-moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::E)) {
+    else if (input->IsKeyDown(KeyCode::E))
+    {
         mCamera.Rise(moveSpeed * deltaTime);
     }
 
-    else if (input->IsKeyDown(KeyCode::Q)) {
+    else if (input->IsKeyDown(KeyCode::Q))
+    {
         mCamera.Rise(-moveSpeed * deltaTime);
     }
 
-    if (input->IsMouseDown(MouseButton::RBUTTON)) {
+    if (input->IsMouseDown(MouseButton::RBUTTON))
+    {
         mCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
         mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
     }

@@ -5,24 +5,28 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-struct Transform {
+struct Transform
+{
     Math::Vector3 position = Math::Vector3::Zero;
     Math::Quaternion rotation = Math::Quaternion::Identity;
     Math::Vector3 scale = Math::Vector3::One;
 
-    Math::Matrix4 Apply() const {
+    Math::Matrix4 Apply() const
+    {
         return Math::Matrix4::Translation(position) *
                Math::Matrix4::MatrixRotationQuaternion(rotation) * Math::Matrix4::Scaling(scale);
     }
 };
 
-struct PlanetObject {
+struct PlanetObject
+{
     Math::Matrix4 matWorld = Math::Matrix4::Identity;
     MeshBuffer mesh;
     TextureId textureId = 0;
 };
 
-struct PlanetData {
+struct PlanetData
+{
     PlanetObject object;
     float orbitRadius;
     float orbitSpeed;
@@ -32,7 +36,8 @@ struct PlanetData {
     float radius = 1.0f;
 };
 
-class GameState : public AppState {
+class GameState : public AppState
+{
   public:
     void Initialize() override;
     void Terminate() override;
@@ -42,10 +47,10 @@ class GameState : public AppState {
 
   private:
     void UpdateCamera(float deltaTime);
-    void UpdateCelestialBody(PlanetData &body, float deltaTime);
-    void DrawOrbit(const PlanetData &body);
-    void RenderMesh(const PlanetObject &object, const Camera &camera);
-    void RenderMeshAtOrigin(const PlanetObject &object, const Camera &camera);
+    void UpdateCelestialBody(PlanetData& body, float deltaTime);
+    void DrawOrbit(const PlanetData& body);
+    void RenderMesh(const PlanetObject& object, const Camera& camera);
+    void RenderMeshAtOrigin(const PlanetObject& object, const Camera& camera);
 
     // Core components
     Camera mMainCamera;

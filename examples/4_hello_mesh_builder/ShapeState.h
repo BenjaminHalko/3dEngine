@@ -2,7 +2,8 @@
 
 #include <Engine/Inc/Engine.h>
 
-class ShapeState : public Engine::AppState {
+class ShapeState : public Engine::AppState
+{
   public:
     void Initialize() override;
     void Terminate() override;
@@ -24,7 +25,8 @@ class ShapeState : public Engine::AppState {
     Engine::Graphics::Sampler mSampler;
 };
 
-class CubeState : public ShapeState {
+class CubeState : public ShapeState
+{
   public:
     void Update(float deltaTime) override;
 
@@ -32,7 +34,8 @@ class CubeState : public ShapeState {
     void CreateShape() override;
 };
 
-class PyramidState : public ShapeState {
+class PyramidState : public ShapeState
+{
   public:
     void Update(float deltaTime) override;
 
@@ -40,7 +43,8 @@ class PyramidState : public ShapeState {
     void CreateShape() override;
 };
 
-class RectangleState : public ShapeState {
+class RectangleState : public ShapeState
+{
   public:
     void Update(float deltaTime) override;
 

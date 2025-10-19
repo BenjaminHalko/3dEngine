@@ -7,7 +7,8 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-void SimpleTextureEffect::Initialize() {
+void SimpleTextureEffect::Initialize()
+{
     std::filesystem::path shaderPath = L"../../Assets/Shaders/DoTexture.fx";
     mVertexShader.Initialize<VertexPX>(shaderPath);
     mPixelShader.Initialize(shaderPath);
@@ -15,23 +16,29 @@ void SimpleTextureEffect::Initialize() {
     mTransformBuffer.Initialize(sizeof(Math::Matrix4));
 }
 
-void SimpleTextureEffect::Terminate() {
+void SimpleTextureEffect::Terminate()
+{
     mTransformBuffer.Terminate();
     mSampler.Terminate();
     mPixelShader.Terminate();
     mVertexShader.Terminate();
 }
 
-void SimpleTextureEffect::Begin() {
+void SimpleTextureEffect::Begin()
+{
     mVertexShader.Bind();
     mPixelShader.Bind();
     mSampler.BindPS(0);
     mTransformBuffer.BindVS(0);
 }
 
-void SimpleTextureEffect::End() { Texture::UnbindPS(0); }
+void SimpleTextureEffect::End()
+{
+    Texture::UnbindPS(0);
+}
 
-void SimpleTextureEffect::Render(const SimpleTextureEffect::RenderData &renderData) {
+void SimpleTextureEffect::Render(const SimpleTextureEffect::RenderData& renderData)
+{
     ASSERT(mCamera != nullptr, "SimpleTextureEffect: Must have a camera!");
     const Math::Matrix4 matView = mCamera->GetViewMatrix();
     const Math::Matrix4 matProj = mCamera->GetProjectionMatrix();
@@ -43,4 +50,7 @@ void SimpleTextureEffect::Render(const SimpleTextureEffect::RenderData &renderDa
     renderData.mesh.Render();
 }
 
-void SimpleTextureEffect::SetCamera(const Camera &camera) { mCamera = &camera; }
+void SimpleTextureEffect::SetCamera(const Camera& camera)
+{
+    mCamera = &camera;
+}

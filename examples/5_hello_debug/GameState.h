@@ -2,7 +2,8 @@
 
 #include <Engine/Inc/Engine.h>
 
-class GameState : public Engine::AppState {
+class GameState : public Engine::AppState
+{
   public:
     void Initialize() override;
 

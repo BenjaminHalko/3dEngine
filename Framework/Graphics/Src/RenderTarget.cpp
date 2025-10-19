@@ -6,9 +6,12 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 
-namespace {
-DXGI_FORMAT GetDXGIFormat(RenderTarget::Format format) {
-    switch (format) {
+namespace
+{
+DXGI_FORMAT GetDXGIFormat(RenderTarget::Format format)
+{
+    switch (format)
+    {
     case RenderTarget::Format::RGBA_U8:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
     case RenderTarget::Format::RGBA_U32:
@@ -21,16 +24,19 @@ DXGI_FORMAT GetDXGIFormat(RenderTarget::Format format) {
 }
 } // namespace
 
-RenderTarget::~RenderTarget() {
+RenderTarget::~RenderTarget()
+{
     ASSERT(mRenderTargetView == nullptr && mDepthStencilView == nullptr,
            "RenderTarget: Must call Terminate!");
 }
 
-void RenderTarget::Initialize(const std::filesystem::path &fileName) {
+void RenderTarget::Initialize(const std::filesystem::path& fileName)
+{
     ASSERT(false, "RenderTarget: Initialize with file name is not supported");
 }
 
-void RenderTarget::Initialize(uint32_t width, uint32_t height, Format format) {
+void RenderTarget::Initialize(uint32_t width, uint32_t height, Format format)
+{
     D3D11_TEXTURE2D_DESC desc{};
     desc.Width = width;
     desc.Height = height;
@@ -45,7 +51,7 @@ void RenderTarget::Initialize(uint32_t width, uint32_t height, Format format) {
     desc.MiscFlags = 0;
 
     auto device = GraphicsSystem::Get()->GetDevice();
-    ID3D11Texture2D *texture = nullptr;
+    ID3D11Texture2D* texture = nullptr;
     HRESULT hr = device->CreateTexture2D(&desc, nullptr, &texture);
     ASSERT(SUCCEEDED(hr), "RenderTarget: Failed to create texture!");
 
@@ -75,14 +81,16 @@ void RenderTarget::Initialize(uint32_t width, uint32_t height, Format format) {
     mViewport.MaxDepth = 1.0f;
 }
 
-void RenderTarget::Terminate() {
+void RenderTarget::Terminate()
+{
     Texture::Terminate();
 
     SafeRelease(mDepthStencilView);
     SafeRelease(mRenderTargetView);
 }
 
-void RenderTarget::BeginRender(Color clearColor) {
+void RenderTarget::BeginRender(Color clearColor)
+{
     auto context = GraphicsSystem::Get()->GetContext();
 
     // Store the current versions
@@ -97,7 +105,8 @@ void RenderTarget::BeginRender(Color clearColor) {
     context->RSSetViewports(1, &mViewport);
 }
 
-void RenderTarget::EndRender() {
+void RenderTarget::EndRender()
+{
     auto context = GraphicsSystem::Get()->GetContext();
     context->OMSetRenderTargets(1, &mOldRenderTargetView, mOldDepthStencilView);
     context->RSSetViewports(1, &mOldViewport);

@@ -2,19 +2,21 @@
 
 #include "InputTypes.h"
 
-namespace Engine::Input {
-class InputSystem final {
+namespace Engine::Input
+{
+class InputSystem final
+{
   public:
     static void StaticInitialize(HWND window);
     static void StaticTerminate();
-    static InputSystem *Get();
+    static InputSystem* Get();
 
   public:
     InputSystem() = default;
     ~InputSystem();
 
-    InputSystem(const InputSystem &) = delete;
-    InputSystem &operator=(const InputSystem &) = delete;
+    InputSystem(const InputSystem&) = delete;
+    InputSystem& operator=(const InputSystem&) = delete;
 
     void Initialize(HWND window);
     void Terminate();
@@ -44,7 +46,9 @@ class InputSystem final {
     bool IsMouseClipToWindow() const;
 
   private:
-    static LRESULT CALLBACK InputSystemMessageHandler(HWND window, UINT message, WPARAM wParam,
+    static LRESULT CALLBACK InputSystemMessageHandler(HWND window,
+                                                      UINT message,
+                                                      WPARAM wParam,
                                                       LPARAM lParam);
 
     HWND mWindow = nullptr;
