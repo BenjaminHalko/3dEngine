@@ -1,5 +1,5 @@
 #include "ShapeState.h"
-#include <Engine/inc/Engine.h>
+#include <Engine/Inc/Engine.h>
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int) {
     Engine::AppConfig config;

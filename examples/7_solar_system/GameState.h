@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Engine/inc/Engine.h>
+#include <Engine/Inc/Engine.h>
 
 using namespace Engine;
 using namespace Engine::Graphics;

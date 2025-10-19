@@ -3,4 +3,9 @@ function(target_compile_library target)
     add_library(${target} ${src_files})
 
     target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Inc)
+    
+    # Set up precompiled headers
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Src/Precompiled.h)
+        target_precompile_headers(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Src/Precompiled.h)
+    endif()
 endfunction()

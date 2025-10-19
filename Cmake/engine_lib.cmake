@@ -1,4 +1,4 @@
-include(${CMAKE_SOURCE_DIR}/cmake/common.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/library.cmake)
+include(${CMAKE_SOURCE_DIR}/Cmake/common.cmake)
+include(${CMAKE_SOURCE_DIR}/Cmake/library.cmake)
 
-include_directories(${CMAKE_SOURCE_DIR}/framework ${CMAKE_SOURCE_DIR}/engine ${CMAKE_SOURCE_DIR}/external)
+include_directories(${CMAKE_SOURCE_DIR}/Framework ${CMAKE_SOURCE_DIR}/Engine ${CMAKE_SOURCE_DIR}/External)

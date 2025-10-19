@@ -1,5 +1,5 @@
 project(Math)
-include(${CMAKE_SOURCE_DIR}/cmake/framework_lib.cmake)
+include(${CMAKE_SOURCE_DIR}/Cmake/framework_lib.cmake)
 
 target_compile_library(Math)
 
