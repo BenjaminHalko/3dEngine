@@ -5,7 +5,7 @@ using namespace Engine;
 class MainState : public AppState
 {
   public:
-    void Initialize()
+    void Initialize() override
     {
         LOG("MAIN STATE INITIALIZED");
         mLifeTime = 2.0f;
@@ -30,7 +30,7 @@ class MainState : public AppState
 class GameState : public AppState
 {
   public:
-    void Initialize()
+    void Initialize() override
     {
         LOG("MAIN STATE INITIALIZED");
         mLifeTime = 2.0f;
