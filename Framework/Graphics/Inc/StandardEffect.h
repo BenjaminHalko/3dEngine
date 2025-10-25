@@ -45,7 +45,7 @@ class StandardEffect final
         int useSpecMap = 1;
         int useNormalMap = 1;
         int useBumpMap = 1;
-        float bumpIntensity = 0.1f;
+        float bumpIntensity = -0.02f;
         float padding[3] = {0.0f};
     };
 

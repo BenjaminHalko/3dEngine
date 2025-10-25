@@ -21,6 +21,7 @@ class MeshBuilder
     // Plane
     static MeshPC CreatePlanePC(int numRows, int numColums, float spacing, bool horizontal = true);
     static MeshPX CreatePlanePX(int numRows, int numColums, float spacing, bool horizontal = true);
+    static Mesh CreatePlane(int numRows, int numColums, float spacing, bool horizontal = true);
 
     // Cylinder
     static MeshPC CreateCylinderPC(int slices, int rings);

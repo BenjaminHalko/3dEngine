@@ -11,6 +11,7 @@
 #include "GraphicsSystem.h"
 #include "Material.h"
 #include "MeshBuffer.h"
+#include "Model.h"
 #include "MeshBuilder.h"
 #include "MeshTypes.h"
 #include "PixelShader.h"

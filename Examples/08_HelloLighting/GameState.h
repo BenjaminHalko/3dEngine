@@ -18,7 +18,12 @@ class GameState : public AppState
 
     Graphics::Camera mCamera;
     Graphics::DirectionalLight mDirectionalLight;
-    Graphics::RenderObject mRenderObject;
+
+    Graphics::RenderObject mRenderObject_Earth;
+    Graphics::RenderObject mRenderObject_Metal;
+    Graphics::RenderObject mRenderObject_Wood;
+    Graphics::RenderObject mRenderObject_Water;
+
     Graphics::StandardEffect mStandardEffect;
 };
 } // namespace Engine
