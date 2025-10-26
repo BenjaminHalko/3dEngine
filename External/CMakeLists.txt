@@ -1,5 +1,3 @@
-add_subdirectory(DirectXTK)
-
 # Configure ImGui
 project(ImGui)
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ImGui)
@@ -19,8 +17,12 @@ target_include_directories(ImGui PUBLIC
     ${IMGUI_DIR}/backends
 )
 
-if(WIN32)
-    target_link_libraries(ImGui PUBLIC d3d11)
+if(WIN32 OR MINGW)
+    target_link_libraries(ImGui PUBLIC 
+        d3d11 
+        d3dcompiler
+        dwmapi
+    )
 endif()
 
 set_target_properties(ImGui PROPERTIES FOLDER "External")

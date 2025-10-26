@@ -5,7 +5,7 @@
 #define NOMINMAX
 
 // Win32 Headers
-#include <Windows.h>
+#include <windows.h>
 #include <objbase.h>
 
 // Std Headers
@@ -25,5 +25,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
