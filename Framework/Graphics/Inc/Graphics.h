@@ -13,6 +13,7 @@
 #include "MeshBuffer.h"
 #include "Model.h"
 #include "ModelIO.h"
+#include "ModelManager.h"
 #include "MeshBuilder.h"
 #include "MeshTypes.h"
 #include "PixelShader.h"
