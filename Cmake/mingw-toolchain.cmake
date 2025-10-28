@@ -25,7 +25,9 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(WIN32 TRUE)
 set(MINGW TRUE)
 
-# Static link MinGW runtime libraries to avoid DLL dependencies in Wine
-set(CMAKE_CXX_FLAGS_INIT "-static-libgcc -static-libstdc++ -static")
-set(CMAKE_C_FLAGS_INIT "-static-libgcc -static")
+# Static link MinGW runtime libraries for executables to avoid DLL dependencies in Wine
+# For shared libraries (DLLs), use -shared-libgcc to avoid symbol conflicts between DLLs
+set(CMAKE_CXX_FLAGS_INIT "")
+set(CMAKE_C_FLAGS_INIT "")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-static-libgcc -static-libstdc++ -static -lpthread")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "-shared-libgcc")
