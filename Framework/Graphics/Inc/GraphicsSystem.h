@@ -7,7 +7,7 @@ namespace Engine::Graphics
 class GraphicsSystem final
 {
   public:
-    static void StaticInitialize(HWND window, bool fullscreen);
+    static void StaticInitialize(GLFWwindow* window, bool fullscreen);
     static void StaticTerminate();
     static GraphicsSystem* Get();
 
@@ -19,7 +19,7 @@ class GraphicsSystem final
     GraphicsSystem& operator=(const GraphicsSystem&) = delete;
     GraphicsSystem& operator=(const GraphicsSystem&&) = delete;
 
-    void Initialize(HWND window, bool fullscreen);
+    void Initialize(GLFWwindow* window, bool fullscreen);
     void Terminate();
 
     void BeginRender();
@@ -42,10 +42,7 @@ class GraphicsSystem final
     ID3D11DeviceContext* GetContext();
 
   private:
-    static LRESULT CALLBACK GraphicsSystemMessageHandler(HWND window,
-                                                         UINT message,
-                                                         WPARAM wParam,
-                                                         LPARAM lParam);
+    static void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 
     ID3D11Device* mD3DDevice = nullptr;
     ID3D11DeviceContext* mImmediateContext = nullptr;

@@ -4,103 +4,82 @@
 using namespace Engine;
 using namespace Engine::Core;
 
-LRESULT CALLBACK WindowMessageHandler(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam)
+namespace
 {
-    switch (msg)
+    // Convert wstring to UTF-8 string for GLFW
+    std::string WStringToString(const std::wstring& wstr)
     {
-    case WM_DESTROY:
-    {
-        PostQuitMessage(0);
-        break;
+        if (wstr.empty()) return std::string();
+        // Simple conversion for cross-platform use
+        std::string result;
+        result.reserve(wstr.size());
+        for (wchar_t c : wstr) 
+        {
+            if (c < 128) // ASCII range
+                result.push_back(static_cast<char>(c));
+            else
+                result.push_back('?'); // Replace non-ASCII with placeholder
+        }
+        return result;
     }
-    default:
-        break;
-    }
-
-    return DefWindowProc(handle, msg, wParam, lParam);
 }
 
-void Window::Initialize(HINSTANCE instance,
+void Window::Initialize(void* instance,
                         const std::wstring& appName,
                         uint32_t width,
                         uint32_t height)
 {
-    mInstance = instance;
     mAppName = appName;
+    mWidth = width;
+    mHeight = height;
 
-    WNDCLASSEX wcex;
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WindowMessageHandler;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = instance;
-    wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(nullptr, IDC_CROSS);
-    wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-    wcex.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-    wcex.lpszMenuName = nullptr;
-    wcex.lpszClassName = mAppName.c_str();
+    // Initialize GLFW
+    if (!glfwInit())
+    {
+        // Error handling
+        return;
+    }
 
-    RegisterClassEx(&wcex);
+    // GLFW window hints for DirectX/DXMT
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // We're using DirectX, not OpenGL
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    mScreenRect = {0, 0, (LONG) width, (LONG) height};
-    AdjustWindowRect(&mScreenRect, WS_OVERLAPPEDWINDOW, FALSE);
+    // Create window
+    std::string titleUtf8 = WStringToString(appName);
+    mWindow = glfwCreateWindow(width, height, titleUtf8.c_str(), nullptr, nullptr);
 
-    const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    const int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    const int winWidth =
-        std::min(static_cast<int>(mScreenRect.right - mScreenRect.left), screenWidth);
-    const int winHeight =
-        std::min(static_cast<int>(mScreenRect.bottom - mScreenRect.top), screenHeight);
+    if (mWindow == nullptr)
+    {
+        glfwTerminate();
+        return;
+    }
 
-    const int left = (screenWidth - winWidth) / 2;
-    const int top = (screenHeight - winHeight) / 2;
-
-    mScreenRect.left = left;
-    mScreenRect.top = top;
-
-    mWindow = CreateWindow(mAppName.c_str(),
-                           mAppName.c_str(),
-                           WS_OVERLAPPEDWINDOW,
-                           left,
-                           top,
-                           winWidth,
-                           winHeight,
-                           nullptr,
-                           nullptr,
-                           instance,
-                           nullptr);
-
-    ShowWindow(mWindow, SW_SHOWNORMAL);
-    SetCursorPos(screenWidth / 2, screenHeight / 2);
-    mIsActive = (mWindow != nullptr);
+    mIsActive = true;
 }
 
 void Window::Terminate()
 {
-    DestroyWindow(mWindow);
-    UnregisterClass(mAppName.c_str(), mInstance);
-    mWindow = nullptr;
-    mInstance = nullptr;
+    if (mWindow != nullptr)
+    {
+        glfwDestroyWindow(mWindow);
+        mWindow = nullptr;
+    }
+    glfwTerminate();
     mIsActive = false;
 }
 
 void Window::ProcessMessage()
 {
-    MSG msg{};
-    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    glfwPollEvents();
+    
+    // Check if window should close
+    if (glfwWindowShouldClose(mWindow))
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-        if (WM_QUIT == msg.message)
-        {
-            mIsActive = false;
-        }
+        mIsActive = false;
     }
 }
 
-HWND Window::GetWindowHandle() const
+GLFWwindow* Window::GetWindowHandle() const
 {
     return mWindow;
 }

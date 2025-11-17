@@ -1,4 +1,11 @@
-# Configure ImGui
+# Add GLFW for cross-platform windowing (used on all platforms)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(glfw)
+
+# Configure ImGui with GLFW backend (universal)
 project(ImGui)
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ImGui)
 
@@ -8,8 +15,8 @@ add_library(ImGui STATIC
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
-    ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
 )
 
 target_include_directories(ImGui PUBLIC 
@@ -17,11 +24,22 @@ target_include_directories(ImGui PUBLIC
     ${IMGUI_DIR}/backends
 )
 
-if(WIN32 OR MINGW)
+# Link GLFW and graphics libraries
+target_link_libraries(ImGui PUBLIC glfw)
+
+if(WIN32)
     target_link_libraries(ImGui PUBLIC 
         d3d11 
         d3dcompiler
         dwmapi
+    )
+elseif(APPLE)
+    # On macOS, we'll link DXMT libraries
+    find_library(METAL_LIBRARY Metal)
+    find_library(QUARTZCORE_LIBRARY QuartzCore)
+    target_link_libraries(ImGui PUBLIC 
+        ${METAL_LIBRARY}
+        ${QUARTZCORE_LIBRARY}
     )
 endif()
 

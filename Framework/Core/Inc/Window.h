@@ -5,7 +5,8 @@ namespace Engine::Core
 class Window
 {
   public:
-    void Initialize(HINSTANCE instance,
+    // Platform-agnostic initialize (instance ignored on non-Windows)
+    void Initialize(void* instance,
                     const std::wstring& appName,
                     uint32_t width,
                     uint32_t height);
@@ -14,15 +15,15 @@ class Window
 
     void ProcessMessage();
 
-    HWND GetWindowHandle() const;
+    GLFWwindow* GetWindowHandle() const;
 
     bool IsActive() const;
 
   private:
-    HINSTANCE mInstance = nullptr;
-    HWND mWindow = nullptr;
-    RECT mScreenRect{};
+    GLFWwindow* mWindow = nullptr;
     std::wstring mAppName;
+    uint32_t mWidth = 0;
+    uint32_t mHeight = 0;
     bool mIsActive = false;
 };
 } // namespace Engine::Core

@@ -13,8 +13,7 @@ void App::Run(const AppConfig& config)
 
     // Initialize Everything
     Window myWindow;
-    myWindow.Initialize(
-        GetModuleHandle(nullptr), config.appName, config.winWidth, config.winHeight);
+    myWindow.Initialize(nullptr, config.appName, config.winWidth, config.winHeight);
     auto handle = myWindow.GetWindowHandle();
     GraphicsSystem::StaticInitialize(handle, false);
     InputSystem::StaticInitialize(handle);

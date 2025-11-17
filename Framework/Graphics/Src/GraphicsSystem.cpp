@@ -1,37 +1,32 @@
 #include "Precompiled.h"
 #include "GraphicsSystem.h"
 
+// Platform-specific native window access
+#if defined(_WIN32)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+    #include <GLFW/glfw3native.h>
+#elif defined(__APPLE__)
+    #define GLFW_EXPOSE_NATIVE_COCOA
+    #include <GLFW/glfw3native.h>
+#endif
+
 using namespace Engine;
 using namespace Engine::Graphics;
 
 namespace
 {
 std::unique_ptr<GraphicsSystem> sGraphicsSystem;
-Core::WindowMessageHandler sWindowsMessageHandler;
 } // namespace
 
-LRESULT GraphicsSystem::GraphicsSystemMessageHandler(HWND window,
-                                                     UINT message,
-                                                     WPARAM wParam,
-                                                     LPARAM lParam)
+void GraphicsSystem::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-    if (sGraphicsSystem != nullptr)
+    if (sGraphicsSystem != nullptr && width > 0 && height > 0)
     {
-        switch (message)
-        {
-        case WM_SIZE:
-        {
-            const uint32_t width = static_cast<uint32_t>(LOWORD(lParam));
-            const uint32_t height = static_cast<uint32_t>(HIWORD(lParam));
-            sGraphicsSystem->Resize(width, height);
-            break;
-        }
-        }
+        sGraphicsSystem->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
     }
-    return sWindowsMessageHandler.ForwardMessage(window, message, wParam, lParam);
 }
 
-void GraphicsSystem::StaticInitialize(HWND window, bool fullscreen)
+void GraphicsSystem::StaticInitialize(GLFWwindow* window, bool fullscreen)
 {
     ASSERT(sGraphicsSystem == nullptr, "GraphicsSystem: is already installed");
     sGraphicsSystem = std::make_unique<GraphicsSystem>();
@@ -58,12 +53,18 @@ GraphicsSystem::~GraphicsSystem()
     ASSERT(mD3DDevice == nullptr, "GraphicsSystem: must be terminated!");
 }
 
-void GraphicsSystem::Initialize(HWND window, bool fullscreen)
+void GraphicsSystem::Initialize(GLFWwindow* window, bool fullscreen)
 {
-    RECT clientRect = {};
-    GetClientRect(window, &clientRect);
-    UINT width = (UINT) (clientRect.right - clientRect.left);
-    UINT height = (UINT) (clientRect.bottom - clientRect.top);
+    // Get window dimensions from GLFW
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    // Get native window handle - DXMT accepts NSWindow cast to HWND on macOS
+#ifdef _WIN32
+    HWND nativeWindow = glfwGetWin32Window(window);
+#else
+    HWND nativeWindow = (HWND)glfwGetCocoaWindow(window);
+#endif
 
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     swapChainDesc.BufferCount = 2;
@@ -73,7 +74,7 @@ void GraphicsSystem::Initialize(HWND window, bool fullscreen)
     swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
     swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.OutputWindow = window;
+    swapChainDesc.OutputWindow = nativeWindow;
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.Windowed = !fullscreen;
@@ -99,13 +100,12 @@ void GraphicsSystem::Initialize(HWND window, bool fullscreen)
 
     Resize(GetBackBufferWidth(), GetBackBufferHeight());
 
-    sWindowsMessageHandler.Hook(window, GraphicsSystemMessageHandler);
+    // Set GLFW resize callback
+    glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 }
 
 void GraphicsSystem::Terminate()
 {
-    sWindowsMessageHandler.Unhook();
-
     SafeRelease(mDepthStencilView);
     SafeRelease(mDepthStencilBuffer);
     SafeRelease(mRenderTargetView);
@@ -152,53 +152,55 @@ void GraphicsSystem::Resize(uint32_t width, uint32_t height)
     }
 
     ID3D11Texture2D* backBuffer = nullptr;
-    hr = mSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to get back buffer");
+    hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*) &backBuffer);
+    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to access swap chain buffer");
 
     hr = mD3DDevice->CreateRenderTargetView(backBuffer, nullptr, &mRenderTargetView);
     SafeRelease(backBuffer);
-    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to create render target");
+    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to create render target view");
 
-    D3D11_TEXTURE2D_DESC depthDesc = {};
-    depthDesc.Width = GetBackBufferWidth();
-    depthDesc.Height = GetBackBufferHeight();
-    depthDesc.MipLevels = 1;
-    depthDesc.ArraySize = 1;
-    depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthDesc.SampleDesc.Count = 1;
-    depthDesc.SampleDesc.Quality = 0;
-    depthDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    depthDesc.CPUAccessFlags = 0;
-    depthDesc.MiscFlags = 0;
-    hr = mD3DDevice->CreateTexture2D(&depthDesc, nullptr, &mDepthStencilBuffer);
-    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to create stencil buffer");
+    D3D11_TEXTURE2D_DESC descDepth = {};
+    descDepth.Width = GetBackBufferWidth();
+    descDepth.Height = GetBackBufferHeight();
+    descDepth.MipLevels = 1;
+    descDepth.ArraySize = 1;
+    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepth.SampleDesc.Count = 1;
+    descDepth.SampleDesc.Quality = 0;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    descDepth.CPUAccessFlags = 0;
+    descDepth.MiscFlags = 0;
+    hr = mD3DDevice->CreateTexture2D(&descDepth, nullptr, &mDepthStencilBuffer);
+    ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to create depth stencil buffer!");
 
-    D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-    dsvDesc.Format = depthDesc.Format;
-    dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-    dsvDesc.Texture2D.MipSlice = 0;
-    hr = mD3DDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, &mDepthStencilView);
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+    descDSV.Format = descDepth.Format;
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSV.Texture2D.MipSlice = 0;
+    hr = mD3DDevice->CreateDepthStencilView(mDepthStencilBuffer, &descDSV, &mDepthStencilView);
     ASSERT(SUCCEEDED(hr), "GraphicsSystem: Failed to create depth stencil view!");
 
-    ResetRenderTarget();
+    mImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mDepthStencilView);
 
+    mViewport.TopLeftX = 0.0f;
+    mViewport.TopLeftY = 0.0f;
     mViewport.Width = static_cast<float>(GetBackBufferWidth());
     mViewport.Height = static_cast<float>(GetBackBufferHeight());
     mViewport.MinDepth = 0.0f;
     mViewport.MaxDepth = 1.0f;
-    mViewport.TopLeftX = 0;
-    mViewport.TopLeftY = 0;
-    ResetViewport();
+    mImmediateContext->RSSetViewports(1, &mViewport);
 }
 
 void GraphicsSystem::ResetRenderTarget()
 {
+    ASSERT(mD3DDevice != nullptr, "GraphicsSystem: not initialized!");
     mImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mDepthStencilView);
 }
 
 void GraphicsSystem::ResetViewport()
 {
+    ASSERT(mD3DDevice != nullptr, "GraphicsSystem: not initialized!");
     mImmediateContext->RSSetViewports(1, &mViewport);
 }
 
@@ -229,10 +231,12 @@ float GraphicsSystem::GetBackBufferAspectRatio() const
 
 ID3D11Device* GraphicsSystem::GetDevice()
 {
+    ASSERT(mD3DDevice != nullptr, "GraphicsSystem: not initialized!");
     return mD3DDevice;
 }
 
 ID3D11DeviceContext* GraphicsSystem::GetContext()
 {
+    ASSERT(mD3DDevice != nullptr, "GraphicsSystem: not initialized!");
     return mImmediateContext;
 }

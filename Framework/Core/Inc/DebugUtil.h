@@ -5,6 +5,14 @@
 using namespace Engine;
 using namespace Engine::Core;
 
+#ifdef _WIN32
+    #include <windows.h>
+    #define PLATFORM_BREAK() DebugBreak()
+#else
+    #include <signal.h>
+    #define PLATFORM_BREAK() raise(SIGTRAP)
+#endif
+
 #if defined(_DEBUG)
 #define LOG(format, ...)                                                                           \
     ;                                                                                              \
@@ -25,7 +33,7 @@ using namespace Engine::Core;
         if (!(condition))                                                                          \
         {                                                                                          \
             LOG("ASSERT! %s(%d)\n" format, __FILE__, __LINE__, __VA_ARGS__);                       \
-            DebugBreak();                                                                          \
+            PLATFORM_BREAK();                                                                          \
         }                                                                                          \
     } while (false)
 #else

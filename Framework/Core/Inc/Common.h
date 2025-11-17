@@ -1,12 +1,8 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#define UNICODE
-#define NOMINMAX
-
-// Win32 Headers
-#include <windows.h>
-#include <objbase.h>
+// GLFW for all platforms
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 // Std Headers
 #include <algorithm>

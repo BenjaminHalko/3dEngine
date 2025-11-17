@@ -7,141 +7,80 @@ using namespace Engine::Input;
 namespace
 {
 std::unique_ptr<InputSystem> sInputSystem;
-Core::WindowMessageHandler sWindowMessageHandler;
 
-void ClipToWindow(HWND window)
+// GLFW to Engine KeyCode mapping
+KeyCode GLFWKeyToKeyCode(int glfwKey)
 {
-    RECT rect;
-    GetClientRect(window, &rect);
-
-    POINT ul;
-    ul.x = rect.left;
-    ul.y = rect.top;
-
-    POINT lr;
-    lr.x = rect.right;
-    lr.y = rect.bottom;
-
-    MapWindowPoints(window, nullptr, &ul, 1);
-    MapWindowPoints(window, nullptr, &lr, 1);
-
-    rect.left = ul.x;
-    rect.top = ul.y;
-
-    rect.right = lr.x;
-    rect.bottom = lr.y;
-
-    ClipCursor(&rect);
+    // Map common GLFW keys to our KeyCode enum
+    if (glfwKey >= GLFW_KEY_A && glfwKey <= GLFW_KEY_Z)
+        return static_cast<KeyCode>(static_cast<int>(KeyCode::A) + (glfwKey - GLFW_KEY_A));
+    if (glfwKey >= GLFW_KEY_0 && glfwKey <= GLFW_KEY_9)
+        return static_cast<KeyCode>(static_cast<int>(KeyCode::ZERO) + (glfwKey - GLFW_KEY_0));
+    
+    switch (glfwKey)
+    {
+    case GLFW_KEY_SPACE: return KeyCode::SPACE;
+    case GLFW_KEY_ESCAPE: return KeyCode::ESCAPE;
+    case GLFW_KEY_ENTER: return KeyCode::RETURN;
+    case GLFW_KEY_LEFT_SHIFT: return KeyCode::LSHIFT;
+    case GLFW_KEY_RIGHT_SHIFT: return KeyCode::RSHIFT;
+    case GLFW_KEY_LEFT_CONTROL: return KeyCode::LCONTROL;
+    case GLFW_KEY_RIGHT_CONTROL: return KeyCode::RCONTROL;
+    case GLFW_KEY_UP: return KeyCode::UP;
+    case GLFW_KEY_DOWN: return KeyCode::DOWN;
+    case GLFW_KEY_LEFT: return KeyCode::LEFT;
+    case GLFW_KEY_RIGHT: return KeyCode::RIGHT;
+    default: return static_cast<KeyCode>(glfwKey);
+    }
 }
 } // namespace
 
-LRESULT CALLBACK InputSystem::InputSystemMessageHandler(HWND window,
-                                                        UINT message,
-                                                        WPARAM wParam,
-                                                        LPARAM lParam)
+void InputSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (sInputSystem && key >= 0 && key < 512)
+    {
+        KeyCode keyCode = GLFWKeyToKeyCode(key);
+        int index = static_cast<int>(keyCode);
+        if (index >= 0 && index < 512)
+        {
+            sInputSystem->mCurrKeys[index] = (action != GLFW_RELEASE);
+        }
+    }
+}
+
+void InputSystem::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     if (sInputSystem)
     {
-        switch (message)
-        {
-        case WM_ACTIVATEAPP:
-        {
-            if (wParam == TRUE)
-            {
-                SetCapture(window);
-            }
-            else
-            {
-                sInputSystem->mMouseLeftEdge = false;
-                sInputSystem->mMouseRightEdge = false;
-                sInputSystem->mMouseTopEdge = false;
-                sInputSystem->mMouseBottomEdge = false;
-                ReleaseCapture();
-            }
-            break;
-        }
-        case WM_LBUTTONDOWN:
-        {
-            sInputSystem->mCurrMouseButtons[0] = true;
-            break;
-        }
-        case WM_LBUTTONUP:
-        {
-            sInputSystem->mCurrMouseButtons[0] = false;
-            break;
-        }
-        case WM_RBUTTONDOWN:
-        {
-            sInputSystem->mCurrMouseButtons[1] = true;
-            break;
-        }
-        case WM_RBUTTONUP:
-        {
-            sInputSystem->mCurrMouseButtons[1] = false;
-            break;
-        }
-        case WM_MBUTTONDOWN:
-        {
-            sInputSystem->mCurrMouseButtons[2] = true;
-            break;
-        }
-        case WM_MBUTTONUP:
-        {
-            sInputSystem->mCurrMouseButtons[2] = false;
-            break;
-        }
-        case WM_MOUSEWHEEL:
-        {
-            sInputSystem->mMouseWheel +=
-                (float) GET_WHEEL_DELTA_WPARAM(wParam) / (float) WHEEL_DELTA;
-            break;
-        }
-        case WM_MOUSEMOVE:
-        {
-            int mouseX = (signed short) (lParam);
-            int mouseY = (signed short) (lParam >> 16);
-
-            sInputSystem->mCurrMouseX = mouseX;
-            sInputSystem->mCurrMouseY = mouseY;
-            if (sInputSystem->mPrevMouseX == -1)
-            {
-                sInputSystem->mPrevMouseX = mouseX;
-                sInputSystem->mPrevMouseY = mouseY;
-            }
-
-            RECT rect;
-            GetClientRect(window, &rect);
-            sInputSystem->mMouseLeftEdge = mouseX <= rect.left;
-            sInputSystem->mMouseRightEdge = mouseX + 1 >= rect.right;
-            sInputSystem->mMouseTopEdge = mouseY <= rect.top;
-            sInputSystem->mMouseBottomEdge = mouseY + 1 >= rect.bottom;
-            break;
-        }
-        case WM_KEYDOWN:
-        {
-            if (wParam < 256)
-            {
-                sInputSystem->mCurrKeys[wParam] = true;
-            }
-            break;
-        }
-        case WM_KEYUP:
-        {
-            if (wParam < 256)
-            {
-                sInputSystem->mCurrKeys[wParam] = false;
-            }
-            break;
-        }
-        }
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
+            sInputSystem->mCurrMouseButtons[0] = (action == GLFW_PRESS);
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+            sInputSystem->mCurrMouseButtons[1] = (action == GLFW_PRESS);
+        else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+            sInputSystem->mCurrMouseButtons[2] = (action == GLFW_PRESS);
     }
-
-    return sWindowMessageHandler.ForwardMessage(window, message, wParam, lParam);
 }
 
-void InputSystem::StaticInitialize(HWND window)
+void InputSystem::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    ASSERT(sInputSystem == nullptr, "InputSystem -- System already initialized!");
+    if (sInputSystem)
+    {
+        sInputSystem->mMouseWheel = static_cast<float>(yoffset);
+    }
+}
+
+void InputSystem::CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (sInputSystem)
+    {
+        sInputSystem->mCurrMouseX = static_cast<int>(xpos);
+        sInputSystem->mCurrMouseY = static_cast<int>(ypos);
+    }
+}
+
+void InputSystem::StaticInitialize(GLFWwindow* window)
+{
+    ASSERT(sInputSystem == nullptr, "InputSystem: already initialized!");
     sInputSystem = std::make_unique<InputSystem>();
     sInputSystem->Initialize(window);
 }
@@ -157,97 +96,108 @@ void InputSystem::StaticTerminate()
 
 InputSystem* InputSystem::Get()
 {
-    ASSERT(sInputSystem != nullptr, "InputSystem -- No system registered.");
+    ASSERT(sInputSystem != nullptr, "InputSystem: is not initialized");
     return sInputSystem.get();
 }
 
 InputSystem::~InputSystem()
 {
-    ASSERT(!mInitialized, "InputSystem -- Terminate() must be called to clean up!");
+    ASSERT(!mInitialized, "InputSystem: must be terminated first!");
 }
 
-void InputSystem::Initialize(HWND window)
+void InputSystem::Initialize(GLFWwindow* window)
 {
-    // Check if we have already initialized the system
-    if (mInitialized)
-    {
-        LOG("InputSystem -- System already initialized.");
-        return;
-    }
+    mWindow = window;
 
-    LOG("InputSystem -- Initializing...");
+    // Set up GLFW callbacks
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetScrollCallback(window, ScrollCallback);
+    glfwSetCursorPosCallback(window, CursorPosCallback);
 
-    // Hook application to window's procedure
-    sWindowMessageHandler.Hook(window, InputSystemMessageHandler);
+    // Initialize mouse position
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    mCurrMouseX = mPrevMouseX = static_cast<int>(xpos);
+    mCurrMouseY = mPrevMouseY = static_cast<int>(ypos);
 
     mInitialized = true;
-
-    LOG("InputSystem -- System initialized.");
 }
 
 void InputSystem::Terminate()
 {
-    // Check if we have already terminated the system
-    if (!mInitialized)
+    // Clear GLFW callbacks
+    if (mWindow)
     {
-        LOG("InputSystem -- System already terminated.");
-        return;
+        glfwSetKeyCallback(mWindow, nullptr);
+        glfwSetMouseButtonCallback(mWindow, nullptr);
+        glfwSetScrollCallback(mWindow, nullptr);
+        glfwSetCursorPosCallback(mWindow, nullptr);
     }
 
-    LOG("InputSystem -- Terminating...");
-
-    // mGamePad.reset();
+    mWindow = nullptr;
     mInitialized = false;
-
-    // Restore original window's procedure
-    sWindowMessageHandler.Unhook();
-
-    LOG("InputSystem -- System terminated.");
 }
 
 void InputSystem::Update()
 {
-    ASSERT(mInitialized, "InputSystem -- System not initialized.");
+    // Update previous state
+    std::memcpy(mPrevKeys, mCurrKeys, sizeof(mCurrKeys));
+    std::memcpy(mPrevMouseButtons, mCurrMouseButtons, sizeof(mCurrMouseButtons));
 
-    // Store the previous keyboard state
+    // Calculate pressed keys
     for (int i = 0; i < 512; ++i)
     {
         mPressedKeys[i] = !mPrevKeys[i] && mCurrKeys[i];
     }
-    memcpy(mPrevKeys, mCurrKeys, sizeof(mCurrKeys));
 
-    // Update mouse movement
+    // Calculate pressed mouse buttons
+    for (int i = 0; i < 3; ++i)
+    {
+        mPressedMouseButtons[i] = !mPrevMouseButtons[i] && mCurrMouseButtons[i];
+    }
+
+    // Calculate mouse movement
     mMouseMoveX = mCurrMouseX - mPrevMouseX;
     mMouseMoveY = mCurrMouseY - mPrevMouseY;
     mPrevMouseX = mCurrMouseX;
     mPrevMouseY = mCurrMouseY;
 
-    // Store the previous mouse state
-    for (int i = 0; i < 3; ++i)
+    // Check edge proximity
+    if (mWindow)
     {
-        mPressedMouseButtons[i] = !mPrevMouseButtons[i] && mCurrMouseButtons[i];
+        int windowWidth, windowHeight;
+        glfwGetWindowSize(mWindow, &windowWidth, &windowHeight);
+
+        const int edgeThreshold = 10;
+        mMouseLeftEdge = (mCurrMouseX < edgeThreshold);
+        mMouseRightEdge = (mCurrMouseX > windowWidth - edgeThreshold);
+        mMouseTopEdge = (mCurrMouseY < edgeThreshold);
+        mMouseBottomEdge = (mCurrMouseY > windowHeight - edgeThreshold);
     }
-    memcpy(mPrevMouseButtons, mCurrMouseButtons, sizeof(mCurrMouseButtons));
+
+    // Reset mouse wheel after processing
+    mMouseWheel = 0.0f;
 }
 
 bool InputSystem::IsKeyDown(KeyCode key) const
 {
-    return mCurrKeys[(int) key];
+    return mCurrKeys[static_cast<int>(key)];
 }
 
 bool InputSystem::IsKeyPressed(KeyCode key) const
 {
-    return mPressedKeys[(int) key];
+    return mPressedKeys[static_cast<int>(key)];
 }
 
 bool InputSystem::IsMouseDown(MouseButton button) const
 {
-    return mCurrMouseButtons[(int) button];
+    return mCurrMouseButtons[static_cast<int>(button)];
 }
 
 bool InputSystem::IsMousePressed(MouseButton button) const
 {
-    return mPressedMouseButtons[(int) button];
+    return mPressedMouseButtons[static_cast<int>(button)];
 }
 
 int InputSystem::GetMouseMoveX() const
@@ -297,12 +247,24 @@ bool InputSystem::IsMouseBottomEdge() const
 
 void InputSystem::ShowSystemCursor(bool show)
 {
-    ShowCursor(show);
+    if (mWindow)
+    {
+        glfwSetInputMode(mWindow, GLFW_CURSOR, show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+    }
 }
 
 void InputSystem::SetMouseClipToWindow(bool clip)
 {
     mClipMouseToWindow = clip;
+    // GLFW doesn't have direct cursor clipping, but GLFW_CURSOR_DISABLED captures the cursor
+    if (mWindow && clip)
+    {
+        glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    else if (mWindow && !clip)
+    {
+        glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
 }
 
 bool InputSystem::IsMouseClipToWindow() const

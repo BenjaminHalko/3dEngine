@@ -9,7 +9,7 @@ enum class Theme
     Light
 };
 
-void StaticInitialize(HWND window, bool docking = false, bool multiViewport = false);
+void StaticInitialize(GLFWwindow* window, bool docking = false, bool multiViewport = false);
 
 void StaticTerminate();
 

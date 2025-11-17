@@ -4,23 +4,23 @@ namespace Engine::Input
 {
 enum class KeyCode : uint32_t
 {
-    // Keyboard roll 1
-    ESCAPE = VK_ESCAPE,
-    F1 = VK_F1,
-    F2 = VK_F2,
-    F3 = VK_F3,
-    F4 = VK_F4,
-    F5 = VK_F5,
-    F6 = VK_F6,
-    F7 = VK_F7,
-    F8 = VK_F8,
-    F9 = VK_F9,
-    F10 = VK_F10,
-    F11 = VK_F11,
-    F12 = VK_F12,
+    // Function keys (GLFW key codes)
+    ESCAPE = 256,
+    F1 = 290,
+    F2 = 291,
+    F3 = 292,
+    F4 = 293,
+    F5 = 294,
+    F6 = 295,
+    F7 = 296,
+    F8 = 297,
+    F9 = 298,
+    F10 = 299,
+    F11 = 300,
+    F12 = 301,
 
-    // Keyboard roll 2
-    GRAVE = VK_OEM_3,
+    // Numbers
+    GRAVE = 96,
     ONE = '1',
     TWO = '2',
     THREE = '3',
@@ -31,12 +31,12 @@ enum class KeyCode : uint32_t
     EIGHT = '8',
     NINE = '9',
     ZERO = '0',
-    MINUS = VK_OEM_MINUS,
-    EQUALS = VK_OEM_PLUS,
-    BACKSPACE = VK_BACK,
+    MINUS = '-',
+    EQUALS = '=',
+    BACKSPACE = 259,
 
-    // Keyboard roll 3
-    TAB = VK_TAB,
+    // Main keyboard
+    TAB = 258,
     Q = 'Q',
     W = 'W',
     E = 'E',
@@ -47,11 +47,10 @@ enum class KeyCode : uint32_t
     I = 'I',
     O = 'O',
     P = 'P',
-    LBRACKET = VK_OEM_4,
-    RBRACKET = VK_OEM_6,
-    BACKSLASH = VK_OEM_5,
+    LBRACKET = '[',
+    RBRACKET = ']',
+    BACKSLASH = '\\',
 
-    // Keyboard roll 4
     A = 'A',
     S = 'S',
     D = 'D',
@@ -61,11 +60,11 @@ enum class KeyCode : uint32_t
     J = 'J',
     K = 'K',
     L = 'L',
-    SEMICOLON = VK_OEM_1,
-    APOSTROPHE = VK_OEM_7,
-    ENTER = VK_RETURN,
+    SEMICOLON = ';',
+    APOSTROPHE = '\'',
+    RETURN = 257,
 
-    // Keyboard roll 5
+    LSHIFT = 340,
     Z = 'Z',
     X = 'X',
     C = 'C',
@@ -73,57 +72,36 @@ enum class KeyCode : uint32_t
     B = 'B',
     N = 'N',
     M = 'M',
-    COMMA = VK_OEM_COMMA,
-    PERIOD = VK_OEM_PERIOD,
-    SLASH = VK_OEM_2,
+    COMMA = ',',
+    PERIOD = '.',
+    SLASH = '/',
+    RSHIFT = 344,
 
-    // Lock keys
-    CAPSLOCK = VK_CAPITAL,
-    NUMLOCK = VK_NUMLOCK,
-    SCROLLLOCK = VK_SCROLL,
+    LCONTROL = 341,
+    LALT = 342,
+    SPACE = ' ',
+    RALT = 346,
+    RCONTROL = 345,
 
-    // Numpad keys
-    NUMPAD1 = VK_NUMPAD1,
-    NUMPAD2 = VK_NUMPAD2,
-    NUMPAD3 = VK_NUMPAD3,
-    NUMPAD4 = VK_NUMPAD4,
-    NUMPAD5 = VK_NUMPAD5,
-    NUMPAD6 = VK_NUMPAD6,
-    NUMPAD7 = VK_NUMPAD7,
-    NUMPAD8 = VK_NUMPAD8,
-    NUMPAD9 = VK_NUMPAD9,
-    NUMPAD0 = VK_NUMPAD0,
-    NUM_ADD = VK_ADD,
-    NUM_SUB = VK_SUBTRACT,
-    NUM_MUL = VK_MULTIPLY,
-    NUM_DIV = VK_DIVIDE,
-    NUM_ENTER = VK_RETURN,
-    NUM_DECIMAL = VK_DECIMAL,
+    // Arrows
+    UP = 265,
+    DOWN = 264,
+    LEFT = 263,
+    RIGHT = 262,
 
-    // Navigation keys
-    INS = VK_INSERT,
-    DEL = VK_DELETE,
-    HOME = VK_HOME,
-    END = VK_END,
-    PGUP = VK_PRIOR,
-    PGDN = VK_NEXT,
+    // Numpad
+    NUMPAD0 = 320,
+    NUMPAD1 = 321,
+    NUMPAD2 = 322,
+    NUMPAD3 = 323,
+    NUMPAD4 = 324,
+    NUMPAD5 = 325,
+    NUMPAD6 = 326,
+    NUMPAD7 = 327,
+    NUMPAD8 = 328,
+    NUMPAD9 = 329,
 
-    // Support keys
-    LSHIFT = VK_SHIFT,
-    RSHIFT = VK_SHIFT,
-    LCONTROL = VK_CONTROL,
-    RCONTROL = VK_CONTROL,
-    LALT = VK_MENU,
-    RALT = VK_MENU,
-    LWIN = VK_LWIN,
-    RWIN = VK_RWIN,
-    SPACE = VK_SPACE,
-
-    // Arrow keys
-    UP = VK_UP,
-    DOWN = VK_DOWN,
-    LEFT = VK_LEFT,
-    RIGHT = VK_RIGHT,
+    NUMPADENTER = 335,
 };
 
 enum class MouseButton : uint32_t

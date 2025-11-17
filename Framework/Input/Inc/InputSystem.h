@@ -7,7 +7,7 @@ namespace Engine::Input
 class InputSystem final
 {
   public:
-    static void StaticInitialize(HWND window);
+    static void StaticInitialize(GLFWwindow* window);
     static void StaticTerminate();
     static InputSystem* Get();
 
@@ -18,7 +18,7 @@ class InputSystem final
     InputSystem(const InputSystem&) = delete;
     InputSystem& operator=(const InputSystem&) = delete;
 
-    void Initialize(HWND window);
+    void Initialize(GLFWwindow* window);
     void Terminate();
 
     void Update();
@@ -46,12 +46,12 @@ class InputSystem final
     bool IsMouseClipToWindow() const;
 
   private:
-    static LRESULT CALLBACK InputSystemMessageHandler(HWND window,
-                                                      UINT message,
-                                                      WPARAM wParam,
-                                                      LPARAM lParam);
+    static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+    static void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
-    HWND mWindow = nullptr;
+    GLFWwindow* mWindow = nullptr;
 
     bool mCurrKeys[512]{};
     bool mPrevKeys[512]{};

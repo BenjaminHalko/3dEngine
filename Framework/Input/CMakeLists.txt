@@ -3,4 +3,4 @@ include(${CMAKE_SOURCE_DIR}/Cmake/framework_lib.cmake)
 
 target_compile_library(Input)
 
-target_link_libraries(Input PRIVATE Core)
+target_link_libraries(Input PRIVATE Core glfw)

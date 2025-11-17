@@ -16,7 +16,7 @@ class MainState : public AppState
     }
     void Update(float deltaTime) override
     {
-        mLifeTime -= std::max(deltaTime, 0.01f);
+        mLifeTime -= (deltaTime > 0.01f ? deltaTime : 0.01f);
         if (mLifeTime <= 0.0f)
         {
             MainApp().ChangeState("GameState");
@@ -41,7 +41,7 @@ class GameState : public AppState
     }
     void Update(float deltaTime) override
     {
-        mLifeTime -= std::max(deltaTime, 0.01f);
+        mLifeTime -= (deltaTime > 0.01f ? deltaTime : 0.01f);
         if (mLifeTime <= 0.0f)
         {
             MainApp().ChangeState("MainState");
