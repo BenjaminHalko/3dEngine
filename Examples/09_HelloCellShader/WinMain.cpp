@@ -2,7 +2,7 @@
 
 using namespace Engine;
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
+int main()
 {
     AppConfig config;
     config.appName = L"Hello Cell Shader";

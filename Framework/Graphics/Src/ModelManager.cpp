@@ -48,6 +48,7 @@ ModelId ModelManager::LoadModel(const std::filesystem::path& filePath)
         auto& modelPtr = iter->second;
         modelPtr = std::make_unique<Model>();
         ModelIO::LoadModel(fullPath, *modelPtr);
+        ModelIO::LoadMaterial(fullPath, *modelPtr);
     }
     return modelId;
 }

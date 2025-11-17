@@ -7,10 +7,12 @@ int main()
     myApp.AddState<GameState>("GameState");
 
     Engine::AppConfig appConfig;
-    appConfig.appName = L"Hello Model";
+    appConfig.appName = L"Hello Post Processing";
     appConfig.winWidth = 1280;
     appConfig.winHeight = 720;
 
     myApp.Run(appConfig);
     return 0;
 }
+
+

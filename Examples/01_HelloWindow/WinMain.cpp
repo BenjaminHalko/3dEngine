@@ -52,7 +52,7 @@ class GameState : public AppState
     float mLifeTime = 0.0f;
 };
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
+int main()
 {
     AppConfig config;
     config.appName = L"Hello Window";

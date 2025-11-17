@@ -23,9 +23,10 @@ MACRO(target_set_windows_application target)
         set_target_properties(${target} PROPERTIES
             LINK_FLAGS "-Wl,--subsystem,console"
         )
-    elseif(MSVC)
+    else()
+        # For Clang/MSVC - set console subsystem with main entry point
         set_target_properties(${target} PROPERTIES
-            LINK_FLAGS "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup"
+            LINK_FLAGS "-Xlinker /SUBSYSTEM:CONSOLE"
         )
     endif()
 endmacro()

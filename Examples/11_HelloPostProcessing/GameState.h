@@ -25,6 +25,16 @@ private:
     Engine::Graphics::RenderGroup mCharacter;
     Engine::Graphics::RenderGroup parasite;
     Engine::Graphics::RenderGroup zombie;
+    Engine::Graphics::RenderObject mGround;
+
+    Engine::Graphics::RenderObject mScreenQuad;
 
     Engine::Graphics::StandardEffect mStandardEffect;
+    Engine::Graphics::RenderTarget mRenderTarget;
+
+    Engine::Graphics::Texture mCombineTexture;
+
+    Engine::Graphics::PostProcessingEffect mPostProcessingEffect;
 };
+
+

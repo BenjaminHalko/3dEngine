@@ -1,7 +1,7 @@
 #include "ShapeState.h"
 #include <Engine/Inc/Engine.h>
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
+int main()
 {
     Engine::AppConfig config;
     config.appName = L"Hello Shapes";
