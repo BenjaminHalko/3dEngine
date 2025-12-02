@@ -3,6 +3,7 @@
 .cache/
 .vscode/
 .cmake/
+.DS_Store
 CMakeFiles/
 cmake-*/
 build/

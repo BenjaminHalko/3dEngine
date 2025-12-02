@@ -6,8 +6,18 @@
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
 #elif defined(__APPLE__)
+    // Save and undefine DXMT Windows macros that conflict with macOS system headers
+    #pragma push_macro("interface")
+    #pragma push_macro("BOOL")
+    #undef interface
+    #undef BOOL
+
     #define GLFW_EXPOSE_NATIVE_COCOA
     #include <GLFW/glfw3native.h>
+
+    // Restore DXMT Windows macros
+    #pragma pop_macro("BOOL")
+    #pragma pop_macro("interface")
 #endif
 
 using namespace Engine;

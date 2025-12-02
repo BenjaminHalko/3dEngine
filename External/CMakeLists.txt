@@ -45,6 +45,78 @@ endif()
 
 set_target_properties(ImGui PROPERTIES FOLDER "External")
 
+# Configure DXMT for macOS
+if(APPLE)
+    set(DXMT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dxmt)
+
+    # Build D3DCompiler implementation
+    add_library(d3dcompiler STATIC
+        ${DXMT_DIR}/d3dcompiler.cpp
+    )
+    target_include_directories(d3dcompiler PRIVATE
+        ${DXMT_DIR}/include/directx
+        ${DXMT_DIR}/include/windows
+    )
+
+    # Build native macdrv bridge for GLFW-Metal integration
+    add_library(native_macdrv_bridge SHARED
+        ${DXMT_DIR}/native_macdrv_bridge.mm
+    )
+    target_link_libraries(native_macdrv_bridge PRIVATE
+        "-framework Cocoa"
+        "-framework Metal"
+        "-framework QuartzCore"
+    )
+    set_target_properties(native_macdrv_bridge PROPERTIES
+        COMPILE_FLAGS "-fvisibility=default"
+        LIBRARY_OUTPUT_DIRECTORY "${DXMT_DIR}"
+    )
+
+    # Import pre-built DXMT shared libraries as proper IMPORTED targets
+    add_library(dxmt_d3d11 SHARED IMPORTED)
+    set_target_properties(dxmt_d3d11 PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/d3d11.dylib")
+
+    add_library(dxmt_dxgi SHARED IMPORTED)
+    set_target_properties(dxmt_dxgi PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/dxgi.dylib")
+
+    add_library(dxmt_winemetal SHARED IMPORTED)
+    set_target_properties(dxmt_winemetal PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/winemetal.dylib")
+
+    # Import static libraries
+    add_library(dxmt_core STATIC IMPORTED)
+    set_target_properties(dxmt_core PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/libdxmt.a")
+
+    add_library(dxmt_airconv STATIC IMPORTED)
+    set_target_properties(dxmt_airconv PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/libairconv.a")
+
+    add_library(dxmt_util STATIC IMPORTED)
+    set_target_properties(dxmt_util PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/libutil.a")
+
+    # Create interface library that wraps all DXMT components
+    add_library(dxmt INTERFACE)
+    add_dependencies(dxmt native_macdrv_bridge d3dcompiler)
+    target_link_libraries(dxmt INTERFACE
+        native_macdrv_bridge
+        dxmt_d3d11
+        dxmt_dxgi
+        dxmt_winemetal
+        dxmt_core
+        dxmt_airconv
+        dxmt_util
+        d3dcompiler
+    )
+    target_include_directories(dxmt INTERFACE
+        ${DXMT_DIR}/include/directx
+        ${DXMT_DIR}/include/windows
+    )
+
+    # Also add ImGui DXMT include directories
+    target_include_directories(ImGui PUBLIC
+        ${DXMT_DIR}/include/directx
+        ${DXMT_DIR}/include/windows
+    )
+endif()
+
 # Configure Assimp
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)

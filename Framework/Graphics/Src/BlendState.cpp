@@ -13,9 +13,9 @@ D3D11_BLEND GetSrcBlend(BlendState::Mode mode)
     switch (mode)
     {
     case BlendState::Mode::Opaque:
-        return D3D11_BLEND_SRC1_ALPHA;
+        return D3D11_BLEND_ONE;
     case BlendState::Mode::AlphaBlend:
-        return D3D11_BLEND_SRC1_ALPHA;
+        return D3D11_BLEND_SRC_ALPHA;
     case BlendState::Mode::AlphaPremultiplied:
         return D3D11_BLEND_ONE;
     case BlendState::Mode::Additive:
