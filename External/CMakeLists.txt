@@ -58,18 +58,10 @@ if(APPLE)
         ${DXMT_DIR}/include/windows
     )
 
-    # Build native macdrv bridge for GLFW-Metal integration
-    add_library(native_macdrv_bridge SHARED
-        ${DXMT_DIR}/native_macdrv_bridge.mm
-    )
-    target_link_libraries(native_macdrv_bridge PRIVATE
-        "-framework Cocoa"
-        "-framework Metal"
-        "-framework QuartzCore"
-    )
+    # Import pre-built native macdrv bridge for GLFW-Metal integration
+    add_library(native_macdrv_bridge SHARED IMPORTED)
     set_target_properties(native_macdrv_bridge PROPERTIES
-        COMPILE_FLAGS "-fvisibility=default"
-        LIBRARY_OUTPUT_DIRECTORY "${DXMT_DIR}"
+        IMPORTED_LOCATION "${DXMT_DIR}/libnative_macdrv_bridge.dylib"
     )
 
     # Import pre-built DXMT shared libraries as proper IMPORTED targets
