@@ -221,11 +221,6 @@ static HRESULT CompileShaderWithFxc(
         }
     }
 
-    if (fxcPath.empty()) {
-        // Try absolute path as fallback
-        fxcPath = "/Users/benjamin/Documents/Projects/3D_engines/3dEngine/Tools/fxc/fxc.exe";
-    }
-
     // Build Wine command
     std::string cmd = "wine \"" + toWinePath(fxcPath) + "\" "
                      "/T " + pTarget + " "
