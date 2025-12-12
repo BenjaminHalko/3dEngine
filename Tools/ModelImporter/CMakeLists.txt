@@ -5,8 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/Framework ${CMAKE_SOURCE_DIR}/Engine ${C
 
 add_executable(ModelImporter main.cpp)
 
-target_link_libraries(ModelImporter 
-    Engine 
+target_link_libraries(ModelImporter
+    Engine
     assimp
 )
-

@@ -6,7 +6,8 @@
 .cmake/
 .claude/
 .DS_Store
-_dxgi.log
+*.log
 CMakeFiles/
 cmake-*/
-build/
+build*/
+imgui.ini

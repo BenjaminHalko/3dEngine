@@ -9,6 +9,16 @@ using namespace Engine::Graphics;
 
 namespace
 {
+std::string ReadFileContents(const std::filesystem::path& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        return "";
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
 std::vector<D3D11_INPUT_ELEMENT_DESC> GetVertexLayout(uint32_t format)
 {
     std::vector<D3D11_INPUT_ELEMENT_DESC> vertexLayout;
@@ -74,15 +84,23 @@ void VertexShader::Initialize(const std::filesystem::path& shaderPath, uint32_t 
     DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
     ID3DBlob* shaderBlob = nullptr;
     ID3DBlob* errorBlob = nullptr;
-    HRESULT hr = D3DCompileFromFile(shaderPath.c_str(),
-                                    nullptr,
-                                    D3D_COMPILE_STANDARD_FILE_INCLUDE,
-                                    "VS",
-                                    "vs_5_0",
-                                    shaderFlags,
-                                    0,
-                                    &shaderBlob,
-                                    &errorBlob);
+
+    // Read shader source and compile
+    std::string shaderSource = ReadFileContents(shaderPath);
+    ASSERT(!shaderSource.empty(), "Failed to read shader file: %s", shaderPath.string().c_str());
+
+    std::string fileName = shaderPath.filename().string();
+    HRESULT hr = D3DCompile(shaderSource.c_str(),
+                            shaderSource.size(),
+                            fileName.c_str(),
+                            nullptr,
+                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                            "VS",
+                            "vs_5_0",
+                            shaderFlags,
+                            0,
+                            &shaderBlob,
+                            &errorBlob);
 
     if (errorBlob != nullptr && errorBlob->GetBufferPointer() != nullptr)
     {

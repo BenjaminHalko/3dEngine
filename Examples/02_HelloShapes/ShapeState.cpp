@@ -4,6 +4,19 @@ using namespace Engine;
 using namespace Engine::Math;
 using namespace Engine::Graphics;
 
+namespace
+{
+    std::string ReadFileContents(const std::filesystem::path& path)
+    {
+        std::ifstream file(path);
+        if (!file.is_open())
+            return "";
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        return buffer.str();
+    }
+}
+
 void ShapeState::Initialize()
 {
     // Creates a shape out of the vertices
@@ -28,20 +41,26 @@ void ShapeState::Initialize()
     //====================================================================================================
 
     // BIND TO FUNCTION IN SPECIFIED SHADER FILE
-    std::filesystem::path shaderFilePath = L"Assets/Shaders/DoColor.fx";
+    std::filesystem::path shaderFilePath = "Assets/Shaders/DoColor.fx";
+
+    std::string shaderSource = ReadFileContents(shaderFilePath);
+    ASSERT(!shaderSource.empty(), "Failed to read shader file");
 
     DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
     ID3DBlob* shaderBlob = nullptr;
     ID3DBlob* errorBlob = nullptr;
-    hr = D3DCompileFromFile(shaderFilePath.c_str(),
-                            nullptr,
-                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
-                            "VS",
-                            "vs_5_0",
-                            shaderFlags,
-                            0,
-                            &shaderBlob,
-                            &errorBlob);
+    std::string fileName = shaderFilePath.filename().string();
+    hr = D3DCompile(shaderSource.c_str(),
+                    shaderSource.size(),
+                    fileName.c_str(),
+                    nullptr,
+                    D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                    "VS",
+                    "vs_5_0",
+                    shaderFlags,
+                    0,
+                    &shaderBlob,
+                    &errorBlob);
 
     if (errorBlob != nullptr && errorBlob->GetBufferPointer() != nullptr)
     {
@@ -72,15 +91,17 @@ void ShapeState::Initialize()
     //======================================================================================================
 
     // BIND TO PIXEL FUNCTION IN SPECIFIED SHADER FILE
-    hr = D3DCompileFromFile(shaderFilePath.c_str(),
-                            nullptr,
-                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
-                            "PS",
-                            "ps_5_0",
-                            shaderFlags,
-                            0,
-                            &shaderBlob,
-                            &errorBlob);
+    hr = D3DCompile(shaderSource.c_str(),
+                    shaderSource.size(),
+                    fileName.c_str(),
+                    nullptr,
+                    D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                    "PS",
+                    "ps_5_0",
+                    shaderFlags,
+                    0,
+                    &shaderBlob,
+                    &errorBlob);
 
     if (errorBlob != nullptr && errorBlob->GetBufferPointer() != nullptr)
     {

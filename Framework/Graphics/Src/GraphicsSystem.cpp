@@ -1,6 +1,10 @@
 #include "Precompiled.h"
 #include "GraphicsSystem.h"
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <cstdlib>
+#endif
+
 // Platform-specific native window access
 #if defined(_WIN32)
     #define GLFW_EXPOSE_NATIVE_WIN32
@@ -18,6 +22,9 @@
     // Restore DXMT Windows macros
     #pragma pop_macro("BOOL")
     #pragma pop_macro("interface")
+#else
+    // X11 helper defined in X11Window.cpp to avoid Window name conflict
+    extern "C" void* GetX11WindowHandle(GLFWwindow* window);
 #endif
 
 using namespace Engine;
@@ -65,15 +72,22 @@ GraphicsSystem::~GraphicsSystem()
 
 void GraphicsSystem::Initialize(GLFWwindow* window, bool fullscreen)
 {
+#if !defined(_WIN32) && !defined(__APPLE__)
+    // Tell DXVK to use GLFW for window system integration
+    setenv("DXVK_WSI_DRIVER", "glfw", 0);
+#endif
+
     // Get window dimensions from GLFW
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    // Get native window handle - DXMT accepts NSWindow cast to HWND on macOS
+    // Get native window handle
 #ifdef _WIN32
     HWND nativeWindow = glfwGetWin32Window(window);
-#else
+#elif defined(__APPLE__)
     HWND nativeWindow = (HWND)glfwGetCocoaWindow(window);
+#else
+    HWND nativeWindow = (HWND)GetX11WindowHandle(window);
 #endif
 
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};

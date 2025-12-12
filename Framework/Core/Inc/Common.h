@@ -9,16 +9,20 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <climits>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <list>
 #include <map>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -29,6 +33,9 @@
 #ifndef _WIN32
     #include <cstdarg>
     #include <cwchar>
+    #include <cerrno>
+
+    using errno_t = int;
 
     // fopen_s replacement
     inline errno_t fopen_s(FILE** pFile, const char* filename, const char* mode) {

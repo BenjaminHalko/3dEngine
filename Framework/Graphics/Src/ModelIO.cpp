@@ -2,6 +2,10 @@
 #include "ModelIO.h"
 #include "Model.h"
 
+#ifndef MAX_PATH
+#define MAX_PATH 4096
+#endif
+
 using namespace Engine;
 using namespace Engine::Graphics;
 
@@ -158,7 +162,11 @@ void ModelIO::LoadMaterial(std::filesystem::path filePath, Model& model)
     auto TryReadTextureName = [&](auto& fileName)
         {
             char buffer[MAX_PATH];
-            fscanf_s(file, "%s\n", &buffer, (uint32_t)sizeof(buffer));
+#ifdef _WIN32
+            fscanf_s(file, "%s\n", buffer, (uint32_t)sizeof(buffer));
+#else
+            fscanf(file, "%s\n", buffer);
+#endif
             if (strcmp(buffer, "<NONE>") != 0)
             {
                 fileName = filePath.replace_filename(buffer).string();

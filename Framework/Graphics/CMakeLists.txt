@@ -3,11 +3,20 @@ include(${CMAKE_SOURCE_DIR}/Cmake/framework_lib.cmake)
 
 target_compile_library(Graphics)
 
+# Exclude X11Window.cpp from precompiled headers (it has X11/Window name conflict)
+if(UNIX AND NOT APPLE)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Src/X11Window.cpp
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+    )
+endif()
+
 target_link_libraries(Graphics PUBLIC ImGui glfw PRIVATE Core Math)
 
-if(APPLE)
-    # Link DXMT interface library and required macOS frameworks
-    # Use PUBLIC so these propagate to consumers (Engine, examples)
+if(WIN32)
+    # Windows: Use native DirectX (linked at example level)
+elseif(APPLE)
+    # macOS: Link DXMT and required frameworks
     target_link_libraries(Graphics PUBLIC dxmt)
     find_library(METAL_LIBRARY Metal)
     find_library(QUARTZCORE_LIBRARY QuartzCore)
@@ -20,5 +29,6 @@ if(APPLE)
         ${APPKIT_LIBRARY}
     )
 else()
-    target_link_directories(Graphics PRIVATE ${CMAKE_SOURCE_DIR}/external/DirectXTK)
+    # Linux: Link DXVK-native
+    target_link_libraries(Graphics PUBLIC dxvk)
 endif()
