@@ -2,7 +2,6 @@
 .idea/
 .cache/
 .vscode/
-.zed/
 .cmake/
 .claude/
 .DS_Store
