@@ -10962,14 +10962,9 @@ typedef enum D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT {
 } D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT;
 #define D3D11_SDK_VERSION (7)
 
-#include <d3d10_1.h>
 #ifndef D3D11_IGNORE_SDK_LAYERS
 # include <d3d11sdklayers.h>
 #endif
-#include <d3d10misc.h>
-#include <d3d10shader.h>
-#include <d3d10effect.h>
-#include <d3d10_1shader.h>
 #define _FACD3D11 (0x87c)
 
 #define MAKE_D3D11_HRESULT(code) MAKE_HRESULT(SEVERITY_ERROR, _FACD3D11, code)

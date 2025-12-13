@@ -9,30 +9,61 @@ add_subdirectory(glfw)
 if(NOT WIN32)
     set(VKD3D_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vkd3d)
 
-    add_library(vkd3d-common STATIC IMPORTED)
-    set_target_properties(vkd3d-common PROPERTIES
-        IMPORTED_LOCATION "${VKD3D_DIR}/lib/libvkd3d-common.a"
-    )
+    # Set platform-specific library path
+    if(APPLE)
+        set(VKD3D_LIB_DIR "${VKD3D_DIR}/lib/macos")
+    else()
+        set(VKD3D_LIB_DIR "${VKD3D_DIR}/lib/linux")
+    endif()
 
-    add_library(vkd3d STATIC IMPORTED)
-    set_target_properties(vkd3d PROPERTIES
-        IMPORTED_LOCATION "${VKD3D_DIR}/lib/libvkd3d.a"
-    )
+    if(APPLE)
+        add_library(vkd3d SHARED IMPORTED)
+        add_library(vkd3d-shader SHARED IMPORTED)
+        add_library(vkd3d-utils SHARED IMPORTED)
 
-    add_library(vkd3d-shader STATIC IMPORTED)
-    set_target_properties(vkd3d-shader PROPERTIES
-        IMPORTED_LOCATION "${VKD3D_DIR}/lib/libvkd3d-shader.a"
-    )
+        set_target_properties(vkd3d PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d.1.dylib"
+        )
+        set_target_properties(vkd3d-shader PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-shader.1.dylib"
+        )
+        set_target_properties(vkd3d-utils PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-utils.1.dylib"
+        )
 
-    add_library(vkd3d-utils STATIC IMPORTED)
-    set_target_properties(vkd3d-utils PROPERTIES
-        IMPORTED_LOCATION "${VKD3D_DIR}/lib/libvkd3d-utils.a"
-    )
+        # d3dcompiler interface wraps vkd3d-utils which provides D3DCompile
+        add_library(d3dcompiler INTERFACE)
+        target_link_libraries(d3dcompiler INTERFACE vkd3d-utils vkd3d-shader vkd3d)
+        target_include_directories(d3dcompiler INTERFACE ${VKD3D_DIR}/include)
 
-    # d3dcompiler interface wraps vkd3d-utils which provides D3DCompile
-    add_library(d3dcompiler INTERFACE)
-    target_link_libraries(d3dcompiler INTERFACE vkd3d-utils vkd3d-shader vkd3d vkd3d-common)
-    target_include_directories(d3dcompiler INTERFACE ${VKD3D_DIR}/include)
+        # Copy vkd3d dylibs to output directory
+        set(VKD3D_DYLIBS
+            "${VKD3D_LIB_DIR}/libvkd3d.1.dylib"
+            "${VKD3D_LIB_DIR}/libvkd3d-shader.1.dylib"
+            "${VKD3D_LIB_DIR}/libvkd3d-utils.1.dylib"
+        )
+        file(COPY ${VKD3D_DYLIBS} DESTINATION ${CMAKE_BINARY_DIR}/bin)
+    else()
+        # Linux uses static libraries
+        add_library(vkd3d STATIC IMPORTED)
+        add_library(vkd3d-shader STATIC IMPORTED)
+        add_library(vkd3d-utils STATIC IMPORTED)
+
+        set_target_properties(vkd3d PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d.a"
+        )
+        set_target_properties(vkd3d-shader PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-shader.a"
+        )
+        set_target_properties(vkd3d-utils PROPERTIES
+            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-utils.a"
+        )
+
+        # d3dcompiler interface wraps vkd3d-utils which provides D3DCompile
+        add_library(d3dcompiler INTERFACE)
+        target_link_libraries(d3dcompiler INTERFACE vkd3d-utils vkd3d-shader vkd3d)
+        target_include_directories(d3dcompiler INTERFACE ${VKD3D_DIR}/include)
+    endif()
 endif()
 
 # Configure ImGui with GLFW backend
@@ -112,7 +143,7 @@ if(APPLE)
     set_target_properties(dxmt_airconv PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/libairconv.a")
 
     add_library(dxmt_util STATIC IMPORTED)
-    set_target_properties(dxmt_util PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/libutil.a")
+    set_target_properties(dxmt_util PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/libutil.a")
 
     # Create interface library that wraps all DXMT components
     add_library(dxmt INTERFACE)
