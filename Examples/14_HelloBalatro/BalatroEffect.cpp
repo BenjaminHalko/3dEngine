@@ -632,7 +632,7 @@ void BalatroEffect::DebugUI()
 
         ImGui::Separator();
 
-        ImGui::DragFloat("Contrast", &mContrast, 0.1f, 0.1f, 10.0f);
+        ImGui::DragFloat("Contrast", &mContrast, 0.1f, 0.1f, 20.0f);
         ImGui::DragFloat("Spin Amount", &mSpinAmount, 0.01f, 0.0f, 2.0f);
         ImGui::DragFloat("Pixel Filter", &mPixelFilter, 10.0f, 100.0f, 2000.0f);
 
