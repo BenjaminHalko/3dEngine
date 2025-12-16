@@ -7,7 +7,7 @@ using namespace Engine::Input;
 void GameState::Initialize()
 {
     // Initialize GPU Communication
-    std::filesystem::path shaderFile = L"Assets/Shaders/DoTexture.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/DoTexture.hlsl";
     mVertexShader.Initialize<VertexPX>(shaderFile);
     mPixelShader.Initialize(shaderFile);
     mSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Wrap);

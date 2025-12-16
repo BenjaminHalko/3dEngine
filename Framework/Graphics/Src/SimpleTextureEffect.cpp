@@ -9,7 +9,7 @@ using namespace Engine::Graphics;
 
 void SimpleTextureEffect::Initialize()
 {
-    std::filesystem::path shaderPath = L"../../Assets/Shaders/DoTexture.fx";
+    std::filesystem::path shaderPath = L"../../Assets/Shaders/DoTexture.hlsl";
     mVertexShader.Initialize<VertexPX>(shaderPath);
     mPixelShader.Initialize(shaderPath);
     mSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Wrap);

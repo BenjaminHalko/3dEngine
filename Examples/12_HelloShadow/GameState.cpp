@@ -36,7 +36,7 @@ void GameState::Initialize()
     mShadowEffect.Initialize();
     mShadowEffect.SetDirectionalLight(mDirectionalLight);
 
-    std::filesystem::path shaderFile = "Assets/Shaders/Standard.fx";
+    std::filesystem::path shaderFile = "Assets/Shaders/Standard.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);

@@ -12,7 +12,7 @@ using namespace Engine::Graphics;
 
 void TerrainEffect::Initialize()
 {
-    std::filesystem::path shaderFile = "../../Assets/Shaders/Terrain.fx";
+    std::filesystem::path shaderFile = "../../Assets/Shaders/Terrain.hlsl";
     mVertexShader.Initialize<Vertex>(shaderFile);
     mPixelShader.Initialize(shaderFile);
 

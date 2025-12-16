@@ -32,12 +32,12 @@ void GameState::Initialize()
     MeshPX screenQuadMesh = MeshBuilder::CreateScreenQuadPX();
     mScreenQuad.meshBuffer.Initialize(screenQuadMesh);
 
-    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
 
-    shaderFile = L"Assets/Shaders/PostProcessing.fx";
+    shaderFile = L"Assets/Shaders/PostProcessing.hlsl";
     mPostProcessingEffect.Initialize(shaderFile);
     mPostProcessingEffect.SetTexture(&mRenderTarget);
     mPostProcessingEffect.SetTexture(&mCombineTexture, 1);
@@ -168,5 +168,3 @@ void GameState::UpdateCamera(float deltaTime)
         mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
     }
 }
-
-

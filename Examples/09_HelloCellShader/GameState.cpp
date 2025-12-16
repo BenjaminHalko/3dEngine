@@ -67,7 +67,7 @@ void GameState::Initialize()
     mRenderObject_Water.bumpMapId = tm4->LoadTexture(L"water/water_height.jpg");
 
 
-    std::filesystem::path shaderFile = L"Assets/Shaders/CelShader.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/CelShader.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
@@ -229,4 +229,3 @@ void GameState::UpdateCamera(float deltaTime)
         mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
     }
 }
-

@@ -8,7 +8,7 @@ void GameState::Initialize()
     MeshPX screenQuadMesh = MeshBuilder::CreateScreenQuadPX();
     mScreenQuad.meshBuffer.Initialize(screenQuadMesh);
 
-    std::filesystem::path shaderFile = L"Assets/Shaders/Balatro.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/Balatro.hlsl";
     mBalatroEffect.Initialize(shaderFile);
 }
 

@@ -41,7 +41,7 @@ void ShapeState::Initialize()
     //====================================================================================================
 
     // BIND TO FUNCTION IN SPECIFIED SHADER FILE
-    std::filesystem::path shaderFilePath = "Assets/Shaders/DoColor.fx";
+    std::filesystem::path shaderFilePath = "Assets/Shaders/DoColor.hlsl";
 
     std::string shaderSource = ReadFileContents(shaderFilePath);
     ASSERT(!shaderSource.empty(), "Failed to read shader file");

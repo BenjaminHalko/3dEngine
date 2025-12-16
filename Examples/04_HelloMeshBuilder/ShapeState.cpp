@@ -16,7 +16,7 @@ void ShapeState::Initialize()
     CreateShape();
     mMeshbuffer.Initialize(mMesh);
 
-    std::filesystem::path shaderFilePath = L"Assets/Shaders/DoTexture.fx";
+    std::filesystem::path shaderFilePath = L"Assets/Shaders/DoTexture.hlsl";
     mVertexShader.Initialize<VertexPX>(shaderFilePath);
     mPixelShader.Initialize(shaderFilePath);
 

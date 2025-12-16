@@ -9,7 +9,7 @@ using namespace Engine::Graphics;
 
 void ShadowEffect::Initialize()
 {
-    std::filesystem::path shaderFile = "Assets/Shaders/Shadow.fx";
+    std::filesystem::path shaderFile = "Assets/Shaders/Shadow.hlsl";
     mVertexShader.Initialize<Vertex>(shaderFile);
     mPixelShader.Initialize(shaderFile);
     mTransformBuffer.Initialize();

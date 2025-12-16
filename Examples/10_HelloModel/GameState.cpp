@@ -24,7 +24,7 @@ void GameState::Initialize()
     zombie.Initialize("zombie/zombie.model"); // Zombie
     zombie.transform.position = { 0.5f, 0.0f, 0.6f };
 
-    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);

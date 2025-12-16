@@ -16,7 +16,7 @@ void ShapeState::Initialize()
     CreateShape();
     mMeshbuffer.Initialize(mMesh);
 
-    std::filesystem::path shaderFilePath = L"Assets/Shaders/DoTransformColor.fx";
+    std::filesystem::path shaderFilePath = L"Assets/Shaders/DoTransformColor.hlsl";
     mVertexShader.Initialize<VertexPC>(shaderFilePath);
     mPixelShader.Initialize(shaderFilePath);
 }
