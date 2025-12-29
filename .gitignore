@@ -1,7 +1,6 @@
 .vs/
 .idea/
 .cache/
-.vscode/
 .cmake/
 .claude/
 .DS_Store
