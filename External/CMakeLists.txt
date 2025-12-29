@@ -1,78 +1,30 @@
-# Add GLFW for cross-platform windowing (used on all platforms)
+# GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(glfw)
 
-# Configure d3dcompiler compatibility layer using vendored vkd3d-utils (non-Windows only)
-if(NOT WIN32)
-    set(VKD3D_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vkd3d)
+# DirectX11 compatibility
+if (NOT WIN32)
+    add_subdirectory(vkd3d)
 
-    # Set platform-specific library path
-    if(APPLE)
-        set(VKD3D_LIB_DIR "${VKD3D_DIR}/lib/macos")
+    if (APPLE)
+        add_subdirectory(dxmt)
     else()
-        set(VKD3D_LIB_DIR "${VKD3D_DIR}/lib/linux")
-    endif()
-
-    if(APPLE)
-        add_library(vkd3d SHARED IMPORTED)
-        add_library(vkd3d-shader SHARED IMPORTED)
-        add_library(vkd3d-utils SHARED IMPORTED)
-
-        set_target_properties(vkd3d PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d.1.dylib"
-        )
-        set_target_properties(vkd3d-shader PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-shader.1.dylib"
-        )
-        set_target_properties(vkd3d-utils PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-utils.1.dylib"
-        )
-
-        # d3dcompiler interface wraps vkd3d-utils which provides D3DCompile
-        add_library(d3dcompiler INTERFACE)
-        target_link_libraries(d3dcompiler INTERFACE vkd3d-utils vkd3d-shader vkd3d)
-        target_include_directories(d3dcompiler INTERFACE ${VKD3D_DIR}/include)
-
-        # Copy vkd3d dylibs to output directory
-        set(VKD3D_DYLIBS
-            "${VKD3D_LIB_DIR}/libvkd3d.1.dylib"
-            "${VKD3D_LIB_DIR}/libvkd3d-shader.1.dylib"
-            "${VKD3D_LIB_DIR}/libvkd3d-utils.1.dylib"
-        )
-        file(COPY ${VKD3D_DYLIBS} DESTINATION ${CMAKE_BINARY_DIR}/bin)
-    else()
-        # Linux uses static libraries
-        add_library(vkd3d STATIC IMPORTED)
-        add_library(vkd3d-shader STATIC IMPORTED)
-        add_library(vkd3d-utils STATIC IMPORTED)
-
-        set_target_properties(vkd3d PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d.a"
-        )
-        set_target_properties(vkd3d-shader PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-shader.a"
-        )
-        set_target_properties(vkd3d-utils PROPERTIES
-            IMPORTED_LOCATION "${VKD3D_LIB_DIR}/libvkd3d-utils.a"
-        )
-
-        # d3dcompiler interface wraps vkd3d-utils which provides D3DCompile
-        add_library(d3dcompiler INTERFACE)
-        target_link_libraries(d3dcompiler INTERFACE vkd3d-utils vkd3d-shader vkd3d)
-        target_include_directories(d3dcompiler INTERFACE ${VKD3D_DIR}/include)
+        add_subdirectory(dxvk)
     endif()
 endif()
 
-# Configure ImGui with GLFW backend
+# Assimp
+add_subdirectory(assimp)
+
+# Configure ImGui
 project(ImGui)
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ImGui)
 
 add_library(ImGui STATIC
     ${IMGUI_DIR}/imgui.cpp
-    ${IMGUI_DIR}/imgui_demo.cpp
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
@@ -111,104 +63,4 @@ else()
     )
     find_package(X11 REQUIRED)
     target_link_libraries(ImGui PUBLIC ${X11_LIBRARIES})
-endif()
-
-set_target_properties(ImGui PROPERTIES FOLDER "External")
-
-# Configure DXMT for macOS
-if(APPLE)
-    set(DXMT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dxmt)
-
-    # Import pre-built native macdrv bridge for GLFW-Metal integration
-    add_library(native_macdrv_bridge SHARED IMPORTED)
-    set_target_properties(native_macdrv_bridge PROPERTIES
-        IMPORTED_LOCATION "${DXMT_DIR}/lib/libnative_macdrv_bridge.dylib"
-    )
-
-    # Import pre-built DXMT shared libraries
-    add_library(dxmt_d3d11 SHARED IMPORTED)
-    set_target_properties(dxmt_d3d11 PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/d3d11.dylib")
-
-    add_library(dxmt_dxgi SHARED IMPORTED)
-    set_target_properties(dxmt_dxgi PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/dxgi.dylib")
-
-    add_library(dxmt_winemetal SHARED IMPORTED)
-    set_target_properties(dxmt_winemetal PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/winemetal.dylib")
-
-    # Import static libraries
-    add_library(dxmt_core STATIC IMPORTED)
-    set_target_properties(dxmt_core PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/libdxmt.a")
-
-    add_library(dxmt_airconv STATIC IMPORTED)
-    set_target_properties(dxmt_airconv PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/libairconv.a")
-
-    add_library(dxmt_util STATIC IMPORTED)
-    set_target_properties(dxmt_util PROPERTIES IMPORTED_LOCATION "${DXMT_DIR}/lib/libutil.a")
-
-    # Create interface library that wraps all DXMT components
-    add_library(dxmt INTERFACE)
-    target_link_libraries(dxmt INTERFACE
-        native_macdrv_bridge
-        dxmt_d3d11
-        dxmt_dxgi
-        dxmt_winemetal
-        dxmt_core
-        dxmt_airconv
-        dxmt_util
-        d3dcompiler
-    )
-    target_include_directories(dxmt INTERFACE
-        ${DXMT_DIR}/include/directx
-        ${DXMT_DIR}/include/windows
-    )
-endif()
-
-# Configure DXVK-native for Linux
-if(UNIX AND NOT APPLE)
-    set(DXVK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dxvk)
-
-    # Import pre-built DXVK shared libraries
-    add_library(dxvk_d3d11 SHARED IMPORTED)
-    set_target_properties(dxvk_d3d11 PROPERTIES
-        IMPORTED_LOCATION "${DXVK_DIR}/lib/libdxvk_d3d11.so.0"
-        IMPORTED_SONAME "libdxvk_d3d11.so.0"
-    )
-
-    add_library(dxvk_dxgi SHARED IMPORTED)
-    set_target_properties(dxvk_dxgi PROPERTIES
-        IMPORTED_LOCATION "${DXVK_DIR}/lib/libdxvk_dxgi.so.0"
-        IMPORTED_SONAME "libdxvk_dxgi.so.0"
-    )
-
-    # Create interface library that wraps DXVK components
-    add_library(dxvk INTERFACE)
-    target_link_libraries(dxvk INTERFACE
-        dxvk_d3d11
-        dxvk_dxgi
-        d3dcompiler
-    )
-    target_include_directories(dxvk INTERFACE
-        ${DXVK_DIR}/include
-    )
-endif()
-
-# Configure vendored Assimp
-set(ASSIMP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assimp)
-
-add_library(assimp SHARED IMPORTED GLOBAL)
-target_include_directories(assimp INTERFACE ${ASSIMP_DIR}/include)
-
-if(WIN32)
-    set_target_properties(assimp PROPERTIES
-        IMPORTED_LOCATION "${ASSIMP_DIR}/lib/assimp.lib"
-        IMPORTED_IMPLIB "${ASSIMP_DIR}/lib/assimp.lib"
-    )
-elseif(APPLE)
-    set_target_properties(assimp PROPERTIES
-        IMPORTED_LOCATION "${ASSIMP_DIR}/lib/libassimp.dylib"
-    )
-else()
-    set_target_properties(assimp PROPERTIES
-        IMPORTED_LOCATION "${ASSIMP_DIR}/lib/libassimp.so"
-    )
 endif()
