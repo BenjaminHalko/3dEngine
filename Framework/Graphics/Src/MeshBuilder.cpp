@@ -319,8 +319,9 @@ Mesh MeshBuilder::CreatePlane(int numRows, int numColums, float spacing, bool ho
     {
         for (int c = 0; c <= numColums; ++c)
         {
-            Math::Vector3 pos = (horizontal) ? Math::Vector3(w, 0.0f, h) : Math::Vector3(w, h, 0.0f);
-            mesh.vertices.push_back({ pos, normal, tan, { u, v } });
+            Math::Vector3 pos =
+                (horizontal) ? Math::Vector3(w, 0.0f, h) : Math::Vector3(w, h, 0.0f);
+            mesh.vertices.push_back({pos, normal, tan, {u, v}});
             w += spacing;
             u += uInc;
         }
@@ -549,7 +550,7 @@ MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path& filePath, float sca
     MeshPX mesh;
     FILE* file = nullptr;
     fopen_s(&file, filePath.u8string().c_str(), "r");
-    ASSERT(file != nullptr, "MeshBuilder: Can't open file %s", filePath.u8string().c_str());
+    ASSERT(file != nullptr, "MeshBuilder: Can't open file %s", filePath.string().c_str());
 
     // Read in file;
     std::vector<Math::Vector3> positions;
@@ -560,7 +561,7 @@ MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path& filePath, float sca
     while (true)
     {
         char buffer[128];
-        int result = fscanf_s(file, "%s", buffer, (uint32_t) std::size(buffer));
+        int result = fscanf(file, "%127s", buffer);
         if (result == EOF)
         {
             break;
@@ -645,13 +646,11 @@ MeshPX MeshBuilder::CreateOBJPX(const std::filesystem::path& filePath, float sca
 MeshPX MeshBuilder::CreateScreenQuadPX()
 {
     MeshPX mesh;
-    mesh.vertices.push_back({ { -1.0f,  -1.0f, 0.0f }, { 0.0f, 1.0f } }); // Normalized Device Coordinates
-    mesh.vertices.push_back({ { -1.0f,   1.0f, 0.0f }, { 0.0f, 0.0f } });
-    mesh.vertices.push_back({ {  1.0f,   1.0f, 0.0f }, { 1.0f, 0.0f } });
-    mesh.vertices.push_back({ {  1.0f,  -1.0f, 0.0f }, { 1.0f, 1.0f } });
-    mesh.indices = {
-    0, 1, 2,
-    0, 2, 3 }; // World Space Coordinates
+    mesh.vertices.push_back({{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}); // Normalized Device Coordinates
+    mesh.vertices.push_back({{-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
+    mesh.vertices.push_back({{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
+    mesh.vertices.push_back({{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}});
+    mesh.indices = {0, 1, 2, 0, 2, 3}; // World Space Coordinates
 
     return mesh;
 }
