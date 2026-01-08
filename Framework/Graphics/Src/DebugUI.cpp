@@ -3,8 +3,8 @@
 
 #include "GraphicsSystem.h"
 
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_dx11.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_dx11.h>
 
 using namespace Engine;
 using namespace Engine::Graphics;
@@ -34,8 +34,8 @@ void DebugUI::StaticInitialize(GLFWwindow* window, bool docking, bool multiViewp
     SetTheme(sCurrentTheme);
 
     // Initialize ImGui backends (GLFW + DX11)
-    ImGui_ImplGlfw_InitForOther(window, true);  // "Other" means we're not using OpenGL
-    
+    ImGui_ImplGlfw_InitForOther(window, true); // "Other" means we're not using OpenGL
+
     GraphicsSystem* gs = GraphicsSystem::Get();
     ImGui_ImplDX11_Init(gs->GetDevice(), gs->GetContext());
 }
