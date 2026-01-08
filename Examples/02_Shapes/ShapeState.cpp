@@ -6,16 +6,16 @@ using namespace Engine::Graphics;
 
 namespace
 {
-    std::string ReadFileContents(const std::filesystem::path& path)
-    {
-        std::ifstream file(path);
-        if (!file.is_open())
-            return "";
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        return buffer.str();
-    }
+std::string ReadFileContents(const std::filesystem::path& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        return "";
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
 }
+} // namespace
 
 void ShapeState::Initialize()
 {
@@ -242,8 +242,8 @@ void Heart::CreateShape()
     // Left semicircle
     for (int i = 0; i < numSegments / 2; ++i)
     {
-        float angle1 = Math::Constants::Pi + (i * Math::Constants::Pi) / (numSegments / 2);
-        float angle2 = Math::Constants::Pi + ((i + 1) * Math::Constants::Pi) / (numSegments / 2);
+        float angle1 = Math::Constants::Pi + (i * Math::Constants::Pi) / (numSegments * 0.5);
+        float angle2 = Math::Constants::Pi + ((i + 1) * Math::Constants::Pi) / (numSegments * 0.5);
 
         Vector3 p1 = center1 + Vector3(cos(angle1) * radius, sin(angle1) * radius, 0.0f);
         Vector3 p2 = center1 + Vector3(cos(angle2) * radius, sin(angle2) * radius, 0.0f);
@@ -256,8 +256,8 @@ void Heart::CreateShape()
     // Right semicircle
     for (int i = 0; i < numSegments / 2; ++i)
     {
-        float angle1 = (i * Math::Constants::Pi) / (numSegments / 2);
-        float angle2 = ((i + 1) * Math::Constants::Pi) / (numSegments / 2);
+        float angle1 = (i * Math::Constants::Pi) / (numSegments * 0.5);
+        float angle2 = ((i + 1) * Math::Constants::Pi) / (numSegments * 0.5);
 
         Vector3 p1 = center2 + Vector3(cos(angle1) * radius, sin(angle1) * radius, 0.0f);
         Vector3 p2 = center2 + Vector3(cos(angle2) * radius, sin(angle2) * radius, 0.0f);
