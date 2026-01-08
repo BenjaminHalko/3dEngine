@@ -3,11 +3,31 @@
     "clangd": {
       "initialization_options": {
         "compilationDatabasePath": "build",
-        "clangd.arguments": ["-header-insertion=never"]
+        "clangd.arguments": ["-header-insertion=never"],
       },
       "binary": {
-        "arguments": ["--header-insertion=never"]
-      }
-    }
-  }
+        "arguments": ["--header-insertion=never"],
+      },
+    },
+  },
+  "languages": {
+    "C++": {
+      "formatter": {
+        "external": {
+          "command": "clang-format",
+          "arguments": ["--assume-filename", "{buffer_path}"],
+        },
+      },
+      "format_on_save": "on",
+    },
+    "C": {
+      "formatter": {
+        "external": {
+          "command": "clang-format",
+          "arguments": ["--assume-filename", "{buffer_path}"],
+        },
+      },
+      "format_on_save": "on",
+    },
+  },
 }
