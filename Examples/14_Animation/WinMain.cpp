@@ -7,7 +7,7 @@ int main()
     myApp.AddState<GameState>("GameState");
 
     Engine::AppConfig appConfig;
-    appConfig.appName = L"Hello Quaternion";
+    appConfig.appName = L"Hello Animation";
     appConfig.winWidth = 1280;
     appConfig.winHeight = 720;
 
