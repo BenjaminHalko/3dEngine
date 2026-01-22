@@ -32,3 +32,9 @@
 #include "ShadowEffect.h"
 #include "Terrain.h"
 #include "TerrainEffect.h"
+
+#include "Keyframe.h"
+#include "Animation.h"
+#include "AnimationBuilder.h"
+#include "Bone.h"
+#include "Skeleton.h"

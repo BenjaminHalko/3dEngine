@@ -10,4 +10,15 @@ class GameState : public Engine::AppState
     void Update(float deltaTime) override;
     void Render() override;
     void DebugUI() override;
+
+  private:
+    void UpdateCamera(float deltaTime);
+
+    Engine::Graphics::Camera mCamera;
+    Engine::Graphics::DirectionalLight mDirectionalLight;
+    Engine::Graphics::StandardEffect mStandardEffect;
+
+    Engine::Graphics::RenderObject mBasketball;
+    Engine::Graphics::Animation mAnimation;
+    float mAnimationTime = 0.0f;
 };
