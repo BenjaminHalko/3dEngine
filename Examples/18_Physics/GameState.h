@@ -1,0 +1,30 @@
+#pragma once
+
+#include <Engine/Inc/Engine.h>
+
+class GameState : public Engine::AppState
+{
+  public:
+    void Initialize() override;
+    void Terminate() override;
+    void Update(float deltaTime) override;
+    void Render() override;
+    void DebugUI() override;
+
+  private:
+    void UpdateCamera(float deltaTime);
+
+    Engine::Graphics::Camera mCamera;
+    Engine::Graphics::DirectionalLight mDirectionalLight;
+    Engine::Graphics::StandardEffect mStandardEffect;
+
+    // Football
+    Engine::Graphics::RenderObject mFootball;
+    Engine::Physics::CollisionShape mBallShape;
+    Engine::Physics::RigidBody mBallRigidBody;
+
+    // Ground
+    Engine::Graphics::RenderObject mGroundObject;
+    Engine::Physics::CollisionShape mGroundShape;
+    Engine::Physics::RigidBody mGroundRigidBody;
+};

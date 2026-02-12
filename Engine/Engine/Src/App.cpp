@@ -21,6 +21,7 @@ void App::Run(const AppConfig& config)
     SimpleDraw::StaticInitialize(config.maxVertexCount);
     TextureManager::StaticInitialize(L"Assets/Textures");
     ModelManager::StaticInitialize(L"Assets/Models");
+    Physics::PhysicsWorld::StaticInitialize();
 
     // Last Step Before Running
     ASSERT(mCurrentState != nullptr, "App: Need an app state to run");
@@ -53,6 +54,7 @@ void App::Run(const AppConfig& config)
         if (deltaTime < 0.5f) // Primarily for handling Breakpoints
 #endif
         {
+            Physics::PhysicsWorld::Get()->Update(deltaTime);
             mCurrentState->Update(deltaTime);
         }
 
@@ -71,6 +73,7 @@ void App::Run(const AppConfig& config)
     LOG("App Quit");
     mCurrentState->Terminate();
 
+    Physics::PhysicsWorld::StaticTerminate();
     ModelManager::StaticTerminate();
     TextureManager::StaticTerminate();
     DebugUI::StaticTerminate();

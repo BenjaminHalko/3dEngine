@@ -49,8 +49,16 @@ ModelId ModelManager::LoadModel(const std::filesystem::path& filePath)
         modelPtr = std::make_unique<Model>();
         ModelIO::LoadModel(fullPath, *modelPtr);
         ModelIO::LoadMaterial(fullPath, *modelPtr);
+        ModelIO::LoadSkeleton(fullPath, *modelPtr);
     }
     return modelId;
+}
+
+void ModelManager::AddAnimation(ModelId id, const std::filesystem::path& filePath)
+{
+    auto model = mInventory.find(id);
+    ASSERT(model != mInventory.end(), "ModelManager: Model not found for animation!");
+    ModelIO::LoadAnimation(filePath, *model->second);
 }
 
 const Model* ModelManager::GetModel(ModelId id)

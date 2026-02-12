@@ -32,8 +32,14 @@ cbuffer SettingBuffer : register(b3)
     bool useNormalMap;
     bool useBumpMap;
     bool useShadowMap;
+    bool useSkinning;
     float bumpMapIntensity;
     float depthBias;
+}
+
+cbuffer BoneTransformBuffer : register(b4)
+{
+    matrix boneTransforms[256];
 }
 
 SamplerState textureSampler : register(s0);
@@ -51,6 +57,8 @@ struct VS_INPUT
     float3 normal : NORMAL;
     float3 tangent : TANGENT;
     float2 texCoord : TEXCOORD;
+    int4 blendIndices : BLENDINDICES;
+    float4 blendWeights : BLENDWEIGHT;
 };
 
 struct VS_OUTPUT
@@ -64,25 +72,57 @@ struct VS_OUTPUT
     float4 lightNDCPosition : TEXCOORD3;
 };
 
+matrix GetBoneTransform(int4 indices, float4 weights)
+{
+    if (weights[0] <= 0.0f)
+    {
+        return matrix(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+    }
+
+    matrix transform = boneTransforms[indices[0]] * weights[0];
+    for (int i = 1; i < 4; ++i)
+    {
+        if (weights[i] > 0.0f)
+        {
+            transform += boneTransforms[indices[i]] * weights[i];
+        }
+    }
+    return transform;
+}
+
 VS_OUTPUT VS(VS_INPUT input)
 {
     float3 localPosition = input.position;
-    
+    float3 localNormal = input.normal;
+    float3 localTangent = input.tangent;
+
+    if (useSkinning)
+    {
+        matrix boneTransform = GetBoneTransform(input.blendIndices, input.blendWeights);
+        localPosition = mul(float4(localPosition, 1.0f), boneTransform).xyz;
+        localNormal = mul(localNormal, (float3x3) boneTransform);
+        localTangent = mul(localTangent, (float3x3) boneTransform);
+    }
+
     if (useBumpMap)
     {
         // Bump Mapping
         float4 bumpMapColor = bumpMap.SampleLevel(textureSampler, input.texCoord, 0.0f);
         float bumpHeight = (bumpMapColor.r * 2.0f) - 1.0f;
-        localPosition += (input.normal * bumpHeight * bumpMapIntensity); // Bump height scale factor
+        localPosition += (localNormal * bumpHeight * bumpMapIntensity);
     }
-    
+
     VS_OUTPUT output;
     output.position = mul(float4(localPosition, 1.0f), wvp);
-    output.worldNormal = mul(input.normal, (float3x3) world);
-    output.worldTangent = mul(input.tangent, (float3x3) world);
+    output.worldNormal = mul(localNormal, (float3x3) world);
+    output.worldTangent = mul(localTangent, (float3x3) world);
     output.texCoord = input.texCoord;
     output.dirToLight = -lightDirection;
-    
+
     float4 worldPosition = mul(float4(localPosition, 1.0f), world);
     output.dirToView = normalize(viewPosition - worldPosition.xyz);
 
@@ -99,7 +139,7 @@ float4 PS(VS_OUTPUT input) : SV_Target
     float3 n = normalize(input.worldNormal);
     float3 light = normalize(input.dirToLight);
     float3 view = normalize(input.dirToView);
-    
+
     // Update Normal Value
     if (useNormalMap)
     {
@@ -114,24 +154,24 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
     // Emissive
     float4 emissive = materialEmissive;
-    
-    // Ambient 
+
+    // Ambient
     float4 ambient = lightAmbient * materialAmbient;
-    
+
     // Diffuse
     float d = saturate(dot(light, n));
     float4 diffuse = d * lightDiffuse * materialDiffuse;
-    
-    // Specular 
+
+    // Specular
     float3 r = reflect(-light, n);
     float base = saturate(dot(r, view));
     float s = pow(base, materialShininess);
     float4 specular = s * lightSpecular * materialSpecular;
-    
+
     // Colours
     float4 diffuseMapColor = (useDiffuseMap)? diffuseMap.Sample(textureSampler, input.texCoord) : 1.0f;
     float4 specMapColor = (useSpecMap)? specMap.Sample(textureSampler, input.texCoord).r : 1.0f;
-    
+
     float4 finalColor = (emissive + ambient + diffuse) * diffuseMapColor + (specular * specMapColor);
 
     if (useShadowMap)
@@ -154,4 +194,3 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
     return finalColor;
 }
-

@@ -7,9 +7,10 @@ int main()
     myApp.AddState<GameState>("GameState");
 
     Engine::AppConfig appConfig;
-    appConfig.appName = L"Hello Animation";
-    appConfig.winWidth = 1280;
-    appConfig.winHeight = 720;
+    appConfig.appName = L"Skeleton Animation";
+    appConfig.winWidth = 1920;
+    appConfig.winHeight = 1080;
+    appConfig.maxVertexCount = 100000;
 
     myApp.Run(appConfig);
     return 0;

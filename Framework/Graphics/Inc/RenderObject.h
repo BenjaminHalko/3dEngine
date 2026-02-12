@@ -8,6 +8,9 @@
 
 namespace Engine::Graphics
 {
+struct Skeleton;
+class Animator;
+
 class RenderObject
 {
   public:
@@ -32,6 +35,8 @@ class RenderGroup
 
     ModelId modelId;     // Model Identifier
     Transform transform; // Root Transform (Other objects may have other transforms)
+    const Skeleton* skeleton = nullptr;
+    const Animator* animator = nullptr;
     std::vector<RenderObject> renderObjects; // All objects to render
 };
 } // namespace Engine::Graphics

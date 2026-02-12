@@ -46,6 +46,8 @@ void RenderGroup::Initialize(const std::filesystem::path& modelFilePath)
             renderObject.bumpMapId = TryLoadTexture(materialData.bumpMapName);
         }
     }
+
+    skeleton = model->skeleton.get();
 }
 
 void RenderGroup::Terminate()

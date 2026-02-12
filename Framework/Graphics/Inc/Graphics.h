@@ -36,5 +36,8 @@
 #include "Keyframe.h"
 #include "Animation.h"
 #include "AnimationBuilder.h"
+#include "AnimationClip.h"
+#include "Animator.h"
+#include "AnimationUtil.h"
 #include "Bone.h"
 #include "Skeleton.h"

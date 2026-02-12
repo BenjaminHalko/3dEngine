@@ -97,7 +97,7 @@ void SimpleDrawImpl::Render(const Camera& camera)
 
     mVertexShader.Bind();
     mPixelShader.Bind();
-    mBlendState.Set();
+    //mBlendState.Set();
 
     mMeshBuffer.SetTopology(MeshBuffer::Topology::Triangles);
     mMeshBuffer.Update(mFaceVertices.get(), mFaceVertexCount);
@@ -107,7 +107,7 @@ void SimpleDrawImpl::Render(const Camera& camera)
     mMeshBuffer.Update(mLineVertices.get(), mLineVertexCount);
     mMeshBuffer.Render();
 
-    BlendState::ClearState();
+    //BlendState::ClearState();
 
     mLineVertexCount = 0;
     mFaceVertexCount = 0;

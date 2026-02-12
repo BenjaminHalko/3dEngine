@@ -53,20 +53,22 @@ class StandardEffect final
         int useNormalMap = 1;
         int useBumpMap = 1;
         int useShadowMap = 1;
-        float bumpIntensity = -0.02f;
+        int useSkinning = 1;
+        float bumpWeight = 0.1f;
         float depthBias = 0.000003f;
-        float padding = 0.0f;
     };
 
     using TransformBuffer = TypedConstantBuffer<TransformData>;
     using LightBuffer = TypedConstantBuffer<DirectionalLight>;
     using MaterialBuffer = TypedConstantBuffer<Material>;
     using SettingsBuffer = TypedConstantBuffer<SettingsData>;
+    using BoneTransformBuffer = ConstantBuffer;
 
     TransformBuffer mTransformBuffer;
     LightBuffer mLightBuffer;
     MaterialBuffer mMaterialBuffer;
     SettingsBuffer mSettingsBuffer;
+    BoneTransformBuffer mBoneTransformBuffer;
 
     VertexShader mVertexShader;
     PixelShader mPixelShader;
