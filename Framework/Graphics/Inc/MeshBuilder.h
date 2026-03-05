@@ -40,5 +40,11 @@ class MeshBuilder
 
     // Screen Quad
     static MeshPX CreateScreenQuadPX();
+
+    // Sprite Quad
+    static MeshPX CreateSpriteQuadPX(float width, float height);
+
+    // Cube (with normals, tangents, UVs)
+    static Mesh CreateCube(float size);
 };
 } // namespace Engine::Graphics

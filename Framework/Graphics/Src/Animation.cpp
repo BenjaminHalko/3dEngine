@@ -81,3 +81,15 @@ Math::Vector3 Animation::GetScale(float time) const
     }
     return mScaleKeys.back().key;
 }
+
+
+void Animation::PlayEvents(float prevTime, float currentTime)
+{
+    for (const auto& eventKey : mEventKeys)
+    {
+        if (eventKey.time > prevTime && eventKey.time <= currentTime)
+        {
+            eventKey.key();
+        }
+    }
+}

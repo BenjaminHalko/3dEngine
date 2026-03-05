@@ -16,3 +16,6 @@ add_subdirectory(15_Animation)
 add_subdirectory(16_Papyrus)
 add_subdirectory(17_SkeletonAnimation)
 add_subdirectory(18_Physics)
+
+add_subdirectory(19_ParticleSystem)
+add_subdirectory(20_EventsAudio)

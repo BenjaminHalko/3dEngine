@@ -1,26 +1,26 @@
 #include "Precompiled.h"
 #include "RigidBody.h"
 
+#include "CollisionShape.h"
+#include "PhysicsWorld.h"
+
 using namespace Engine;
 using namespace Engine::Physics;
 
 RigidBody::~RigidBody()
 {
-    Terminate();
+    ASSERT(mRigidBody == nullptr, "RigidBody: Terminate must be called!");
 }
 
 void RigidBody::Initialize(Graphics::Transform& graphicsTransform,
                            const CollisionShape& shape,
-                           float mass)
+                           float mass,
+                           bool addToWorld)
 {
     mMass = mass;
+    mGraphicsTransform = &graphicsTransform;
 
-    btTransform btTrans;
-    btTrans.setIdentity();
-    btTrans.setOrigin(ToBtVector3(graphicsTransform.position));
-    btTrans.setRotation(ToBtQuaternion(graphicsTransform.rotation));
-
-    mMotionState = new btDefaultMotionState(btTrans);
+    mMotionState = new btDefaultMotionState(ConvertToBtTransform(graphicsTransform));
 
     btVector3 localInertia(0, 0, 0);
     if (mass > 0.0f)
@@ -28,12 +28,20 @@ void RigidBody::Initialize(Graphics::Transform& graphicsTransform,
         shape.GetShape()->calculateLocalInertia(mass, localInertia);
     }
 
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, mMotionState, shape.GetShape(), localInertia);
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(
+        mass, mMotionState, shape.GetShape(), localInertia);
     mRigidBody = new btRigidBody(rbInfo);
+
+    if (addToWorld)
+    {
+        PhysicsWorld::Get()->Register(this);
+    }
 }
 
 void RigidBody::Terminate()
 {
+    PhysicsWorld::Get()->Unregister(this);
+
     delete mRigidBody;
     mRigidBody = nullptr;
     delete mMotionState;
@@ -44,16 +52,11 @@ void RigidBody::SetPosition(const Math::Vector3& position)
 {
     if (mRigidBody != nullptr)
     {
-        btTransform& transform = mRigidBody->getWorldTransform();
-        transform.setOrigin(ToBtVector3(position));
-        mRigidBody->setWorldTransform(transform);
-
-        if (mMotionState != nullptr)
-        {
-            mMotionState->setWorldTransform(transform);
-        }
-
         mRigidBody->activate();
+        mGraphicsTransform->position = position;
+        mRigidBody->setWorldTransform(ConvertToBtTransform(*mGraphicsTransform));
+        if (mMotionState != nullptr)
+            mMotionState->setWorldTransform(ConvertToBtTransform(*mGraphicsTransform));
     }
 }
 
@@ -66,28 +69,37 @@ void RigidBody::SetVelocity(const Math::Vector3& velocity)
     }
 }
 
+void RigidBody::Activate()
+{
+    PhysicsWorld::Get()->Register(this);
+    mRigidBody->activate();
+}
+
+void RigidBody::Deactivate()
+{
+    PhysicsWorld::Get()->Unregister(this);
+}
+
+void RigidBody::SetCollisionFlags(int flags)
+{
+    mRigidBody->setCollisionFlags(flags);
+}
+
+const Math::Vector3 RigidBody::GetVelocity() const
+{
+    return ToVector3(mRigidBody->getLinearVelocity());
+}
+
 bool RigidBody::IsDynamic() const
 {
     return mMass > 0.0f;
 }
 
-void RigidBody::SyncWithGraphics(Graphics::Transform& transform)
+void RigidBody::SyncWithGraphics()
 {
-    if (mRigidBody != nullptr)
-    {
-        btTransform btTrans;
-        if (mMotionState != nullptr)
-        {
-            mMotionState->getWorldTransform(btTrans);
-        }
-        else
-        {
-            btTrans = mRigidBody->getWorldTransform();
-        }
-
-        transform.position = ToVector3(btTrans.getOrigin());
-        transform.rotation = ToQuaternion(btTrans.getRotation());
-    }
+    const btTransform& worldTransform = mRigidBody->getWorldTransform();
+    mGraphicsTransform->position = ToVector3(worldTransform.getOrigin());
+    mGraphicsTransform->rotation = ToQuaternion(worldTransform.getRotation());
 }
 
 btRigidBody* RigidBody::GetRigidBody()

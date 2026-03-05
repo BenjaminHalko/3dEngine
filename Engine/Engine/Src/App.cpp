@@ -6,6 +6,7 @@ using namespace Engine;
 using namespace Engine::Core;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
+using namespace Engine::Audio;
 
 void App::Run(const AppConfig& config)
 {
@@ -22,6 +23,10 @@ void App::Run(const AppConfig& config)
     TextureManager::StaticInitialize(L"Assets/Textures");
     ModelManager::StaticInitialize(L"Assets/Models");
     Physics::PhysicsWorld::StaticInitialize();
+    EventManager::StaticInitialize();
+    AudioSystem::StaticInitialize();
+    SoundEffectManager::StaticInitialize();
+    SoundEffectManager::Get()->SetRootPath("Assets/Audio");
 
     // Last Step Before Running
     ASSERT(mCurrentState != nullptr, "App: Need an app state to run");
@@ -73,6 +78,9 @@ void App::Run(const AppConfig& config)
     LOG("App Quit");
     mCurrentState->Terminate();
 
+    SoundEffectManager::StaticTerminate();
+    AudioSystem::StaticTerminate();
+    EventManager::StaticTerminate();
     Physics::PhysicsWorld::StaticTerminate();
     ModelManager::StaticTerminate();
     TextureManager::StaticTerminate();

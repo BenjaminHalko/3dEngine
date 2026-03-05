@@ -20,4 +20,6 @@ template <class T> using Keyframes = std::vector<Keyframe<T>>;
 using PositionKeys = Keyframes<Math::Vector3>;
 using RotationKeys = Keyframes<Math::Quaternion>;
 using ScaleKeys = Keyframes<Math::Vector3>;
+using AnimationCallback = std::function<void()>;
+using EventKeys = Keyframes<AnimationCallback>;
 } // namespace Engine::Graphics

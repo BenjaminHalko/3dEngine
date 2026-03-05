@@ -1,6 +1,7 @@
 #pragma once
 
 class btRigidBody;
+class btSoftBody;
 
 namespace Engine::Physics
 {
@@ -10,7 +11,17 @@ class PhysicsObject
     PhysicsObject() = default;
     virtual ~PhysicsObject() = default;
 
-    virtual void SyncWithGraphics(Graphics::Transform& transform) = 0;
-    virtual btRigidBody* GetRigidBody() = 0;
+  protected:
+    friend class PhysicsWorld;
+
+    virtual void SyncWithGraphics() = 0;
+    virtual btRigidBody* GetRigidBody()
+    {
+        return nullptr;
+    }
+    virtual btSoftBody* GetSoftBody()
+    {
+        return nullptr;
+    }
 };
 } // namespace Engine::Physics

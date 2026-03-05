@@ -8,6 +8,7 @@
 #include "Vector4.h"
 #include "Quaternion.h"
 #include "Matrix4.h"
+#include "Range.h"
 
 namespace Engine::Math
 {

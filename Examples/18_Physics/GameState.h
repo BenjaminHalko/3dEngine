@@ -27,4 +27,18 @@ class GameState : public Engine::AppState
     Engine::Graphics::RenderObject mGroundObject;
     Engine::Physics::CollisionShape mGroundShape;
     Engine::Physics::RigidBody mGroundRigidBody;
+
+    // Boxes
+    struct BoxData
+    {
+        Engine::Graphics::RenderObject box;
+        Engine::Physics::CollisionShape shape;
+        Engine::Physics::RigidBody rigidBody;
+    };
+    std::vector<BoxData> mBoxes;
+
+    // Cloth
+    Engine::Graphics::RenderObject mClothRenderObject;
+    Engine::Graphics::Mesh mClothMesh;
+    Engine::Physics::SoftBody mClothSoftBody;
 };

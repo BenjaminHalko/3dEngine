@@ -8,6 +8,6 @@ target_include_directories(Physics PUBLIC
 )
 
 target_link_libraries(Physics
-    PUBLIC BulletDynamics BulletCollision LinearMath
+    PUBLIC BulletDynamics BulletCollision LinearMath BulletSoftBody
     PRIVATE Core Math Graphics
 )

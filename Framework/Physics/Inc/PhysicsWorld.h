@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PhysicsDebugDraw.h"
+
 namespace Engine::Physics
 {
 class PhysicsObject;
@@ -30,6 +32,7 @@ class PhysicsWorld final
     void Unregister(PhysicsObject* physicsObject);
 
     void DebugUI();
+    void SetGravity(const Math::Vector3& gravity);
 
   private:
     Settings mSettings;
@@ -38,9 +41,19 @@ class PhysicsWorld final
     btDefaultCollisionConfiguration* mCollisionConfiguration = nullptr;
     btCollisionDispatcher* mDispatcher = nullptr;
     btSequentialImpulseConstraintSolver* mSolver = nullptr;
+#ifdef USE_SOFT_BODY
+    friend class SoftBody;
+    btSoftRigidDynamicsWorld* mDynamicsWorld = nullptr;
+    btSoftRigidDynamicsWorld* GetSoftBodyWorld() { return mDynamicsWorld; }
+#else
     btDiscreteDynamicsWorld* mDynamicsWorld = nullptr;
+    btSoftRigidDynamicsWorld* GetSoftBodyWorld() { return nullptr; }
+#endif // USE_SOFT_BODY
 
     using PhysicsObjects = std::vector<PhysicsObject*>;
     PhysicsObjects mPhysicsObjects;
+
+    PhysicsDebugDraw mPhysicsDebugDraw;
+    bool mDebugDraw = false;
 };
 } // namespace Engine::Physics

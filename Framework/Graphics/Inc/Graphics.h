@@ -29,6 +29,7 @@
 #include "VertexShader.h"
 #include "VertexTypes.h"
 #include "PostProcessingEffect.h"
+#include "ParticleSystemEffect.h"
 #include "ShadowEffect.h"
 #include "Terrain.h"
 #include "TerrainEffect.h"

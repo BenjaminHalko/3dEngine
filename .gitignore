@@ -3,6 +3,7 @@
 .cache/
 .cmake/
 .claude/
+.sisyphus/
 .DS_Store
 *.log
 CMakeFiles/
