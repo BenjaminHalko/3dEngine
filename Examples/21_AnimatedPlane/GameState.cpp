@@ -38,9 +38,9 @@ void GameState::Initialize()
         .AddPositionKey({-20.0f, 8.0f,  5.0f}, 0.0f)
         .AddPositionKey({  0.0f, 8.0f,  0.0f}, flightDuration * 0.5f)
         .AddPositionKey({ 20.0f, 8.0f, -5.0f}, flightDuration)
-        // Yaw Pi/2 to face direction of travel (+X), no pitch/roll fix needed for this model
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f), flightDuration)
+        // Yaw -Pi/2 to face direction of travel (+X) in left-handed coordinate system
+        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
+        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), flightDuration)
         .AddScaleKey({0.3f, 0.3f, 0.3f}, 0.0f)
         .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
         .Build();
