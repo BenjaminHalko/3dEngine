@@ -17,4 +17,11 @@ class GameState : public Engine::AppState
     Engine::Graphics::Camera mCamera;
     Engine::Graphics::DirectionalLight mDirectionalLight;
     Engine::Graphics::StandardEffect mStandardEffect;
+
+    // Stanley
+    Engine::Graphics::RenderGroup mStanley;
+    Engine::Graphics::Animator mStanleyAnimator;
+
+    // Ground
+    Engine::Graphics::RenderObject mGround;
 };
