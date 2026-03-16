@@ -88,7 +88,7 @@ void GameState::DebugUI()
 {
     ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Stage 2: Plane Flight Path");
-    ImGui::Text("Plane anim time: %.2f / %.2f", mPlaneAnimTime, mPlaneFlightAnimation.GetDuration());
+    ImGui::Text("Plane anim: %.2f / %.2f", mPlaneAnimTime, mPlaneFlightAnimation.GetDuration());
     ImGui::End();
 }
 
