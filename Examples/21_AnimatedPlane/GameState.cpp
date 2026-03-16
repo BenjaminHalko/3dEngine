@@ -3,11 +3,12 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
+using namespace Engine::Math;
 
 void GameState::Initialize()
 {
-    mCamera.SetPosition({0.0f, 1.0f, -3.0f});
-    mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
+    mCamera.SetPosition({0.0f, 3.0f, -10.0f});
+    mCamera.SetLookAt({0.0f, 3.0f, 0.0f});
 
     mDirectionalLight.direction = Math::Normalize({1.0f, -1.0f, 1.0f});
     mDirectionalLight.ambient = {0.4f, 0.4f, 0.4f, 1.0f};
@@ -20,13 +21,30 @@ void GameState::Initialize()
     mStanley.animator = &mStanleyAnimator;
     ModelManager::Get()->AddAnimation(mStanley.modelId, "Assets/Models/stanley/stanley.animset");
     mStanleyAnimator.Initialize(mStanley.modelId);
-    // DO NOT call PlayAnimation — T-pose only for Stage 1
 
     // Ground plane
     Mesh groundMesh = MeshBuilder::CreatePlane(20, 20, 1.0f, true);
     mGround.meshBuffer.Initialize(groundMesh);
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
+
+    // Plane model
+    mPlane.Initialize("Plane/plane.model");
+    mPlane.transform.scale = {0.5f, 0.5f, 0.5f};
+
+    // Flight path animation — flies from left to right overhead
+    const float flightDuration = 6.0f;
+    mPlaneAnimTime = 0.0f;
+    mPlaneFlightAnimation = AnimationBuilder()
+        .AddPositionKey({-20.0f, 8.0f,  5.0f}, 0.0f)
+        .AddPositionKey({  0.0f, 8.0f,  0.0f}, flightDuration * 0.5f)
+        .AddPositionKey({ 20.0f, 8.0f, -5.0f}, flightDuration)
+        // Plane faces direction of travel (rotated ~14 deg around Y)
+        .AddRotationKey(Quaternion::CreateFromAxisAngle(Vector3::YAxis, -0.24f), 0.0f)
+        .AddRotationKey(Quaternion::CreateFromAxisAngle(Vector3::YAxis, -0.24f), flightDuration)
+        .AddScaleKey({0.5f, 0.5f, 0.5f}, 0.0f)
+        .AddScaleKey({0.5f, 0.5f, 0.5f}, flightDuration)
+        .Build();
 
     // StandardEffect
     std::filesystem::path shaderFile = "Assets/Shaders/Standard.hlsl";
@@ -37,6 +55,7 @@ void GameState::Initialize()
 
 void GameState::Terminate()
 {
+    mPlane.Terminate();
     mGround.Terminate();
     mStanley.Terminate();
     mStandardEffect.Terminate();
@@ -46,6 +65,14 @@ void GameState::Update(float deltaTime)
 {
     UpdateCamera(deltaTime);
     mStanleyAnimator.Update(deltaTime);
+
+    // Advance plane animation time (loop)
+    mPlaneAnimTime += deltaTime;
+    if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
+        mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
+
+    // Apply flight transform to plane
+    mPlane.transform = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 }
 
 void GameState::Render()
@@ -53,13 +80,15 @@ void GameState::Render()
     mStandardEffect.Begin();
     mStandardEffect.Render(mStanley);
     mStandardEffect.Render(mGround);
+    mStandardEffect.Render(mPlane);
     mStandardEffect.End();
 }
 
 void GameState::DebugUI()
 {
     ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Stage 1: Stanley on Grass");
+    ImGui::Text("Stage 2: Plane Flight Path");
+    ImGui::Text("Plane anim time: %.2f / %.2f", mPlaneAnimTime, mPlaneFlightAnimation.GetDuration());
     ImGui::End();
 }
 

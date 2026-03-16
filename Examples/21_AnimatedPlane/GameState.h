@@ -24,4 +24,9 @@ class GameState : public Engine::AppState
 
     // Ground
     Engine::Graphics::RenderObject mGround;
+
+    // Plane
+    Engine::Graphics::RenderGroup mPlane;
+    Engine::Graphics::Animation mPlaneFlightAnimation;
+    float mPlaneAnimTime = 0.0f;
 };
