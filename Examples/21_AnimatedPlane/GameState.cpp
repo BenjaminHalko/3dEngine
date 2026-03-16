@@ -58,7 +58,7 @@ void GameState::Initialize()
     explosionInfo.maxParticles = 200;
     explosionInfo.particlesPerEmit = {10, 20};
     explosionInfo.delay = 0.0f;
-    explosionInfo.lifeTime = 2.0f;
+    explosionInfo.lifeTime = FLT_MAX;
     explosionInfo.timeBetweenEmit = {0.01f, 0.05f};
     explosionInfo.spawnAngle = {0.0f, 180.0f};
     explosionInfo.spawnSpeed = {3.0f, 8.0f};
@@ -123,11 +123,19 @@ void GameState::Update(float deltaTime)
         mExplosion.SpawnParticles();
     }
 
-    // Track explosion position to plane
+    // Only update particles after explosion triggered, track to plane
     if (mExplosionTriggered)
+    {
         mExplosion.SetPositon(planeT.position);
+        mExplosion.Update(deltaTime);
+    }
 
-    mExplosion.Update(deltaTime);
+    // Camera tracks jet position
+    Math::Vector3 camTarget = planeT.position;
+    mCamera.SetPosition(camTarget + Math::Vector3{0.0f, 2.0f, -8.0f});
+    mCamera.SetLookAt(camTarget);
+    mStandardEffect.SetCamera(mCamera);
+    mParticleSystemEffect.SetCamera(mCamera);
 }
 
 void GameState::Render()
