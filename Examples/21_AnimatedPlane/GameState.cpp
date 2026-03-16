@@ -28,22 +28,21 @@ void GameState::Initialize()
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
 
-    // Plane model
-    mPlane.Initialize("Plane/plane.model");
-    mPlane.transform.scale = {0.5f, 0.5f, 0.5f};
+    // Jet model -- APJetFly (wingspan along X, body along Z, correctly oriented)
+    mPlane.Initialize("Plane/APJetFly.model");
 
-    // Flight path animation — flies from left to right overhead
+    // Flight path animation -- flies from left to right overhead
     const float flightDuration = 6.0f;
     mPlaneAnimTime = 0.0f;
     mPlaneFlightAnimation = AnimationBuilder()
         .AddPositionKey({-20.0f, 8.0f,  5.0f}, 0.0f)
         .AddPositionKey({  0.0f, 8.0f,  0.0f}, flightDuration * 0.5f)
         .AddPositionKey({ 20.0f, 8.0f, -5.0f}, flightDuration)
-        // YawPitchRoll: yaw=-0.24 (direction of travel), roll=Pi/2 (level the wings — FBX axis fix)
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-0.24f, 0.0f, Math::Constants::Pi * 0.5f), 0.0f)
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-0.24f, 0.0f, Math::Constants::Pi * 0.5f), flightDuration)
-        .AddScaleKey({0.5f, 0.5f, 0.5f}, 0.0f)
-        .AddScaleKey({0.5f, 0.5f, 0.5f}, flightDuration)
+        // Yaw Pi/2 to face direction of travel (+X), no pitch/roll fix needed for this model
+        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
+        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f), flightDuration)
+        .AddScaleKey({0.3f, 0.3f, 0.3f}, 0.0f)
+        .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
         .Build();
 
     // StandardEffect
