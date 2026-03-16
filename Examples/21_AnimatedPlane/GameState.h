@@ -29,4 +29,16 @@ class GameState : public Engine::AppState
     Engine::Graphics::RenderGroup mPlane;
     Engine::Graphics::Animation mPlaneFlightAnimation;
     float mPlaneAnimTime = 0.0f;
+
+    // Explosion particles
+    Engine::Graphics::ParticleSystemEffect mParticleSystemEffect;
+    Engine::Physics::ParticleSystem mExplosion;
+
+    // Shaking state
+    bool mPlaneShaking = false;
+    float mShakeTime = 0.0f;
+
+    // Explosion trigger
+    float mSceneTimer = 0.0f;
+    bool mExplosionTriggered = false;
 };

@@ -3,6 +3,7 @@
 using namespace Engine;
 using namespace Engine::Graphics;
 using namespace Engine::Input;
+using namespace Engine::Physics;
 using namespace Engine::Math;
 
 void GameState::Initialize()
@@ -28,22 +29,47 @@ void GameState::Initialize()
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
 
-    // Jet model -- APJetFly (wingspan along X, body along Z, correctly oriented)
+    // Jet model
     mPlane.Initialize("Plane/APJetFly.model");
 
-    // Flight path animation -- flies from left to right overhead
+    // Flight path animation
     const float flightDuration = 6.0f;
     mPlaneAnimTime = 0.0f;
-    mPlaneFlightAnimation = AnimationBuilder()
-        .AddPositionKey({-20.0f, 8.0f,  5.0f}, 0.0f)
-        .AddPositionKey({  0.0f, 8.0f,  0.0f}, flightDuration * 0.5f)
-        .AddPositionKey({ 20.0f, 8.0f, -5.0f}, flightDuration)
-        // Yaw -Pi/2 to face direction of travel (+X) in left-handed coordinate system
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
-        .AddRotationKey(Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), flightDuration)
-        .AddScaleKey({0.3f, 0.3f, 0.3f}, 0.0f)
-        .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
-        .Build();
+    mPlaneFlightAnimation =
+        AnimationBuilder()
+            .AddPositionKey({-20.0f, 8.0f, 5.0f}, 0.0f)
+            .AddPositionKey({0.0f, 8.0f, 0.0f}, flightDuration * 0.5f)
+            .AddPositionKey({20.0f, 8.0f, -5.0f}, flightDuration)
+            .AddRotationKey(
+                Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
+            .AddRotationKey(
+                Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f),
+                flightDuration)
+            .AddScaleKey({0.3f, 0.3f, 0.3f}, 0.0f)
+            .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
+            .Build();
+
+    // Explosion particle system (fire -> smoke burst)
+    mParticleSystemEffect.Initialize();
+    mParticleSystemEffect.SetCamera(mCamera);
+
+    ParticleSystemInfo explosionInfo;
+    explosionInfo.textureId = tm->LoadTexture("white.jpg");
+    explosionInfo.maxParticles = 200;
+    explosionInfo.particlesPerEmit = {10, 20};
+    explosionInfo.delay = 0.0f;
+    explosionInfo.lifeTime = 2.0f;
+    explosionInfo.timeBetweenEmit = {0.01f, 0.05f};
+    explosionInfo.spawnAngle = {0.0f, 180.0f};
+    explosionInfo.spawnSpeed = {3.0f, 8.0f};
+    explosionInfo.particleLifeTime = {0.3f, 1.5f};
+    explosionInfo.spawnDirection = Math::Vector3::YAxis;
+    explosionInfo.spawnPosition = Math::Vector3::Zero;
+    explosionInfo.startScale = {Math::Vector3::One, Math::Vector3::One * 1.5f};
+    explosionInfo.endScale = {Math::Vector3::One * 0.1f, Math::Vector3::One * 0.3f};
+    explosionInfo.startColour = {Colors::OrangeRed, Colors::Yellow};
+    explosionInfo.endColour = {Colors::Gray, Colors::Gray};
+    mExplosion.Initialize(explosionInfo);
 
     // StandardEffect
     std::filesystem::path shaderFile = "Assets/Shaders/Standard.hlsl";
@@ -54,6 +80,8 @@ void GameState::Initialize()
 
 void GameState::Terminate()
 {
+    mExplosion.Terminate();
+    mParticleSystemEffect.Terminate();
     mPlane.Terminate();
     mGround.Terminate();
     mStanley.Terminate();
@@ -65,13 +93,41 @@ void GameState::Update(float deltaTime)
     UpdateCamera(deltaTime);
     mStanleyAnimator.Update(deltaTime);
 
-    // Advance plane animation time (loop)
+    // Advance scene timer
+    mSceneTimer += deltaTime;
+
+    // Advance plane animation (loop)
     mPlaneAnimTime += deltaTime;
     if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
         mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
 
-    // Apply flight transform to plane
-    mPlane.transform = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
+    // Get base flight transform
+    Transform planeT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
+
+    // Apply shaking on top of flight path
+    if (mPlaneShaking)
+    {
+        mShakeTime += deltaTime;
+        planeT.position.y += sinf(mShakeTime * 30.0f) * 0.15f;
+        planeT.position.x += sinf(mShakeTime * 25.0f) * 0.08f;
+    }
+
+    mPlane.transform = planeT;
+
+    // Trigger explosion at 3 seconds
+    if (mSceneTimer >= 3.0f && !mExplosionTriggered)
+    {
+        mExplosionTriggered = true;
+        mPlaneShaking = true;
+        mExplosion.SetPositon(planeT.position);
+        mExplosion.SpawnParticles();
+    }
+
+    // Track explosion position to plane
+    if (mExplosionTriggered)
+        mExplosion.SetPositon(planeT.position);
+
+    mExplosion.Update(deltaTime);
 }
 
 void GameState::Render()
@@ -81,13 +137,19 @@ void GameState::Render()
     mStandardEffect.Render(mGround);
     mStandardEffect.Render(mPlane);
     mStandardEffect.End();
+
+    mParticleSystemEffect.Begin();
+    mExplosion.Render(mParticleSystemEffect);
+    mParticleSystemEffect.End();
 }
 
 void GameState::DebugUI()
 {
     ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Stage 2: Plane Flight Path");
-    ImGui::Text("Plane anim: %.2f / %.2f", mPlaneAnimTime, mPlaneFlightAnimation.GetDuration());
+    ImGui::Text("Stage 3: Explosion + Shaking");
+    ImGui::Text("Scene time: %.1f", mSceneTimer);
+    ImGui::Text("Shaking: %s", mPlaneShaking ? "YES" : "NO");
+    ImGui::Text("Explosion: %s", mExplosionTriggered ? "TRIGGERED" : "waiting...");
     ImGui::End();
 }
 
