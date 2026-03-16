@@ -13,6 +13,7 @@ class GameState : public Engine::AppState
 
   private:
     void UpdateCamera(float deltaTime);
+    void OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT);
 
     Engine::Graphics::Camera mCamera;
     Engine::Graphics::DirectionalLight mDirectionalLight;
@@ -38,7 +39,8 @@ class GameState : public Engine::AppState
     bool mPlaneShaking = false;
     float mShakeTime = 0.0f;
 
-    // Explosion trigger
-    float mSceneTimer = 0.0f;
-    bool mExplosionTriggered = false;
+    // Cinematic sequencer
+    float mCinematicTime = 0.0f;
+    bool mCinematicDone = false;
+    int mCurrentShot = 1;
 };

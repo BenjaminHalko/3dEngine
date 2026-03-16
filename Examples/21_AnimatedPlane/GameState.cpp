@@ -6,10 +6,22 @@ using namespace Engine::Input;
 using namespace Engine::Physics;
 using namespace Engine::Math;
 
+// Cinematic shot timing constants
+static constexpr float SHOT1_START = 0.0f;
+static constexpr float SHOT2_START = 3.0f;
+static constexpr float SHOT3_START = 6.0f;
+static constexpr float SHOT4_START = 8.0f;
+static constexpr float SHOT5_START = 9.5f;
+static constexpr float SHOT6_START = 11.0f;
+static constexpr float SHOT7_START = 13.0f;
+static constexpr float SHOT8_START = 15.0f;
+static constexpr float SHOT9_START = 17.0f;
+static constexpr float CINEMATIC_END = 21.0f;
+
 void GameState::Initialize()
 {
-    mCamera.SetPosition({0.0f, 3.0f, -10.0f});
-    mCamera.SetLookAt({0.0f, 3.0f, 0.0f});
+    mCamera.SetPosition({0.0f, 1.2f, -1.5f});
+    mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
 
     mDirectionalLight.direction = Math::Normalize({1.0f, -1.0f, 1.0f});
     mDirectionalLight.ambient = {0.4f, 0.4f, 0.4f, 1.0f};
@@ -32,7 +44,7 @@ void GameState::Initialize()
     // Jet model
     mPlane.Initialize("Plane/APJetFly.model");
 
-    // Flight path animation
+    // Flight path animation (loops every 6s)
     const float flightDuration = 6.0f;
     mPlaneAnimTime = 0.0f;
     mPlaneFlightAnimation =
@@ -49,7 +61,7 @@ void GameState::Initialize()
             .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
             .Build();
 
-    // Explosion particle system (fire -> smoke burst)
+    // Explosion particle system
     mParticleSystemEffect.Initialize();
     mParticleSystemEffect.SetCamera(mCamera);
 
@@ -66,9 +78,9 @@ void GameState::Initialize()
     explosionInfo.spawnDirection = Math::Vector3::YAxis;
     explosionInfo.spawnPosition = Math::Vector3::Zero;
     explosionInfo.startScale = {Math::Vector3::One, Math::Vector3::One * 1.5f};
-    explosionInfo.endScale   = {Math::Vector3::One * 0.1f, Math::Vector3::One * 0.3f};
+    explosionInfo.endScale = {Math::Vector3::One * 0.1f, Math::Vector3::One * 0.3f};
     explosionInfo.startColour = {Colors::OrangeRed, Colors::LightYellow};
-    explosionInfo.endColour   = {Colors::LightGray,  Colors::White};
+    explosionInfo.endColour = {Colors::LightGray, Colors::White};
     mExplosion.Initialize(explosionInfo);
 
     // StandardEffect
@@ -76,6 +88,11 @@ void GameState::Initialize()
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
+
+    // Cinematic state
+    mCinematicTime = 0.0f;
+    mCinematicDone = false;
+    mCurrentShot = 1;
 }
 
 void GameState::Terminate()
@@ -90,18 +107,14 @@ void GameState::Terminate()
 
 void GameState::Update(float deltaTime)
 {
-    UpdateCamera(deltaTime);
     mStanleyAnimator.Update(deltaTime);
 
-    // Advance scene timer
-    mSceneTimer += deltaTime;
-
-    // Advance plane animation (loop)
+    // Advance plane animation (always loops)
     mPlaneAnimTime += deltaTime;
     if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
         mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
 
-    // Smooth flight transform (camera tracks this -- no shake)
+    // Smooth flight transform (no shake) — used for camera and particles
     Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
     // Apply shaking on top for rendered plane only
@@ -112,29 +125,110 @@ void GameState::Update(float deltaTime)
         planeT.position.y += sinf(mShakeTime * 30.0f) * 0.15f;
         planeT.position.x += sinf(mShakeTime * 25.0f) * 0.08f;
     }
-
     mPlane.transform = planeT;
-    // Trigger explosion at 3 seconds
-    if (mSceneTimer >= 3.0f && !mExplosionTriggered)
+
+    // Advance cinematic timer
+    if (!mCinematicDone)
+        mCinematicTime += deltaTime;
+    if (mCinematicTime >= CINEMATIC_END)
+        mCinematicDone = true;
+
+    // Determine current shot (highest threshold crossed)
+    int prevShot = mCurrentShot;
+    if (mCinematicTime >= SHOT9_START)
+        mCurrentShot = 9;
+    else if (mCinematicTime >= SHOT8_START)
+        mCurrentShot = 8;
+    else if (mCinematicTime >= SHOT7_START)
+        mCurrentShot = 7;
+    else if (mCinematicTime >= SHOT6_START)
+        mCurrentShot = 6;
+    else if (mCinematicTime >= SHOT5_START)
+        mCurrentShot = 5;
+    else if (mCinematicTime >= SHOT4_START)
+        mCurrentShot = 4;
+    else if (mCinematicTime >= SHOT3_START)
+        mCurrentShot = 3;
+    else if (mCinematicTime >= SHOT2_START)
+        mCurrentShot = 2;
+    else
+        mCurrentShot = 1;
+
+    // Fire one-time entry events on shot change
+    if (mCurrentShot != prevShot)
+        OnShotEnter(mCurrentShot, smoothT);
+
+    // Per-shot camera assignment
+    switch (mCurrentShot)
     {
-        mExplosionTriggered = true;
-        mPlaneShaking = true;
-        mExplosion.SetPositon(smoothT.position);
-        mExplosion.SpawnParticles();
+    case 1:
+        mCamera.SetPosition({0.0f, 1.2f, -1.5f});
+        mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
+        break;
+    case 2:
+        mCamera.SetPosition({0.0f, 2.0f, -10.0f});
+        mCamera.SetLookAt({0.0f, 3.0f, 0.0f});
+        break;
+    case 3:
+    case 4:
+    case 5:
+        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 0.5f, -4.0f});
+        mCamera.SetLookAt(smoothT.position);
+        break;
+    case 6:
+        mCamera.SetPosition({0.0f, 1.2f, -2.0f});
+        mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
+        break;
+    case 7:
+        mCamera.SetPosition({2.0f, 5.0f, -3.0f});
+        mCamera.SetLookAt(smoothT.position);
+        break;
+    case 8:
+        mCamera.SetPosition({-5.0f, 3.0f, -8.0f});
+        mCamera.SetLookAt({0.0f, 1.5f, 0.0f});
+        break;
+    case 9:
+        mCamera.SetPosition({-3.0f, 10.0f, -5.0f});
+        mCamera.SetLookAt(smoothT.position);
+        mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
+        break;
     }
 
-    // Update particles only after triggered, track smooth position
-    if (mExplosionTriggered)
+    mStandardEffect.SetCamera(mCamera);
+    mParticleSystemEffect.SetCamera(mCamera);
+
+    // Particle system update
+    if (mExplosion.IsActive())
     {
         mExplosion.SetPositon(smoothT.position);
         mExplosion.Update(deltaTime);
     }
+}
 
-    // Camera follows smooth path -- not shake
-    mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 2.0f, -8.0f});
-    mCamera.SetLookAt(smoothT.position);
-    mStandardEffect.SetCamera(mCamera);
-    mParticleSystemEffect.SetCamera(mCamera);
+void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT)
+{
+    switch (shot)
+    {
+    case 4:
+        mExplosion.SetPositon(smoothT.position);
+        mExplosion.SpawnParticles();
+        break;
+    case 5:
+        mPlaneShaking = true;
+        break;
+    case 6:
+        mPlaneShaking = false;
+        mShakeTime = 0.0f;
+        break;
+    case 9:
+        mPlaneShaking = false;
+        mShakeTime = 0.0f;
+        mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
+        mStanleyAnimator.PlayAnimation(0, true);
+        break;
+    default:
+        break;
+    }
 }
 
 void GameState::Render()
@@ -152,36 +246,17 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
-    ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Stage 3: Explosion + Shaking");
-    ImGui::Text("Scene time: %.1f", mSceneTimer);
+    ImGui::Begin("Cinematic", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("Shot: %d / 9", mCurrentShot);
+    ImGui::Text("Time: %.1f / %.1f", mCinematicTime, CINEMATIC_END);
+    ImGui::Text("Done: %s", mCinematicDone ? "YES" : "NO");
     ImGui::Text("Shaking: %s", mPlaneShaking ? "YES" : "NO");
-    ImGui::Text("Explosion: %s", mExplosionTriggered ? "TRIGGERED" : "waiting...");
     ImGui::End();
 }
 
 void GameState::UpdateCamera(float deltaTime)
 {
-    InputSystem* input = InputSystem::Get();
-    const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 10.0f : 4.0f;
-    const float turnSpeed = 0.5f;
-
-    if (input->IsKeyDown(KeyCode::W))
-        mCamera.Walk(moveSpeed * deltaTime);
-    else if (input->IsKeyDown(KeyCode::S))
-        mCamera.Walk(-moveSpeed * deltaTime);
-    else if (input->IsKeyDown(KeyCode::D))
-        mCamera.Strafe(moveSpeed * deltaTime);
-    else if (input->IsKeyDown(KeyCode::A))
-        mCamera.Strafe(-moveSpeed * deltaTime);
-    else if (input->IsKeyDown(KeyCode::E))
-        mCamera.Rise(moveSpeed * deltaTime);
-    else if (input->IsKeyDown(KeyCode::Q))
-        mCamera.Rise(-moveSpeed * deltaTime);
-
-    if (input->IsMouseDown(MouseButton::RBUTTON))
-    {
-        mCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
-        mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
-    }
+    // Camera is controlled by cinematic sequencer in Update()
+    // Free-look kept here for future debug override (Stage 5)
+    (void) deltaTime;
 }
