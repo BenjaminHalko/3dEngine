@@ -54,21 +54,21 @@ void GameState::Initialize()
     mParticleSystemEffect.SetCamera(mCamera);
 
     ParticleSystemInfo explosionInfo;
-    explosionInfo.textureId = tm->LoadTexture("white.jpg");
-    explosionInfo.maxParticles = 200;
-    explosionInfo.particlesPerEmit = {10, 20};
+    explosionInfo.textureId = tm->LoadTexture("Images/explosion.png");
+    explosionInfo.maxParticles = 500;
+    explosionInfo.particlesPerEmit = {10, 250};
     explosionInfo.delay = 0.0f;
-    explosionInfo.lifeTime = FLT_MAX;
+    explosionInfo.lifeTime = 0.0f;
     explosionInfo.timeBetweenEmit = {0.01f, 0.05f};
-    explosionInfo.spawnAngle = {0.0f, 180.0f};
-    explosionInfo.spawnSpeed = {3.0f, 8.0f};
-    explosionInfo.particleLifeTime = {0.3f, 1.5f};
+    explosionInfo.spawnAngle = {-180.0f, 180.0f};
+    explosionInfo.spawnSpeed = {7.0f, 25.0f};
+    explosionInfo.particleLifeTime = {0.5f, 2.0f};
     explosionInfo.spawnDirection = Math::Vector3::YAxis;
     explosionInfo.spawnPosition = Math::Vector3::Zero;
     explosionInfo.startScale = {Math::Vector3::One, Math::Vector3::One * 1.5f};
-    explosionInfo.endScale = {Math::Vector3::One * 0.1f, Math::Vector3::One * 0.3f};
-    explosionInfo.startColour = {Colors::OrangeRed, Colors::Yellow};
-    explosionInfo.endColour = {Colors::Gray, Colors::Gray};
+    explosionInfo.endScale   = {Math::Vector3::One * 0.1f, Math::Vector3::One * 0.3f};
+    explosionInfo.startColour = {Colors::OrangeRed, Colors::LightYellow};
+    explosionInfo.endColour   = {Colors::LightGray,  Colors::White};
     mExplosion.Initialize(explosionInfo);
 
     // StandardEffect
