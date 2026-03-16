@@ -38,6 +38,7 @@ class GameState : public Engine::AppState
     // Shaking state
     bool mPlaneShaking = false;
     float mShakeTime = 0.0f;
+    Engine::Math::Vector3 mDiveStartPos;
 
     // Cinematic sequencer
     float mCinematicTime = 0.0f;

@@ -117,6 +117,14 @@ void GameState::Update(float deltaTime)
     // Smooth flight transform (no shake) — used for camera and particles
     Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
+    // Shot 7: override smooth position to dive straight toward Stanley
+    if (mCurrentShot == 7)
+    {
+        float shotT = mCinematicTime - SHOT7_START;
+        float t = Math::Clamp(shotT / (SHOT8_START - SHOT7_START), 0.0f, 1.0f);
+        smoothT.position = Math::Lerp(mDiveStartPos, Math::Vector3{0.0f, 1.5f, 1.0f}, t);
+    }
+
     // Apply shaking on top for rendered plane only
     Transform planeT = smoothT;
     if (mPlaneShaking)
@@ -162,7 +170,7 @@ void GameState::Update(float deltaTime)
     switch (mCurrentShot)
     {
     case 1:
-        mCamera.SetPosition({0.0f, 1.2f, -1.5f});
+        mCamera.SetPosition({0.0f, 1.8f, -2.5f});
         mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
         break;
     case 2:
@@ -180,7 +188,7 @@ void GameState::Update(float deltaTime)
         mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
         break;
     case 7:
-        mCamera.SetPosition({2.0f, 5.0f, -3.0f});
+        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 2.0f, -5.0f});
         mCamera.SetLookAt(smoothT.position);
         break;
     case 8:
@@ -188,8 +196,8 @@ void GameState::Update(float deltaTime)
         mCamera.SetLookAt({0.0f, 1.5f, 0.0f});
         break;
     case 9:
-        mCamera.SetPosition({-3.0f, 10.0f, -5.0f});
-        mCamera.SetLookAt(smoothT.position);
+        mCamera.SetPosition(smoothT.position + Math::Vector3{-1.5f, 2.0f, -3.5f});
+        mCamera.SetLookAt(smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f});
         mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
         break;
     }
@@ -209,6 +217,9 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 {
     switch (shot)
     {
+    case 7:
+        mDiveStartPos = smoothT.position;
+        break;
     case 4:
         mExplosion.SetPositon(smoothT.position);
         mExplosion.SpawnParticles();
