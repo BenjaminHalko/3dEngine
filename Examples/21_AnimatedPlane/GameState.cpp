@@ -117,12 +117,19 @@ void GameState::Update(float deltaTime)
     // Smooth flight transform (no shake) — used for camera and particles
     Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
-    // Shot 7: override smooth position to dive straight toward Stanley
+    // Shot 7: override smooth position/rotation to dive nose-down toward Stanley
     if (mCurrentShot == 7)
     {
         float shotT = mCinematicTime - SHOT7_START;
         float t = Math::Clamp(shotT / (SHOT8_START - SHOT7_START), 0.0f, 1.0f);
         smoothT.position = Math::Lerp(mDiveStartPos, Math::Vector3{0.0f, 1.5f, 1.0f}, t);
+        // Lerp rotation from level flight to nose-down ~54 degrees
+        Quaternion levelRot = Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+        Quaternion diveRot  = Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, Math::Constants::Pi * 0.3f, 0.0f);
+        smoothT.rotation.x = levelRot.x + (diveRot.x - levelRot.x) * t;
+        smoothT.rotation.y = levelRot.y + (diveRot.y - levelRot.y) * t;
+        smoothT.rotation.z = levelRot.z + (diveRot.z - levelRot.z) * t;
+        smoothT.rotation.w = levelRot.w + (diveRot.w - levelRot.w) * t;
     }
 
     // Apply shaking on top for rendered plane only
@@ -170,12 +177,13 @@ void GameState::Update(float deltaTime)
     switch (mCurrentShot)
     {
     case 1:
-        mCamera.SetPosition({0.0f, 1.8f, -2.5f});
-        mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
+        mCamera.SetPosition({0.0f, 1.6f, -0.7f});  // tight face shot
+        mCamera.SetLookAt({0.0f, 1.5f, 0.0f});
         break;
     case 2:
-        mCamera.SetPosition({0.0f, 2.0f, -10.0f});
-        mCamera.SetLookAt({0.0f, 3.0f, 0.0f});
+        // Track the plane so it's always in frame
+        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 1.0f, -12.0f});
+        mCamera.SetLookAt(smoothT.position);
         break;
     case 3:
     case 4:
@@ -219,6 +227,9 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
     {
     case 7:
         mDiveStartPos = smoothT.position;
+    case 2:
+        mPlaneAnimTime = 0.0f;  // reset so plane enters fresh from left
+        break;
         break;
     case 4:
         mExplosion.SetPositon(smoothT.position);
