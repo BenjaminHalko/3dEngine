@@ -44,4 +44,7 @@ class GameState : public Engine::AppState
     float mCinematicTime = 0.0f;
     bool mCinematicDone = false;
     int mCurrentShot = 1;
+
+    // Audio
+    Engine::Audio::SoundId mMusicId = 0;
 };

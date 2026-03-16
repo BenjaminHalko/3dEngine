@@ -5,6 +5,7 @@ using namespace Engine::Graphics;
 using namespace Engine::Input;
 using namespace Engine::Physics;
 using namespace Engine::Math;
+using namespace Engine::Audio;
 
 // Cinematic shot timing constants
 static constexpr float SHOT1_START = 0.0f;
@@ -93,6 +94,12 @@ void GameState::Initialize()
     mCinematicTime = 0.0f;
     mCinematicDone = false;
     mCurrentShot = 1;
+    // Music -- looping from the start
+    mMusicId = SoundEffectManager::Get()->Load("dixie.mp3");
+    SoundEffectManager::Get()->Play(mMusicId, true);
+
+    // Stanley dances from Shot 1
+    mStanleyAnimator.PlayAnimation(0, true);
 }
 
 void GameState::Terminate()
@@ -103,6 +110,7 @@ void GameState::Terminate()
     mGround.Terminate();
     mStanley.Terminate();
     mStandardEffect.Terminate();
+    SoundEffectManager::Get()->Stop(mMusicId);
 }
 
 void GameState::Update(float deltaTime)
