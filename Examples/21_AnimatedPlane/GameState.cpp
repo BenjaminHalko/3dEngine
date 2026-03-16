@@ -101,10 +101,11 @@ void GameState::Update(float deltaTime)
     if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
         mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
 
-    // Get base flight transform
-    Transform planeT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
+    // Smooth flight transform (camera tracks this -- no shake)
+    Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
-    // Apply shaking on top of flight path
+    // Apply shaking on top for rendered plane only
+    Transform planeT = smoothT;
     if (mPlaneShaking)
     {
         mShakeTime += deltaTime;
@@ -113,27 +114,25 @@ void GameState::Update(float deltaTime)
     }
 
     mPlane.transform = planeT;
-
     // Trigger explosion at 3 seconds
     if (mSceneTimer >= 3.0f && !mExplosionTriggered)
     {
         mExplosionTriggered = true;
         mPlaneShaking = true;
-        mExplosion.SetPositon(planeT.position);
+        mExplosion.SetPositon(smoothT.position);
         mExplosion.SpawnParticles();
     }
 
-    // Only update particles after explosion triggered, track to plane
+    // Update particles only after triggered, track smooth position
     if (mExplosionTriggered)
     {
-        mExplosion.SetPositon(planeT.position);
+        mExplosion.SetPositon(smoothT.position);
         mExplosion.Update(deltaTime);
     }
 
-    // Camera tracks jet position
-    Math::Vector3 camTarget = planeT.position;
-    mCamera.SetPosition(camTarget + Math::Vector3{0.0f, 2.0f, -8.0f});
-    mCamera.SetLookAt(camTarget);
+    // Camera follows smooth path -- not shake
+    mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 2.0f, -8.0f});
+    mCamera.SetLookAt(smoothT.position);
     mStandardEffect.SetCamera(mCamera);
     mParticleSystemEffect.SetCamera(mCamera);
 }
