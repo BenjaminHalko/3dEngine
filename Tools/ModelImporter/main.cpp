@@ -20,8 +20,8 @@ struct Arguments
 {
     std::filesystem::path inputFileName;
     std::filesystem::path outputFileName;
-    float scale = 1.0f;                  // 1 Unit = 1 Millimeter
-    bool animOnly = false;              // Export only animation data
+    float scale = 1.0f;    // 1 Unit = 1 Millimeter
+    bool animOnly = false; // Export only animation data
 };
 
 std::optional<Arguments> ParseArgs(int argc, char* argv[])
@@ -38,7 +38,7 @@ std::optional<Arguments> ParseArgs(int argc, char* argv[])
     args.outputFileName = argv[argc - 1];
     for (int i = 0; i + 2 < argc; ++i)
     {
-        if (strcmp(argv[i], "-scale") == 0 )
+        if (strcmp(argv[i], "-scale") == 0)
         {
             args.scale = atof(argv[i + 1]);
             ++i;
@@ -56,58 +56,53 @@ std::optional<Arguments> ParseArgs(int argc, char* argv[])
 
 Vector3 ToVector3(const aiVector3D& v)
 {
-    return 
-    {
-        static_cast<float>(v.x),
-        static_cast<float>(v.y),
-        static_cast<float>(v.z)
-    };
+    return {static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)};
 }
 
 Vector2 ToTexCoord(const aiVector3D& v)
 {
-    return
-    {
-        static_cast<float>(v.x),
-        static_cast<float>(v.y)
-    };
+    return {static_cast<float>(v.x), static_cast<float>(v.y)};
 }
 
 Color ToColor(const aiColor3D& c)
 {
-    return
-    {
-        static_cast<float>(c.r),
-        static_cast<float>(c.g),
-        static_cast<float>(c.b),
-        static_cast<float>(1.0f)
-    };
+    return {static_cast<float>(c.r),
+            static_cast<float>(c.g),
+            static_cast<float>(c.b),
+            static_cast<float>(1.0f)};
 }
 
 Quaternion ToQuaternion(const aiQuaternion& q)
 {
-    return
-    {
-        static_cast<float>(q.x),
-        static_cast<float>(q.y),
-        static_cast<float>(q.z),
-        static_cast<float>(q.w)
-    };
+    return {static_cast<float>(q.x),
+            static_cast<float>(q.y),
+            static_cast<float>(q.z),
+            static_cast<float>(q.w)};
 }
 
 Matrix4 ToMatrix4(const aiMatrix4x4& m)
 {
-    return
-    {
-        static_cast<float>(m.a1), static_cast<float>(m.b1), static_cast<float>(m.c1), static_cast<float>(m.d1),
-        static_cast<float>(m.a2), static_cast<float>(m.b2), static_cast<float>(m.c2), static_cast<float>(m.d2),
-        static_cast<float>(m.a3), static_cast<float>(m.b3), static_cast<float>(m.c3), static_cast<float>(m.d3),
-        static_cast<float>(m.a4), static_cast<float>(m.b4), static_cast<float>(m.c4), static_cast<float>(m.d4)
-    };
+    return {static_cast<float>(m.a1),
+            static_cast<float>(m.b1),
+            static_cast<float>(m.c1),
+            static_cast<float>(m.d1),
+            static_cast<float>(m.a2),
+            static_cast<float>(m.b2),
+            static_cast<float>(m.c2),
+            static_cast<float>(m.d2),
+            static_cast<float>(m.a3),
+            static_cast<float>(m.b3),
+            static_cast<float>(m.c3),
+            static_cast<float>(m.d3),
+            static_cast<float>(m.a4),
+            static_cast<float>(m.b4),
+            static_cast<float>(m.c4),
+            static_cast<float>(m.d4)};
 }
 
-void ExportEmbeddedTexture(const aiTexture* texture, const Arguments& args,
-    const std::filesystem::path& fileName)
+void ExportEmbeddedTexture(const aiTexture* texture,
+                           const Arguments& args,
+                           const std::filesystem::path& fileName)
 {
     printf("Exporting Embedded Texture: %s\n", fileName.u8string().c_str());
 
@@ -129,16 +124,19 @@ void ExportEmbeddedTexture(const aiTexture* texture, const Arguments& args,
     fclose(file);
 }
 
-std::string FindTexture(const aiScene* scene, const aiMaterial* aiMaterial,
-    aiTextureType textureType, const Arguments& args, const std::string& suffix,
-    uint32_t materealIndex)
+std::string FindTexture(const aiScene* scene,
+                        const aiMaterial* aiMaterial,
+                        aiTextureType textureType,
+                        const Arguments& args,
+                        const std::string& suffix,
+                        uint32_t materealIndex)
 {
     const uint32_t textureCount = aiMaterial->GetTextureCount(textureType);
     if (textureCount == 0)
     {
         return "";
     }
-    
+
     std::filesystem::path textureName;
     aiString texturePath;
     if (aiMaterial->GetTexture(textureType, 0, &texturePath) == aiReturn_SUCCESS)
@@ -153,7 +151,8 @@ std::string FindTexture(const aiScene* scene, const aiMaterial* aiMaterial,
             ASSERT(scene->HasTextures(), "Error: Model has no embedded textures!");
 
             int textureIndex = atoi(texturePath.C_Str() + 1);
-            ASSERT(textureIndex < static_cast<int>(scene->mNumTextures), "Error: Texture index out of bounds!");
+            ASSERT(textureIndex < static_cast<int>(scene->mNumTextures),
+                   "Error: Texture index out of bounds!");
 
             const aiTexture* embeddedTexture = scene->mTextures[textureIndex];
             ASSERT(embeddedTexture->mHeight == 0, "Error: Compressed texture expected!");
@@ -175,7 +174,8 @@ std::string FindTexture(const aiScene* scene, const aiMaterial* aiMaterial,
             ExportEmbeddedTexture(embeddedTexture, args, fileName);
             textureName = fileName;
         }
-        else if (auto embeddedTexture = scene->GetEmbeddedTexture(texturePath.C_Str()); embeddedTexture)
+        else if (auto embeddedTexture = scene->GetEmbeddedTexture(texturePath.C_Str());
+                 embeddedTexture)
         {
             std::filesystem::path embeddedFilePath = texturePath.C_Str();
             std::string fileName = args.inputFileName.u8string();
@@ -201,7 +201,10 @@ std::string FindTexture(const aiScene* scene, const aiMaterial* aiMaterial,
     return textureName.filename().u8string();
 }
 
-Bone* BuildSkeleton(const aiNode* sceneNode, Bone* parent, Skeleton& skeleton, BoneIndexMap& boneIndexMap)
+Bone* BuildSkeleton(const aiNode* sceneNode,
+                    Bone* parent,
+                    Skeleton& skeleton,
+                    BoneIndexMap& boneIndexMap)
 {
     Bone* bone = nullptr;
     std::string boneName = sceneNode->mName.C_Str();
@@ -257,7 +260,9 @@ uint32_t GetBoneIndex(const aiBone* nodeBone, const BoneIndexMap& boneIndexMap)
     return iter->second;
 }
 
-void SetBoneOffsetTransform(const aiBone* nodeBone, Skeleton& skeleton, const BoneIndexMap& boneIndexMap)
+void SetBoneOffsetTransform(const aiBone* nodeBone,
+                            Skeleton& skeleton,
+                            const BoneIndexMap& boneIndexMap)
 {
     uint32_t boneIndex = GetBoneIndex(nodeBone, boneIndexMap);
     Bone* bone = skeleton.bones[boneIndex].get();
@@ -280,7 +285,8 @@ int main(int argc, char* argv[])
     Assimp::Importer importer;
     importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
-    const uint32_t flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_ConvertToLeftHanded;
+    const uint32_t flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_ConvertToLeftHanded |
+                           aiProcess_PopulateArmatureData;
     const aiScene* scene = importer.ReadFile(args.inputFileName.u8string().c_str(), flags);
 
     if (scene == nullptr)
@@ -290,7 +296,6 @@ int main(int argc, char* argv[])
     }
 
     printf("Importing model located at: %s\n", args.inputFileName.u8string().c_str());
-
 
     Model model;
     BoneIndexMap boneIndexMap;
@@ -358,8 +363,10 @@ int main(int argc, char* argv[])
 
                 const aiVector3D* positions = aiMesh->mVertices;
                 const aiVector3D* normals = aiMesh->mNormals;
-                const aiVector3D* tangents = (aiMesh->HasTangentsAndBitangents()) ? aiMesh->mTangents : nullptr;
-                const aiVector3D* texCoords = (aiMesh->HasTextureCoords(0)) ? aiMesh->mTextureCoords[0] : nullptr;
+                const aiVector3D* tangents =
+                    (aiMesh->HasTangentsAndBitangents()) ? aiMesh->mTangents : nullptr;
+                const aiVector3D* texCoords =
+                    (aiMesh->HasTextureCoords(0)) ? aiMesh->mTextureCoords[0] : nullptr;
 
                 for (uint32_t v = 0; v < numVertices; ++v)
                 {
@@ -436,14 +443,14 @@ int main(int argc, char* argv[])
             materialData.material.specular = ToColor(specular);
             materialData.material.shininess = static_cast<float>(specularPower);
 
-            materialData.diffuseMapName = FindTexture(scene, aiMaterial,
-                aiTextureType_DIFFUSE, args, "_diff", materialIndex);
-            materialData.specMapName = FindTexture(scene, aiMaterial,
-                aiTextureType_SPECULAR, args, "_spec", materialIndex);
-            materialData.normalMapName = FindTexture(scene, aiMaterial,
-                aiTextureType_NORMALS, args, "_norm", materialIndex);
-            materialData.bumpMapName = FindTexture(scene, aiMaterial,
-                aiTextureType_DISPLACEMENT, args, "_bump", materialIndex);
+            materialData.diffuseMapName =
+                FindTexture(scene, aiMaterial, aiTextureType_DIFFUSE, args, "_diff", materialIndex);
+            materialData.specMapName = FindTexture(
+                scene, aiMaterial, aiTextureType_SPECULAR, args, "_spec", materialIndex);
+            materialData.normalMapName =
+                FindTexture(scene, aiMaterial, aiTextureType_NORMALS, args, "_norm", materialIndex);
+            materialData.bumpMapName = FindTexture(
+                scene, aiMaterial, aiTextureType_DISPLACEMENT, args, "_bump", materialIndex);
         }
     }
 
@@ -451,7 +458,7 @@ int main(int argc, char* argv[])
     if (scene->HasAnimations())
     {
         printf("Building Animations...\n");
-        
+
         for (uint32_t animIndex = 0; animIndex < scene->mNumAnimations; ++animIndex)
         {
             const auto& aiAnim = scene->mAnimations[animIndex];
@@ -467,7 +474,8 @@ int main(int argc, char* argv[])
                 animClip.name = "Anim" + std::to_string(animIndex);
             }
             animClip.tickDuration = static_cast<float>(aiAnim->mDuration);
-            animClip.ticksPerSecond = static_cast<float>(aiAnim->mTicksPerSecond); // Frame Rate of Animation
+            animClip.ticksPerSecond =
+                static_cast<float>(aiAnim->mTicksPerSecond); // Frame Rate of Animation
 
             printf("Reading Bone Animations for %s...\n", animClip.name.c_str());
 
@@ -483,7 +491,8 @@ int main(int argc, char* argv[])
                 for (uint32_t keyIndex = 0; keyIndex < aiBoneAnim->mNumPositionKeys; ++keyIndex)
                 {
                     const aiVectorKey& pos = aiBoneAnim->mPositionKeys[keyIndex];
-                    builder.AddPositionKey(ToVector3(pos.mValue) * args.scale, static_cast<float>(pos.mTime));
+                    builder.AddPositionKey(ToVector3(pos.mValue) * args.scale,
+                                           static_cast<float>(pos.mTime));
                 }
                 for (uint32_t keyIndex = 0; keyIndex < aiBoneAnim->mNumRotationKeys; ++keyIndex)
                 {
@@ -519,4 +528,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
