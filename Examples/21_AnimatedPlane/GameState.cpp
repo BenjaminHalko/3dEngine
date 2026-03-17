@@ -7,18 +7,6 @@ using namespace Engine::Physics;
 using namespace Engine::Math;
 using namespace Engine::Audio;
 
-// Cinematic shot timing constants
-static constexpr float SHOT1_START = 0.0f;
-static constexpr float SHOT2_START = 3.0f;
-static constexpr float SHOT3_START = 6.0f;
-static constexpr float SHOT4_START = 8.0f;
-static constexpr float SHOT5_START = 9.5f;
-static constexpr float SHOT6_START = 11.0f;
-static constexpr float SHOT7_START = 13.0f;
-static constexpr float SHOT8_START = 15.0f;
-static constexpr float SHOT9_START = 17.0f;
-static constexpr float CINEMATIC_END = 21.0f;
-
 void GameState::Initialize()
 {
     mCamera.SetPosition({0.0f, 1.2f, -1.5f});
@@ -29,23 +17,19 @@ void GameState::Initialize()
     mDirectionalLight.diffuse = {0.8f, 0.8f, 0.8f, 1.0f};
     mDirectionalLight.specular = {0.9f, 0.9f, 0.9f, 1.0f};
 
-    // Stanley skeleton model
     mStanley.Initialize("stanley/stanley.model");
     mStanley.transform.position = {0.0f, 0.0f, 0.0f};
     mStanley.animator = &mStanleyAnimator;
     ModelManager::Get()->AddAnimation(mStanley.modelId, "Assets/Models/stanley/stanley.animset");
     mStanleyAnimator.Initialize(mStanley.modelId);
 
-    // Ground plane
     Mesh groundMesh = MeshBuilder::CreatePlane(20, 20, 1.0f, true);
     mGround.meshBuffer.Initialize(groundMesh);
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
 
-    // Jet model
     mPlane.Initialize("Plane/APJetFly.model");
 
-    // Flight path animation (loops every 6s)
     const float flightDuration = 6.0f;
     mPlaneAnimTime = 0.0f;
     mPlaneFlightAnimation =
@@ -62,7 +46,6 @@ void GameState::Initialize()
             .AddScaleKey({0.3f, 0.3f, 0.3f}, flightDuration)
             .Build();
 
-    // Explosion particle system
     mParticleSystemEffect.Initialize();
     mParticleSystemEffect.SetCamera(mCamera);
 
@@ -84,22 +67,16 @@ void GameState::Initialize()
     explosionInfo.endColour = {Colors::LightGray, Colors::White};
     mExplosion.Initialize(explosionInfo);
 
-    // StandardEffect
     std::filesystem::path shaderFile = "Assets/Shaders/Standard.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetCamera(mCamera);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
 
-    // Cinematic state
-    mCinematicTime = 0.0f;
-    mCinematicDone = false;
-    mCurrentShot = 1;
-    // Music -- looping from the start
     mMusicId = SoundEffectManager::Get()->Load("dixie.mp3");
     SoundEffectManager::Get()->Play(mMusicId, true);
 
-    // Stanley dances from Shot 1
     mStanleyAnimator.PlayAnimation(0, true);
+    ResetCinematic();
 }
 
 void GameState::Terminate()
@@ -113,25 +90,38 @@ void GameState::Terminate()
     SoundEffectManager::Get()->Stop(mMusicId);
 }
 
+void GameState::ResetCinematic()
+{
+    mCinematicTime = 0.0f;
+    mCinematicDone = false;
+    mCurrentShot = 1;
+    mPlaneAnimTime = 0.0f;
+    mPlaneShaking = false;
+    mShakeTime = 0.0f;
+    mStanley.transform.position = {0.0f, 0.0f, 0.0f};
+    mStanleyAnimator.PlayAnimation(0, true);
+    SoundEffectManager::Get()->Stop(mMusicId);
+    SoundEffectManager::Get()->Play(mMusicId, true);
+}
+
 void GameState::Update(float deltaTime)
 {
     mStanleyAnimator.Update(deltaTime);
 
-    // Advance plane animation (always loops)
-    mPlaneAnimTime += deltaTime;
-    if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
-        mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
+    if (!mPaused && !mCinematicDone)
+    {
+        mPlaneAnimTime += deltaTime;
+        if (mPlaneAnimTime > mPlaneFlightAnimation.GetDuration())
+            mPlaneAnimTime -= mPlaneFlightAnimation.GetDuration();
+    }
 
-    // Smooth flight transform (no shake) — used for camera and particles
     Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
-    // Shot 7: override smooth position/rotation to dive nose-down toward Stanley
     if (mCurrentShot == 7)
     {
-        float shotT = mCinematicTime - SHOT7_START;
-        float t = Math::Clamp(shotT / (SHOT8_START - SHOT7_START), 0.0f, 1.0f);
+        float shotT = mCinematicTime - mShot7Start;
+        float t = Math::Clamp(shotT / (mShot8Start - mShot7Start), 0.0f, 1.0f);
         smoothT.position = Math::Lerp(mDiveStartPos, Math::Vector3{0.0f, 1.5f, 1.0f}, t);
-        // Lerp rotation from level flight to nose-down ~54 degrees
         Quaternion levelRot =
             Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
         Quaternion diveRot = Quaternion::CreateFromYawPitchRoll(
@@ -142,7 +132,6 @@ void GameState::Update(float deltaTime)
         smoothT.rotation.w = levelRot.w + (diveRot.w - levelRot.w) * t;
     }
 
-    // Apply shaking on top for rendered plane only
     Transform planeT = smoothT;
     if (mPlaneShaking)
     {
@@ -152,85 +141,90 @@ void GameState::Update(float deltaTime)
     }
     mPlane.transform = planeT;
 
-    // Advance cinematic timer
-    if (!mCinematicDone)
+    if (!mPaused)
+    {
         mCinematicTime += deltaTime;
-    if (mCinematicTime >= CINEMATIC_END)
-        mCinematicDone = true;
+        if (mCinematicTime >= mCinematicEnd)
+        {
+            mCinematicTime = mCinematicEnd;
+            mCinematicDone = true;
+        }
+    }
 
-    // Determine current shot (highest threshold crossed)
     int prevShot = mCurrentShot;
-    if (mCinematicTime >= SHOT9_START)
+    if (mCinematicTime >= mShot9Start)
         mCurrentShot = 9;
-    else if (mCinematicTime >= SHOT8_START)
+    else if (mCinematicTime >= mShot8Start)
         mCurrentShot = 8;
-    else if (mCinematicTime >= SHOT7_START)
+    else if (mCinematicTime >= mShot7Start)
         mCurrentShot = 7;
-    else if (mCinematicTime >= SHOT6_START)
+    else if (mCinematicTime >= mShot6Start)
         mCurrentShot = 6;
-    else if (mCinematicTime >= SHOT5_START)
+    else if (mCinematicTime >= mShot5Start)
         mCurrentShot = 5;
-    else if (mCinematicTime >= SHOT4_START)
+    else if (mCinematicTime >= mShot4Start)
         mCurrentShot = 4;
-    else if (mCinematicTime >= SHOT3_START)
+    else if (mCinematicTime >= mShot3Start)
         mCurrentShot = 3;
-    else if (mCinematicTime >= SHOT2_START)
+    else if (mCinematicTime >= mShot2Start)
         mCurrentShot = 2;
     else
         mCurrentShot = 1;
 
-    // Fire one-time entry events on shot change
     if (mCurrentShot != prevShot)
         OnShotEnter(mCurrentShot, smoothT);
 
-    // Per-shot camera assignment
-    switch (mCurrentShot)
+    if (!mFreeCam)
     {
-    case 1:
-    {
-        // Zoom in from wide (z=-4) to face (z=-1.8) over the 3s shot
-        float st =
-            Math::Clamp((mCinematicTime - SHOT1_START) / (SHOT2_START - SHOT1_START), 0.0f, 1.0f);
-        float ease = st * st; // quadratic ease-in
-        float camZ = -4.0f + (-1.8f - (-4.0f)) * ease;
-        mCamera.SetPosition({0.0f, 1.5f, camZ});
-        mCamera.SetLookAt({0.0f, 1.4f, 0.0f});
-        break;
+        switch (mCurrentShot)
+        {
+        case 1:
+        {
+            float st = Math::Clamp(
+                (mCinematicTime - mShot1Start) / (mShot2Start - mShot1Start), 0.0f, 1.0f);
+            float ease = st * st;
+            float camZ = -4.0f + (-1.8f - (-4.0f)) * ease;
+            mCamera.SetPosition({0.0f, 1.5f, camZ});
+            mCamera.SetLookAt({0.0f, 1.4f, 0.0f});
+            break;
+        }
+        case 2:
+            mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 1.0f, -12.0f});
+            mCamera.SetLookAt(smoothT.position);
+            break;
+        case 3:
+        case 4:
+        case 5:
+            mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 0.5f, -4.0f});
+            mCamera.SetLookAt(smoothT.position);
+            break;
+        case 6:
+            mCamera.SetPosition({0.0f, 1.2f, -2.0f});
+            mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
+            break;
+        case 7:
+            mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 2.0f, -5.0f});
+            mCamera.SetLookAt(smoothT.position);
+            break;
+        case 8:
+            mCamera.SetPosition({-5.0f, 3.0f, -8.0f});
+            mCamera.SetLookAt({0.0f, 1.5f, 0.0f});
+            break;
+        case 9:
+            mCamera.SetPosition(smoothT.position + Math::Vector3{-1.5f, 2.0f, -3.5f});
+            mCamera.SetLookAt(smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f});
+            mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
+            break;
+        }
     }
-    case 2:
-        // Track the plane so it's always in frame
-        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 1.0f, -12.0f});
-        mCamera.SetLookAt(smoothT.position);
-        break;
-    case 3:
-    case 4:
-    case 5:
-        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 0.5f, -4.0f});
-        mCamera.SetLookAt(smoothT.position);
-        break;
-    case 6:
-        mCamera.SetPosition({0.0f, 1.2f, -2.0f});
-        mCamera.SetLookAt({0.0f, 1.0f, 0.0f});
-        break;
-    case 7:
-        mCamera.SetPosition(smoothT.position + Math::Vector3{0.0f, 2.0f, -5.0f});
-        mCamera.SetLookAt(smoothT.position);
-        break;
-    case 8:
-        mCamera.SetPosition({-5.0f, 3.0f, -8.0f});
-        mCamera.SetLookAt({0.0f, 1.5f, 0.0f});
-        break;
-    case 9:
-        mCamera.SetPosition(smoothT.position + Math::Vector3{-1.5f, 2.0f, -3.5f});
-        mCamera.SetLookAt(smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f});
-        mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
-        break;
+    else
+    {
+        UpdateCamera(deltaTime);
     }
 
     mStandardEffect.SetCamera(mCamera);
     mParticleSystemEffect.SetCamera(mCamera);
 
-    // Particle system update
     if (mExplosion.IsActive())
     {
         mExplosion.SetPositon(smoothT.position);
@@ -242,11 +236,8 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 {
     switch (shot)
     {
-    case 7:
-        mDiveStartPos = smoothT.position;
     case 2:
-        mPlaneAnimTime = 0.0f; // reset so plane enters fresh from left
-        break;
+        mPlaneAnimTime = 0.0f;
         break;
     case 4:
         mExplosion.SetPositon(smoothT.position);
@@ -258,6 +249,9 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
     case 6:
         mPlaneShaking = false;
         mShakeTime = 0.0f;
+        break;
+    case 7:
+        mDiveStartPos = smoothT.position;
         break;
     case 9:
         mPlaneShaking = false;
@@ -285,17 +279,97 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
-    ImGui::Begin("Cinematic", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Shot: %d / 9", mCurrentShot);
-    ImGui::Text("Time: %.1f / %.1f", mCinematicTime, CINEMATIC_END);
-    ImGui::Text("Done: %s", mCinematicDone ? "YES" : "NO");
-    ImGui::Text("Shaking: %s", mPlaneShaking ? "YES" : "NO");
+    ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+    ImGui::Text("Shot: %d / 9   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
+    ImGui::Text(
+        "Shaking: %s   Done: %s", mPlaneShaking ? "YES" : "NO", mCinematicDone ? "YES" : "NO");
+
+    ImGui::Separator();
+
+    if (ImGui::Button(mPaused ? "Play" : "Pause"))
+        mPaused = !mPaused;
+    ImGui::SameLine();
+    if (ImGui::Button("Reset"))
+        ResetCinematic();
+    ImGui::SameLine();
+    ImGui::Checkbox("Free Cam", &mFreeCam);
+
+    ImGui::Separator();
+    ImGui::Text("Skip to shot:");
+    for (int i = 1; i <= 9; ++i)
+    {
+        if (i > 1)
+            ImGui::SameLine();
+        char label[4];
+        snprintf(label, sizeof(label), "%d", i);
+        if (ImGui::Button(label))
+        {
+            float targets[] = {mShot1Start,
+                               mShot2Start,
+                               mShot3Start,
+                               mShot4Start,
+                               mShot5Start,
+                               mShot6Start,
+                               mShot7Start,
+                               mShot8Start,
+                               mShot9Start};
+            mCinematicTime = targets[i - 1];
+            mCinematicDone = false;
+        }
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Shot Timings:");
+    ImGui::DragFloat("Shot 1", &mShot1Start, 0.1f, 0.0f, mShot2Start - 0.5f);
+    ImGui::DragFloat("Shot 2", &mShot2Start, 0.1f, mShot1Start + 0.5f, mShot3Start - 0.5f);
+    ImGui::DragFloat("Shot 3", &mShot3Start, 0.1f, mShot2Start + 0.5f, mShot4Start - 0.5f);
+    ImGui::DragFloat("Shot 4", &mShot4Start, 0.1f, mShot3Start + 0.5f, mShot5Start - 0.5f);
+    ImGui::DragFloat("Shot 5", &mShot5Start, 0.1f, mShot4Start + 0.5f, mShot6Start - 0.5f);
+    ImGui::DragFloat("Shot 6", &mShot6Start, 0.1f, mShot5Start + 0.5f, mShot7Start - 0.5f);
+    ImGui::DragFloat("Shot 7", &mShot7Start, 0.1f, mShot6Start + 0.5f, mShot8Start - 0.5f);
+    ImGui::DragFloat("Shot 8", &mShot8Start, 0.1f, mShot7Start + 0.5f, mShot9Start - 0.5f);
+    ImGui::DragFloat("Shot 9", &mShot9Start, 0.1f, mShot8Start + 0.5f, mCinematicEnd - 0.5f);
+    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot9Start + 0.5f, 60.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Camera Pos: %.1f %.1f %.1f",
+                mCamera.GetPosition().x,
+                mCamera.GetPosition().y,
+                mCamera.GetPosition().z);
+
+    ImGui::Separator();
+    ImGui::Text("Lighting:");
+    ImGui::DragFloat3("Direction", &mDirectionalLight.direction.x, 0.01f, -1.0f, 1.0f);
+    ImGui::ColorEdit4("Ambient", &mDirectionalLight.ambient.x);
+    ImGui::ColorEdit4("Diffuse", &mDirectionalLight.diffuse.x);
+    mStandardEffect.SetDirectionalLight(mDirectionalLight);
+
     ImGui::End();
 }
 
 void GameState::UpdateCamera(float deltaTime)
 {
-    // Camera is controlled by cinematic sequencer in Update()
-    // Free-look kept here for future debug override (Stage 5)
-    (void) deltaTime;
+    InputSystem* input = InputSystem::Get();
+    const float moveSpeed = input->IsKeyDown(KeyCode::LSHIFT) ? 10.0f : 4.0f;
+    const float turnSpeed = 0.5f;
+
+    if (input->IsKeyDown(KeyCode::W))
+        mCamera.Walk(moveSpeed * deltaTime);
+    else if (input->IsKeyDown(KeyCode::S))
+        mCamera.Walk(-moveSpeed * deltaTime);
+    else if (input->IsKeyDown(KeyCode::D))
+        mCamera.Strafe(moveSpeed * deltaTime);
+    else if (input->IsKeyDown(KeyCode::A))
+        mCamera.Strafe(-moveSpeed * deltaTime);
+    else if (input->IsKeyDown(KeyCode::E))
+        mCamera.Rise(moveSpeed * deltaTime);
+    else if (input->IsKeyDown(KeyCode::Q))
+        mCamera.Rise(-moveSpeed * deltaTime);
+
+    if (input->IsMouseDown(MouseButton::RBUTTON))
+    {
+        mCamera.Yaw(input->GetMouseMoveX() * turnSpeed * deltaTime);
+        mCamera.Pitch(input->GetMouseMoveY() * turnSpeed * deltaTime);
+    }
 }
