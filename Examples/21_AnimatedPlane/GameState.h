@@ -36,8 +36,10 @@ class GameState : public Engine::AppState
     Engine::Graphics::ParticleSystemEffect mParticleSystemEffect;
     Engine::Physics::ParticleSystem mExplosion;
 
-    // Tower (lazy-loaded on Shot 11)
+    // Towers (lazy-loaded on Shot 11)
     Engine::Graphics::RenderGroup mTower;
+    Engine::Graphics::RenderGroup mTower2;
+    Engine::Graphics::RenderGroup mTower3;
     bool mTowerLoaded = false;
 
     // Shaking state

@@ -82,7 +82,11 @@ void GameState::Initialize()
 void GameState::Terminate()
 {
     if (mTowerLoaded)
+    {
         mTower.Terminate();
+        mTower2.Terminate();
+        mTower3.Terminate();
+    }
     mExplosion.Terminate();
     mParticleSystemEffect.Terminate();
     mPlane.Terminate();
@@ -105,6 +109,8 @@ void GameState::ResetCinematic()
     if (mTowerLoaded)
     {
         mTower.Terminate();
+        mTower2.Terminate();
+        mTower3.Terminate();
         mTowerLoaded = false;
     }
     SoundEffectManager::Get()->Stop(mMusicId);
@@ -326,11 +332,25 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
     case 11:
         if (!mTowerLoaded)
         {
+            Quaternion towerRot =
+                Quaternion::CreateFromYawPitchRoll(0.0f, Math::Constants::Pi * 0.5f, 0.0f);
+            Math::Vector3 towerScale = {0.1f, 0.1f, 0.1f};
+
             mTower.Initialize("Tower/tower.model");
             mTower.transform.position = {50.0f, 0.0f, 30.0f};
-            mTower.transform.rotation =
-                Quaternion::CreateFromYawPitchRoll(0.0f, Math::Constants::Pi * 0.5f, 0.0f);
-            mTower.transform.scale = {0.1f, 0.1f, 0.1f};
+            mTower.transform.rotation = towerRot;
+            mTower.transform.scale = towerScale;
+
+            mTower2.Initialize("Tower/tower.model");
+            mTower2.transform.position = {50.0f, 0.0f, 50.0f};
+            mTower2.transform.rotation = towerRot;
+            mTower2.transform.scale = towerScale;
+
+            mTower3.Initialize("Tower/tower.model");
+            mTower3.transform.position = {70.0f, 0.0f, 40.0f};
+            mTower3.transform.rotation = towerRot;
+            mTower3.transform.scale = towerScale;
+
             mTowerLoaded = true;
         }
         mPlaneShaking = true;
@@ -347,7 +367,11 @@ void GameState::Render()
     mStandardEffect.Render(mGround);
     mStandardEffect.Render(mPlane);
     if (mTowerLoaded)
+    {
         mStandardEffect.Render(mTower);
+        mStandardEffect.Render(mTower2);
+        mStandardEffect.Render(mTower3);
+    }
     mStandardEffect.End();
 
     mParticleSystemEffect.Begin();
