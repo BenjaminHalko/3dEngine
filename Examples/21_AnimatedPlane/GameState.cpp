@@ -239,7 +239,7 @@ void GameState::Update(float deltaTime)
             float t = Math::Clamp(shotT / (mShot12Start - mShot11Start), 0.0f, 1.0f);
             Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
             Math::Vector3 planeStart = {-20.0f, towerTop.y, towerTop.z};
-            Math::Vector3 planeEnd = towerTop;
+            Math::Vector3 planeEnd = towerTop + Math::Vector3{-8.0f, 0.0f, 0.0f};
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
             mPlane.transform.position = planePos;
             mPlane.transform.rotation =
