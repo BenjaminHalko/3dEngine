@@ -92,7 +92,6 @@ void GameState::Terminate()
 
 void GameState::ResetCinematic()
 {
-    mStartupDelay = 3.0f;
     mCinematicTime = 0.0f;
     mCinematicDone = false;
     mCurrentShot = 1;
@@ -108,12 +107,6 @@ void GameState::ResetCinematic()
 void GameState::Update(float deltaTime)
 {
     mStanleyAnimator.Update(deltaTime);
-
-    if (mStartupDelay > 0.0f)
-    {
-        mStartupDelay -= deltaTime;
-        return;
-    }
 
     if (!mPaused && !mCinematicDone)
     {

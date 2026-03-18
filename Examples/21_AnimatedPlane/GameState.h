@@ -49,7 +49,6 @@ class GameState : public Engine::AppState
     // Playback controls
     bool mPaused = false;
     bool mFreeCam = false;
-    float mStartupDelay = 3.0f;
 
     // Per-shot timing (editable via sliders)
     float mShot1Start = 0.0f;
