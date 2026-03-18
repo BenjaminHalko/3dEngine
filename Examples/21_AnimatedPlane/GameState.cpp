@@ -355,9 +355,20 @@ void GameState::DebugUI()
     ImGui::Separator();
     ImGui::Text("Lighting:");
     ImGui::DragFloat3("Direction", &mDirectionalLight.direction.x, 0.01f, -1.0f, 1.0f);
-    ImGui::ColorEdit4("Ambient", &mDirectionalLight.ambient.x);
-    ImGui::ColorEdit4("Diffuse", &mDirectionalLight.diffuse.x);
+    ImGui::ColorEdit4("Ambient##L", &mDirectionalLight.ambient.x);
+    ImGui::ColorEdit4("Diffuse##L", &mDirectionalLight.diffuse.x);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
+
+    ImGui::Separator();
+    ImGui::Text("Stanley Material:");
+    for (auto& ro : mStanley.renderObjects)
+    {
+        ImGui::ColorEdit4("Ambient##M", &ro.material.ambient.x);
+        ImGui::ColorEdit4("Diffuse##M", &ro.material.diffuse.x);
+        ImGui::ColorEdit4("Specular##M", &ro.material.specular.x);
+        ImGui::DragFloat("Shininess", &ro.material.shininess, 1.0f, 1.0f, 200.0f);
+        break;
+    }
 
     ImGui::End();
 }
