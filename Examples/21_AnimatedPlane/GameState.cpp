@@ -267,17 +267,17 @@ void GameState::Update(float deltaTime)
             float startAngle = Math::Constants::Pi;
             float endAngle = 0.0f;
             float angle = startAngle + (endAngle - startAngle) * t;
-            float height = towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f;
-            Math::Vector3 planePos = {towerCenter.x + cosf(angle) * radius,
-                                      towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f,
-                                      towerCenter.z + sinf(angle) * radius};
+            float arcY = towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f;
+            Math::Vector3 planePos = {
+                towerCenter.x + cosf(angle) * radius, arcY, towerCenter.z + sinf(angle) * radius};
             mPlane.transform.position = planePos;
             float yaw = angle - Math::Constants::Pi * 0.5f;
             mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(yaw, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(towerCenter + Math::Vector3{0.0f, 15.0f, -30.0f});
-            mCamera.SetLookAt(planePos);
+            Math::Vector3 camOffset = {cosf(angle - 0.5f) * 6.0f, 3.0f, sinf(angle - 0.5f) * 6.0f};
+            mCamera.SetPosition(planePos + camOffset);
+            mCamera.SetLookAt(towerCenter);
             break;
         }
         }
