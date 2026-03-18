@@ -159,7 +159,9 @@ void GameState::Update(float deltaTime)
     }
 
     int prevShot = mCurrentShot;
-    if (mCinematicTime >= mShot11Start)
+    if (mCinematicTime >= mShot12Start)
+        mCurrentShot = 12;
+    else if (mCinematicTime >= mShot11Start)
         mCurrentShot = 11;
     else if (mCinematicTime >= mShot10Start)
         mCurrentShot = 10;
@@ -234,7 +236,7 @@ void GameState::Update(float deltaTime)
         case 11:
         {
             float shotT = mCinematicTime - mShot11Start;
-            float t = Math::Clamp(shotT / (mCinematicEnd - mShot11Start), 0.0f, 1.0f);
+            float t = Math::Clamp(shotT / (mShot12Start - mShot11Start), 0.0f, 1.0f);
             Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
             Math::Vector3 planeStart = {-20.0f, towerTop.y, towerTop.z};
             Math::Vector3 planeEnd = towerTop;
@@ -246,6 +248,22 @@ void GameState::Update(float deltaTime)
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
             mCamera.SetPosition(planePos + Math::Vector3{-3.0f, 2.0f, -8.0f});
             mCamera.SetLookAt(Math::Lerp(planePos, towerTop, 0.5f));
+            break;
+        }
+        case 12:
+        {
+            float shotT = mCinematicTime - mShot12Start;
+            float t = Math::Clamp(shotT / (mCinematicEnd - mShot12Start), 0.0f, 1.0f);
+            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            Math::Vector3 planeStart = {towerTop.x, towerTop.y + 5.0f, towerTop.z - 40.0f};
+            Math::Vector3 planeEnd = towerTop;
+            Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
+            mPlane.transform.position = planePos;
+            mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
+            mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
+            mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
+            mCamera.SetPosition(towerTop + Math::Vector3{8.0f, 5.0f, -15.0f});
+            mCamera.SetLookAt(planePos);
             break;
         }
         }
@@ -341,7 +359,7 @@ void GameState::DebugUI()
 {
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text("Shot: %d / 11   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
+    ImGui::Text("Shot: %d / 12   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
     ImGui::Text(
         "Shaking: %s   Done: %s", mPlaneShaking ? "YES" : "NO", mCinematicDone ? "YES" : "NO");
 
@@ -357,7 +375,7 @@ void GameState::DebugUI()
 
     ImGui::Separator();
     ImGui::Text("Skip to shot:");
-    for (int i = 1; i <= 11; ++i)
+    for (int i = 1; i <= 12; ++i)
     {
         if (i > 1)
             ImGui::SameLine();
@@ -375,7 +393,8 @@ void GameState::DebugUI()
                                mShot8Start,
                                mShot9Start,
                                mShot10Start,
-                               mShot11Start};
+                               mShot11Start,
+                               mShot12Start};
             mCinematicTime = targets[i - 1];
             mCinematicDone = false;
         }
@@ -393,8 +412,9 @@ void GameState::DebugUI()
     ImGui::DragFloat("Shot 8", &mShot8Start, 0.1f, mShot7Start + 0.5f, mShot9Start - 0.5f);
     ImGui::DragFloat("Shot 9", &mShot9Start, 0.1f, mShot8Start + 0.5f, mShot10Start - 0.5f);
     ImGui::DragFloat("Shot 10", &mShot10Start, 0.1f, mShot9Start + 0.5f, mShot11Start - 0.5f);
-    ImGui::DragFloat("Shot 11", &mShot11Start, 0.1f, mShot10Start + 0.5f, mCinematicEnd - 0.5f);
-    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot11Start + 0.5f, 60.0f);
+    ImGui::DragFloat("Shot 11", &mShot11Start, 0.1f, mShot10Start + 0.5f, mShot12Start - 0.5f);
+    ImGui::DragFloat("Shot 12", &mShot12Start, 0.1f, mShot11Start + 0.5f, mCinematicEnd - 0.5f);
+    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot12Start + 0.5f, 60.0f);
 
     ImGui::Separator();
     ImGui::Text("Camera Pos: %.1f %.1f %.1f",
