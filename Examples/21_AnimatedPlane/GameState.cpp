@@ -183,7 +183,7 @@ void GameState::Update(float deltaTime)
             float st = Math::Clamp(
                 (mCinematicTime - mShot1Start) / (mShot2Start - mShot1Start), 0.0f, 1.0f);
             float ease = st * st;
-            float camZ = -4.0f + (-1.8f - (-4.0f)) * ease;
+            float camZ = -4.0f + (-2.8f - (-4.0f)) * ease;
             mCamera.SetPosition({0.0f, 1.5f, camZ});
             mCamera.SetLookAt({0.0f, 1.4f, 0.0f});
             break;
