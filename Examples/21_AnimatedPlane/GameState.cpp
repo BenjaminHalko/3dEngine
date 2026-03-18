@@ -259,16 +259,23 @@ void GameState::Update(float deltaTime)
         case 12:
         {
             float shotT = mCinematicTime - mShot12Start;
-            float t = Math::Clamp(shotT / (mCinematicEnd - mShot12Start), 0.0f, 1.0f);
-            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
-            Math::Vector3 planeStart = {towerTop.x, towerTop.y + 5.0f, towerTop.z - 40.0f};
-            Math::Vector3 planeEnd = towerTop;
-            Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
+            float duration = mCinematicEnd - mShot12Start;
+            float t = Math::Clamp(shotT / duration, 0.0f, 1.0f);
+            Math::Vector3 towerCenter =
+                mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            float radius = 25.0f;
+            float startAngle = Math::Constants::Pi;
+            float endAngle = 0.0f;
+            float angle = startAngle + (endAngle - startAngle) * t;
+            float height = towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f;
+            Math::Vector3 planePos = {
+                towerCenter.x + cosf(angle) * radius, height, towerCenter.z + sinf(angle) * radius};
             mPlane.transform.position = planePos;
-            mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
+            float yaw = angle - Math::Constants::Pi * 0.5f;
+            mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(yaw, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(towerTop + Math::Vector3{8.0f, 5.0f, -15.0f});
+            mCamera.SetPosition(towerCenter + Math::Vector3{0.0f, 15.0f, -30.0f});
             mCamera.SetLookAt(planePos);
             break;
         }
