@@ -152,7 +152,9 @@ void GameState::Update(float deltaTime)
     }
 
     int prevShot = mCurrentShot;
-    if (mCinematicTime >= mShot9Start)
+    if (mCinematicTime >= mShot10Start)
+        mCurrentShot = 10;
+    else if (mCinematicTime >= mShot9Start)
         mCurrentShot = 9;
     else if (mCinematicTime >= mShot8Start)
         mCurrentShot = 8;
@@ -215,6 +217,11 @@ void GameState::Update(float deltaTime)
             mCamera.SetLookAt(smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f});
             mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
             break;
+        case 10:
+            mCamera.SetPosition(smoothT.position + Math::Vector3{2.0f, 1.0f, -4.0f});
+            mCamera.SetLookAt(smoothT.position);
+            mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
+            break;
         }
     }
     else
@@ -266,6 +273,12 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
         mStanleyAnimator.PlayAnimation(0, true);
         break;
+    case 10:
+        mPlaneShaking = true;
+        mShakeTime = 0.0f;
+        mExplosion.SetPositon(smoothT.position);
+        mExplosion.SpawnParticles();
+        break;
     default:
         break;
     }
@@ -288,7 +301,7 @@ void GameState::DebugUI()
 {
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text("Shot: %d / 9   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
+    ImGui::Text("Shot: %d / 10   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
     ImGui::Text(
         "Shaking: %s   Done: %s", mPlaneShaking ? "YES" : "NO", mCinematicDone ? "YES" : "NO");
 
@@ -304,7 +317,7 @@ void GameState::DebugUI()
 
     ImGui::Separator();
     ImGui::Text("Skip to shot:");
-    for (int i = 1; i <= 9; ++i)
+    for (int i = 1; i <= 10; ++i)
     {
         if (i > 1)
             ImGui::SameLine();
@@ -320,7 +333,8 @@ void GameState::DebugUI()
                                mShot6Start,
                                mShot7Start,
                                mShot8Start,
-                               mShot9Start};
+                               mShot9Start,
+                               mShot10Start};
             mCinematicTime = targets[i - 1];
             mCinematicDone = false;
         }
@@ -336,8 +350,9 @@ void GameState::DebugUI()
     ImGui::DragFloat("Shot 6", &mShot6Start, 0.1f, mShot5Start + 0.5f, mShot7Start - 0.5f);
     ImGui::DragFloat("Shot 7", &mShot7Start, 0.1f, mShot6Start + 0.5f, mShot8Start - 0.5f);
     ImGui::DragFloat("Shot 8", &mShot8Start, 0.1f, mShot7Start + 0.5f, mShot9Start - 0.5f);
-    ImGui::DragFloat("Shot 9", &mShot9Start, 0.1f, mShot8Start + 0.5f, mCinematicEnd - 0.5f);
-    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot9Start + 0.5f, 60.0f);
+    ImGui::DragFloat("Shot 9", &mShot9Start, 0.1f, mShot8Start + 0.5f, mShot10Start - 0.5f);
+    ImGui::DragFloat("Shot 10", &mShot10Start, 0.1f, mShot9Start + 0.5f, mCinematicEnd - 0.5f);
+    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot10Start + 0.5f, 60.0f);
 
     ImGui::Separator();
     ImGui::Text("Camera Pos: %.1f %.1f %.1f",

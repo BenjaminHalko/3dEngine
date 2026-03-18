@@ -60,7 +60,8 @@ class GameState : public Engine::AppState
     float mShot7Start = 13.0f;
     float mShot8Start = 15.0f;
     float mShot9Start = 17.0f;
-    float mCinematicEnd = 21.0f;
+    float mShot10Start = 21.0f;
+    float mCinematicEnd = 25.0f;
 
     // Audio
     Engine::Audio::SoundId mMusicId = 0;
