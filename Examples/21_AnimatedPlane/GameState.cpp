@@ -263,7 +263,7 @@ void GameState::Update(float deltaTime)
             float t = Math::Clamp(shotT / duration, 0.0f, 1.0f);
             Math::Vector3 towerCenter =
                 mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
-            float radius = 25.0f;
+            float radius = 35.0f;
             float startAngle = Math::Constants::Pi;
             float endAngle = 0.0f;
             float angle = startAngle + (endAngle - startAngle) * t;
