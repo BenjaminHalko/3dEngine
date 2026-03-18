@@ -311,7 +311,7 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
             mTower.Initialize("Tower/tower.model");
             mTower.transform.position = {50.0f, 0.0f, 30.0f};
             mTower.transform.rotation =
-                Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+                Quaternion::CreateFromYawPitchRoll(0.0f, Math::Constants::Pi * 0.5f, 0.0f);
             mTower.transform.scale = {0.1f, 0.1f, 0.1f};
             mTowerLoaded = true;
         }
