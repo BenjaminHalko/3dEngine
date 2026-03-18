@@ -252,7 +252,7 @@ void GameState::Update(float deltaTime)
                 Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(planePos + Math::Vector3{-3.0f, 2.0f, -8.0f});
+            mCamera.SetPosition(planePos + Math::Vector3{-6.0f, 2.0f, -8.0f});
             mCamera.SetLookAt(Math::Lerp(planePos, towerTop, 0.5f));
             break;
         }
@@ -268,8 +268,9 @@ void GameState::Update(float deltaTime)
             float endAngle = 0.0f;
             float angle = startAngle + (endAngle - startAngle) * t;
             float height = towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f;
-            Math::Vector3 planePos = {
-                towerCenter.x + cosf(angle) * radius, height, towerCenter.z + sinf(angle) * radius};
+            Math::Vector3 planePos = {towerCenter.x + cosf(angle) * radius,
+                                      towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f,
+                                      towerCenter.z + sinf(angle) * radius};
             mPlane.transform.position = planePos;
             float yaw = angle - Math::Constants::Pi * 0.5f;
             mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(yaw, 0.0f, 0.0f);
