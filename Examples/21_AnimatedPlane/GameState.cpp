@@ -235,17 +235,17 @@ void GameState::Update(float deltaTime)
         {
             float shotT = mCinematicTime - mShot11Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot11Start), 0.0f, 1.0f);
-            Math::Vector3 towerPos = mTower.transform.position;
-            Math::Vector3 planeStart = {-30.0f, 8.0f, towerPos.z};
-            Math::Vector3 planeEnd = towerPos + Math::Vector3{0.0f, 5.0f, 0.0f};
+            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            Math::Vector3 planeStart = {-20.0f, towerTop.y, towerTop.z};
+            Math::Vector3 planeEnd = towerTop;
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
             mPlane.transform.position = planePos;
             mPlane.transform.rotation =
                 Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(planePos + Math::Vector3{5.0f, 3.0f, -10.0f});
-            mCamera.SetLookAt(towerPos + Math::Vector3{0.0f, 10.0f, 0.0f});
+            mCamera.SetPosition(planePos + Math::Vector3{-3.0f, 2.0f, -8.0f});
+            mCamera.SetLookAt(Math::Lerp(planePos, towerTop, 0.5f));
             break;
         }
         }
@@ -309,8 +309,8 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         if (!mTowerLoaded)
         {
             mTower.Initialize("Tower/tower.model");
-            mTower.transform.position = {30.0f, 0.0f, 20.0f};
-            mTower.transform.scale = {0.01f, 0.01f, 0.01f};
+            mTower.transform.position = {50.0f, 0.0f, 30.0f};
+            mTower.transform.scale = {0.1f, 0.1f, 0.1f};
             mTowerLoaded = true;
         }
         mPlaneShaking = true;
