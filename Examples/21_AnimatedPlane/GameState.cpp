@@ -246,8 +246,12 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
     case 2:
         mPlaneAnimTime = 0.0f;
         break;
+    case 3:
+        mPlaneAnimTime = 0.0f;
+        break;
     case 4:
-        mExplosion.SetPositon(smoothT.position);
+        mPlaneAnimTime = 2.0f;
+        mExplosion.SetPositon(mPlaneFlightAnimation.GetTransform(mPlaneAnimTime).position);
         mExplosion.SpawnParticles();
         break;
     case 5:
@@ -258,7 +262,11 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         mShakeTime = 0.0f;
         break;
     case 7:
-        mDiveStartPos = smoothT.position;
+        mPlaneAnimTime = 0.0f;
+        mDiveStartPos = mPlaneFlightAnimation.GetTransform(0.0f).position;
+        break;
+    case 8:
+        mPlaneAnimTime = 0.0f;
         break;
     case 9:
         mPlaneShaking = false;
