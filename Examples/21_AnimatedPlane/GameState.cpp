@@ -124,10 +124,10 @@ void GameState::Update(float deltaTime)
 
     Transform smoothT = mPlaneFlightAnimation.GetTransform(mPlaneAnimTime);
 
-    if (mCurrentShot == 7)
+    if (mCurrentShot == 7 || mCurrentShot == 8)
     {
         float shotT = mCinematicTime - mShot7Start;
-        float t = Math::Clamp(shotT / (mShot8Start - mShot7Start), 0.0f, 1.0f);
+        float t = Math::Clamp(shotT / (mShot9Start - mShot7Start), 0.0f, 1.0f);
         smoothT.position = Math::Lerp(mDiveStartPos, Math::Vector3{0.0f, 1.5f, 1.0f}, t);
         Quaternion levelRot =
             Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
@@ -266,7 +266,6 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         mDiveStartPos = mPlaneFlightAnimation.GetTransform(0.0f).position;
         break;
     case 8:
-        mPlaneAnimTime = 0.0f;
         break;
     case 9:
         mPlaneShaking = false;
