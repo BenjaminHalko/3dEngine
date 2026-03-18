@@ -81,6 +81,8 @@ void GameState::Initialize()
 
 void GameState::Terminate()
 {
+    if (mTowerLoaded)
+        mTower.Terminate();
     mExplosion.Terminate();
     mParticleSystemEffect.Terminate();
     mPlane.Terminate();
@@ -100,6 +102,11 @@ void GameState::ResetCinematic()
     mShakeTime = 0.0f;
     mStanley.transform.position = {0.0f, 0.0f, 0.0f};
     mStanleyAnimator.PlayAnimation(0, true);
+    if (mTowerLoaded)
+    {
+        mTower.Terminate();
+        mTowerLoaded = false;
+    }
     SoundEffectManager::Get()->Stop(mMusicId);
     SoundEffectManager::Get()->Play(mMusicId, true);
 }
@@ -152,7 +159,9 @@ void GameState::Update(float deltaTime)
     }
 
     int prevShot = mCurrentShot;
-    if (mCinematicTime >= mShot10Start)
+    if (mCinematicTime >= mShot11Start)
+        mCurrentShot = 11;
+    else if (mCinematicTime >= mShot10Start)
         mCurrentShot = 10;
     else if (mCinematicTime >= mShot9Start)
         mCurrentShot = 9;
@@ -222,6 +231,23 @@ void GameState::Update(float deltaTime)
             mCamera.SetLookAt(smoothT.position);
             mStanley.transform.position = smoothT.position + Math::Vector3{0.0f, 0.5f, 0.0f};
             break;
+        case 11:
+        {
+            float shotT = mCinematicTime - mShot11Start;
+            float t = Math::Clamp(shotT / (mCinematicEnd - mShot11Start), 0.0f, 1.0f);
+            Math::Vector3 towerPos = mTower.transform.position;
+            Math::Vector3 planeStart = {-30.0f, 8.0f, towerPos.z};
+            Math::Vector3 planeEnd = towerPos + Math::Vector3{0.0f, 5.0f, 0.0f};
+            Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
+            mPlane.transform.position = planePos;
+            mPlane.transform.rotation =
+                Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+            mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
+            mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
+            mCamera.SetPosition(planePos + Math::Vector3{5.0f, 3.0f, -10.0f});
+            mCamera.SetLookAt(towerPos + Math::Vector3{0.0f, 10.0f, 0.0f});
+            break;
+        }
         }
     }
     else
@@ -279,6 +305,16 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         mExplosion.SetPositon(smoothT.position);
         mExplosion.SpawnParticles();
         break;
+    case 11:
+        if (!mTowerLoaded)
+        {
+            mTower.Initialize("Tower/tower.model");
+            mTower.transform.position = {30.0f, 0.0f, 20.0f};
+            mTower.transform.scale = {0.01f, 0.01f, 0.01f};
+            mTowerLoaded = true;
+        }
+        mPlaneShaking = true;
+        break;
     default:
         break;
     }
@@ -290,6 +326,8 @@ void GameState::Render()
     mStandardEffect.Render(mStanley);
     mStandardEffect.Render(mGround);
     mStandardEffect.Render(mPlane);
+    if (mTowerLoaded)
+        mStandardEffect.Render(mTower);
     mStandardEffect.End();
 
     mParticleSystemEffect.Begin();
@@ -301,7 +339,7 @@ void GameState::DebugUI()
 {
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text("Shot: %d / 10   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
+    ImGui::Text("Shot: %d / 11   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
     ImGui::Text(
         "Shaking: %s   Done: %s", mPlaneShaking ? "YES" : "NO", mCinematicDone ? "YES" : "NO");
 
@@ -317,7 +355,7 @@ void GameState::DebugUI()
 
     ImGui::Separator();
     ImGui::Text("Skip to shot:");
-    for (int i = 1; i <= 10; ++i)
+    for (int i = 1; i <= 11; ++i)
     {
         if (i > 1)
             ImGui::SameLine();
@@ -334,7 +372,8 @@ void GameState::DebugUI()
                                mShot7Start,
                                mShot8Start,
                                mShot9Start,
-                               mShot10Start};
+                               mShot10Start,
+                               mShot11Start};
             mCinematicTime = targets[i - 1];
             mCinematicDone = false;
         }
@@ -351,8 +390,9 @@ void GameState::DebugUI()
     ImGui::DragFloat("Shot 7", &mShot7Start, 0.1f, mShot6Start + 0.5f, mShot8Start - 0.5f);
     ImGui::DragFloat("Shot 8", &mShot8Start, 0.1f, mShot7Start + 0.5f, mShot9Start - 0.5f);
     ImGui::DragFloat("Shot 9", &mShot9Start, 0.1f, mShot8Start + 0.5f, mShot10Start - 0.5f);
-    ImGui::DragFloat("Shot 10", &mShot10Start, 0.1f, mShot9Start + 0.5f, mCinematicEnd - 0.5f);
-    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot10Start + 0.5f, 60.0f);
+    ImGui::DragFloat("Shot 10", &mShot10Start, 0.1f, mShot9Start + 0.5f, mShot11Start - 0.5f);
+    ImGui::DragFloat("Shot 11", &mShot11Start, 0.1f, mShot10Start + 0.5f, mCinematicEnd - 0.5f);
+    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot11Start + 0.5f, 60.0f);
 
     ImGui::Separator();
     ImGui::Text("Camera Pos: %.1f %.1f %.1f",

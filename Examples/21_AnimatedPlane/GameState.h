@@ -36,6 +36,10 @@ class GameState : public Engine::AppState
     Engine::Graphics::ParticleSystemEffect mParticleSystemEffect;
     Engine::Physics::ParticleSystem mExplosion;
 
+    // Tower (lazy-loaded on Shot 11)
+    Engine::Graphics::RenderGroup mTower;
+    bool mTowerLoaded = false;
+
     // Shaking state
     bool mPlaneShaking = false;
     float mShakeTime = 0.0f;
@@ -61,7 +65,8 @@ class GameState : public Engine::AppState
     float mShot8Start = 15.0f;
     float mShot9Start = 17.0f;
     float mShot10Start = 21.0f;
-    float mCinematicEnd = 25.0f;
+    float mShot11Start = 25.0f;
+    float mCinematicEnd = 30.0f;
 
     // Audio
     Engine::Audio::SoundId mMusicId = 0;
