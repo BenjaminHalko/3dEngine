@@ -83,7 +83,11 @@ void GameState::Initialize()
 void GameState::Terminate()
 {
     if (mGiantLoaded)
+    {
         mGiantStanley.Terminate();
+        mDancerLeft.Terminate();
+        mDancerRight.Terminate();
+    }
     if (mTowerLoaded)
     {
         mTower.Terminate();
@@ -112,6 +116,8 @@ void GameState::ResetCinematic()
     if (mGiantLoaded)
     {
         mGiantStanley.Terminate();
+        mDancerLeft.Terminate();
+        mDancerRight.Terminate();
         mGiantLoaded = false;
     }
     if (mTowerLoaded)
@@ -129,7 +135,11 @@ void GameState::Update(float deltaTime)
 {
     mStanleyAnimator.Update(deltaTime);
     if (mGiantLoaded)
+    {
         mGiantAnimator.Update(deltaTime);
+        mDancerLeftAnimator.Update(deltaTime);
+        mDancerRightAnimator.Update(deltaTime);
+    }
 
     if (!mPaused && !mCinematicDone)
     {
@@ -434,6 +444,26 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
             mGiantStanley.animator = &mGiantAnimator;
             mGiantAnimator.Initialize(mGiantStanley.modelId);
             mGiantAnimator.PlayAnimation(1, true);
+
+            Math::Vector3 giantPos = mGiantStanley.transform.position;
+            Quaternion giantRot = mGiantStanley.transform.rotation;
+
+            mDancerLeft.Initialize("stanley/stanley.model");
+            mDancerLeft.transform.position = giantPos + Math::Vector3{0.0f, 0.0f, -40.0f};
+            mDancerLeft.transform.scale = {50.0f, 50.0f, 50.0f};
+            mDancerLeft.transform.rotation = giantRot;
+            mDancerLeft.animator = &mDancerLeftAnimator;
+            mDancerLeftAnimator.Initialize(mDancerLeft.modelId);
+            mDancerLeftAnimator.PlayAnimation(0, true);
+
+            mDancerRight.Initialize("stanley/stanley.model");
+            mDancerRight.transform.position = giantPos + Math::Vector3{0.0f, 0.0f, 40.0f};
+            mDancerRight.transform.scale = {50.0f, 50.0f, 50.0f};
+            mDancerRight.transform.rotation = giantRot;
+            mDancerRight.animator = &mDancerRightAnimator;
+            mDancerRightAnimator.Initialize(mDancerRight.modelId);
+            mDancerRightAnimator.PlayAnimation(0, true);
+
             mGiantLoaded = true;
         }
         mPlaneShaking = false;
@@ -456,7 +486,11 @@ void GameState::Render()
         mStandardEffect.Render(mTower3);
     }
     if (mGiantLoaded)
+    {
         mStandardEffect.Render(mGiantStanley);
+        mStandardEffect.Render(mDancerLeft);
+        mStandardEffect.Render(mDancerRight);
+    }
     mStandardEffect.End();
 
     mParticleSystemEffect.Begin();

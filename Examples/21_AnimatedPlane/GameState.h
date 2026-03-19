@@ -45,6 +45,10 @@ class GameState : public Engine::AppState
     // Giant saluting Stanley (lazy-loaded on Shot 14)
     Engine::Graphics::RenderGroup mGiantStanley;
     Engine::Graphics::Animator mGiantAnimator;
+    Engine::Graphics::RenderGroup mDancerLeft;
+    Engine::Graphics::Animator mDancerLeftAnimator;
+    Engine::Graphics::RenderGroup mDancerRight;
+    Engine::Graphics::Animator mDancerRightAnimator;
     bool mGiantLoaded = false;
 
     // Shaking state
