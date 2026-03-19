@@ -337,7 +337,7 @@ void GameState::Update(float deltaTime)
                 Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(planeStart + Math::Vector3{-15.0f, 10.0f, 0.0f});
+            mCamera.SetPosition(planeStart + Math::Vector3{-15.0f, 0.0f, 0.0f});
             mCamera.SetLookAt(giantHead);
             break;
         }
