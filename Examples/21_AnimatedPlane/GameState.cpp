@@ -392,11 +392,11 @@ void GameState::Update(float deltaTime)
                 mWindowShakeTime = 0.0f;
             }
             mWindowShakeTime += deltaTime;
-            if (mWindowShakeTime < 2.0f)
+            if (mWindowShakeTime < 5.0f)
             {
-                float intensity = 1.0f - (mWindowShakeTime / 2.0f);
-                int offX = static_cast<int>(sinf(mWindowShakeTime * 40.0f) * 8.0f * intensity);
-                int offY = static_cast<int>(sinf(mWindowShakeTime * 35.0f) * 6.0f * intensity);
+                float intensity = 1.0f - (mWindowShakeTime / 5.0f);
+                int offX = static_cast<int>(sinf(mWindowShakeTime * 50.0f) * 20.0f * intensity);
+                int offY = static_cast<int>(sinf(mWindowShakeTime * 43.0f) * 15.0f * intensity);
                 glfwSetWindowPos(win, mWindowBaseX + offX, mWindowBaseY + offY);
             }
             else
