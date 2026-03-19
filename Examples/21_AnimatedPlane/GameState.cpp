@@ -374,7 +374,7 @@ void GameState::Update(float deltaTime)
         mExplosion.Update(deltaTime);
     }
 
-    if ((mCurrentShot == 13 || mCurrentShot == 14) && fmodf(mCinematicTime, 0.5f) < deltaTime)
+    if (mCurrentShot == 13 && fmodf(mCinematicTime, 0.5f) < deltaTime)
     {
         mExplosion.SetPositon(mPlane.transform.position);
         mExplosion.SpawnParticles();
