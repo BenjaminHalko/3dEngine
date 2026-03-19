@@ -58,6 +58,12 @@ class GameState : public Engine::AppState
     Engine::Graphics::Animator mDancerRightAnimator;
     bool mGiantLoaded = false;
 
+    // Window shake
+    float mWindowShakeTime = 0.0f;
+    int mWindowBaseX = 0;
+    int mWindowBaseY = 0;
+    bool mWindowShakeStarted = false;
+
     // Shaking state
     bool mPlaneShaking = false;
     float mShakeTime = 0.0f;

@@ -1,4 +1,5 @@
 #include "GameState.h"
+#include <GLFW/glfw3.h>
 
 using namespace Engine;
 using namespace Engine::Graphics;
@@ -121,6 +122,7 @@ void GameState::ResetCinematic()
 {
     mCinematicTime = 0.0f;
     mCinematicDone = false;
+    mWindowShakeStarted = false;
     mCurrentShot = 1;
     mPlaneAnimTime = 0.0f;
     mPlaneShaking = false;
@@ -373,6 +375,29 @@ void GameState::Update(float deltaTime)
     {
         mExplosion.SetPositon(mPlane.transform.position);
         mExplosion.SpawnParticles();
+    }
+
+    if (mCinematicDone)
+    {
+        GLFWwindow* win = glfwGetCurrentContext();
+        if (!mWindowShakeStarted)
+        {
+            glfwGetWindowPos(win, &mWindowBaseX, &mWindowBaseY);
+            mWindowShakeStarted = true;
+            mWindowShakeTime = 0.0f;
+        }
+        mWindowShakeTime += deltaTime;
+        if (mWindowShakeTime < 2.0f)
+        {
+            float intensity = 1.0f - (mWindowShakeTime / 2.0f);
+            int offX = static_cast<int>(sinf(mWindowShakeTime * 40.0f) * 8.0f * intensity);
+            int offY = static_cast<int>(sinf(mWindowShakeTime * 35.0f) * 6.0f * intensity);
+            glfwSetWindowPos(win, mWindowBaseX + offX, mWindowBaseY + offY);
+        }
+        else
+        {
+            glfwSetWindowPos(win, mWindowBaseX, mWindowBaseY);
+        }
     }
 }
 
