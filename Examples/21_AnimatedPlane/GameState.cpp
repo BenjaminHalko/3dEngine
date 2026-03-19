@@ -437,7 +437,7 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
             mGiantStanley.Initialize("stanley/stanley.model");
             Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
             Math::Vector3 shot13End = towerTop + Math::Vector3{60.0f, 5.0f, 0.0f};
-            mGiantStanley.transform.position = shot13End + Math::Vector3{60.0f, -5.0f, 0.0f};
+            mGiantStanley.transform.position = shot13End + Math::Vector3{60.0f, -105.0f, 0.0f};
             mGiantStanley.transform.scale = {100.0f, 100.0f, 100.0f};
             mGiantStanley.transform.rotation =
                 Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
