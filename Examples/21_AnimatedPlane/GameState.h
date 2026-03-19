@@ -26,7 +26,13 @@ class GameState : public Engine::AppState
 
     // Ground
     Engine::Graphics::RenderObject mGround;
-    Engine::Graphics::RenderObject mSkySphere;
+
+    Engine::Graphics::MeshBuffer mSkySphere;
+    Engine::Graphics::TextureId mSkyTextureId = 0;
+    Engine::Graphics::ConstantBuffer mSkyTransformBuffer;
+    Engine::Graphics::VertexShader mSkyVertexShader;
+    Engine::Graphics::PixelShader mSkyPixelShader;
+    Engine::Graphics::Sampler mSkySampler;
 
     // Plane
     Engine::Graphics::RenderGroup mPlane;

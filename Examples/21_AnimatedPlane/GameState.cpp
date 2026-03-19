@@ -29,12 +29,14 @@ void GameState::Initialize()
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
 
-    Mesh skyMesh = MeshBuilder::CreateSkySphere(30, 30, 500.0f);
-    mSkySphere.meshBuffer.Initialize(skyMesh);
-    mSkySphere.diffuseMapId = tm->LoadTexture("skysphere/sunrise.jpg");
-    mSkySphere.material.ambient = {1.0f, 1.0f, 1.0f, 1.0f};
-    mSkySphere.material.diffuse = {0.0f, 0.0f, 0.0f, 1.0f};
-    mSkySphere.material.specular = {0.0f, 0.0f, 0.0f, 1.0f};
+    MeshPX skyMesh = MeshBuilder::CreateSkySpherePX(30, 30, 500.0f);
+    mSkySphere.Initialize(skyMesh);
+    mSkyTextureId = tm->LoadTexture("skysphere/sunrise.jpg");
+    std::filesystem::path skyShader = "Assets/Shaders/DoTexture.hlsl";
+    mSkyVertexShader.Initialize<VertexPX>(skyShader);
+    mSkyPixelShader.Initialize(skyShader);
+    mSkySampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Wrap);
+    mSkyTransformBuffer.Initialize(sizeof(Math::Matrix4));
 
     mPlane.Initialize("Plane/APJetFly.model");
 
@@ -105,6 +107,10 @@ void GameState::Terminate()
     mParticleSystemEffect.Terminate();
     mPlane.Terminate();
     mSkySphere.Terminate();
+    mSkyTransformBuffer.Terminate();
+    mSkyVertexShader.Terminate();
+    mSkyPixelShader.Terminate();
+    mSkySampler.Terminate();
     mGround.Terminate();
     mStanley.Terminate();
     mStandardEffect.Terminate();
@@ -334,7 +340,7 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot14Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot14Start), 0.0f, 1.0f);
             Math::Vector3 giantPos = mGiantStanley.transform.position;
-            Math::Vector3 giantHead = giantPos + Math::Vector3{0.0f, 120.0f, 0.0f};
+            Math::Vector3 giantHead = giantPos + Math::Vector3{0.0f, 80.0f, 0.0f};
             Math::Vector3 planeStart = {giantHead.x - 60.0f, giantHead.y, giantHead.z};
             Math::Vector3 planeEnd = giantHead;
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
@@ -480,8 +486,20 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 
 void GameState::Render()
 {
+    {
+        const Math::Matrix4 matView = mCamera.GetViewMatrix();
+        const Math::Matrix4 matProj = mCamera.GetProjectionMatrix();
+        const Math::Matrix4 wvp = Math::Transpose(Math::Matrix4::Identity * matView * matProj);
+        mSkyTransformBuffer.Update(&wvp);
+        mSkyVertexShader.Bind();
+        mSkyPixelShader.Bind();
+        mSkySampler.BindPS(0);
+        mSkyTransformBuffer.BindVS(0);
+        TextureManager::Get()->BindPS(mSkyTextureId, 0);
+        mSkySphere.Render();
+    }
+
     mStandardEffect.Begin();
-    mStandardEffect.Render(mSkySphere);
     mStandardEffect.Render(mStanley);
     mStandardEffect.Render(mGround);
     mStandardEffect.Render(mPlane);
