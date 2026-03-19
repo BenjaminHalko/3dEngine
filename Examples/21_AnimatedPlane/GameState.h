@@ -26,6 +26,7 @@ class GameState : public Engine::AppState
 
     // Ground
     Engine::Graphics::RenderObject mGround;
+    Engine::Graphics::RenderObject mSkySphere;
 
     // Plane
     Engine::Graphics::RenderGroup mPlane;

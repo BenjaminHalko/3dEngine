@@ -29,6 +29,13 @@ void GameState::Initialize()
     TextureManager* tm = TextureManager::Get();
     mGround.diffuseMapId = tm->LoadTexture("terrain/grass_2048.jpg");
 
+    Mesh skyMesh = MeshBuilder::CreateSkySphere(30, 30, 500.0f);
+    mSkySphere.meshBuffer.Initialize(skyMesh);
+    mSkySphere.diffuseMapId = tm->LoadTexture("skysphere/sunrise.jpg");
+    mSkySphere.material.ambient = {1.0f, 1.0f, 1.0f, 1.0f};
+    mSkySphere.material.diffuse = {0.0f, 0.0f, 0.0f, 1.0f};
+    mSkySphere.material.specular = {0.0f, 0.0f, 0.0f, 1.0f};
+
     mPlane.Initialize("Plane/APJetFly.model");
 
     const float flightDuration = 6.0f;
@@ -97,6 +104,7 @@ void GameState::Terminate()
     mExplosion.Terminate();
     mParticleSystemEffect.Terminate();
     mPlane.Terminate();
+    mSkySphere.Terminate();
     mGround.Terminate();
     mStanley.Terminate();
     mStandardEffect.Terminate();
@@ -473,6 +481,7 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 void GameState::Render()
 {
     mStandardEffect.Begin();
+    mStandardEffect.Render(mSkySphere);
     mStandardEffect.Render(mStanley);
     mStandardEffect.Render(mGround);
     mStandardEffect.Render(mPlane);
