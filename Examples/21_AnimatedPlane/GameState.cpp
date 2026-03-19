@@ -560,7 +560,7 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
-    ImGui::SetNextWindowCollapsed(true, ImGuiCond_Always);
+    ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("Shot: %d / 14   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
