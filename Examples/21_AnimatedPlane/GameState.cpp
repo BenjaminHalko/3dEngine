@@ -86,23 +86,65 @@ void GameState::Initialize()
     SoundEffectManager::Get()->Play(mMusicId, true);
 
     mStanleyAnimator.PlayAnimation(0, true);
+
+    Quaternion towerRot =
+        Quaternion::CreateFromYawPitchRoll(0.0f, Math::Constants::Pi * 0.5f, 0.0f);
+    Math::Vector3 towerScale = {0.1f, 0.1f, 0.1f};
+    mTower.Initialize("Tower/tower.model");
+    mTower.transform.position = {50.0f, 0.0f, 30.0f};
+    mTower.transform.rotation = towerRot;
+    mTower.transform.scale = towerScale;
+    mTower2.Initialize("Tower/tower.model");
+    mTower2.transform.position = {50.0f, 0.0f, 50.0f};
+    mTower2.transform.rotation = towerRot;
+    mTower2.transform.scale = towerScale;
+    mTower3.Initialize("Tower/tower.model");
+    mTower3.transform.position = {70.0f, 0.0f, 40.0f};
+    mTower3.transform.rotation = towerRot;
+    mTower3.transform.scale = towerScale;
+
+    Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+    Math::Vector3 shot13End = towerTop + Math::Vector3{60.0f, 5.0f, 0.0f};
+    mGiantStanley.Initialize("stanley/stanley.model");
+    mGiantStanley.transform.position = shot13End + Math::Vector3{60.0f, -30.0f, 0.0f};
+    mGiantStanley.transform.scale = {100.0f, 100.0f, 100.0f};
+    mGiantStanley.transform.rotation =
+        Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+    mGiantStanley.animator = &mGiantAnimator;
+    mGiantAnimator.Initialize(mGiantStanley.modelId);
+    mGiantAnimator.PlayAnimation(1, true);
+
+    Math::Vector3 giantPos = mGiantStanley.transform.position;
+    Quaternion giantRot = mGiantStanley.transform.rotation;
+    mDancerLeft.Initialize("stanley/stanley.model");
+    mDancerLeft.transform.position = giantPos + Math::Vector3{0.0f, 15.0f, -40.0f};
+    mDancerLeft.transform.scale = {50.0f, 50.0f, 50.0f};
+    mDancerLeft.transform.rotation = giantRot;
+    mDancerLeft.animator = &mDancerLeftAnimator;
+    mDancerLeftAnimator.Initialize(mDancerLeft.modelId);
+    mDancerLeftAnimator.PlayAnimation(0, true);
+    mDancerRight.Initialize("stanley/stanley.model");
+    mDancerRight.transform.position = giantPos + Math::Vector3{0.0f, 15.0f, 40.0f};
+    mDancerRight.transform.scale = {50.0f, 50.0f, 50.0f};
+    mDancerRight.transform.rotation = giantRot;
+    mDancerRight.animator = &mDancerRightAnimator;
+    mDancerRightAnimator.Initialize(mDancerRight.modelId);
+    mDancerRightAnimator.PlayAnimation(0, true);
+
+    mTowerLoaded = false;
+    mGiantLoaded = false;
+
     ResetCinematic();
 }
 
 void GameState::Terminate()
 {
-    if (mGiantLoaded)
-    {
-        mGiantStanley.Terminate();
-        mDancerLeft.Terminate();
-        mDancerRight.Terminate();
-    }
-    if (mTowerLoaded)
-    {
-        mTower.Terminate();
-        mTower2.Terminate();
-        mTower3.Terminate();
-    }
+    mGiantStanley.Terminate();
+    mDancerLeft.Terminate();
+    mDancerRight.Terminate();
+    mTower.Terminate();
+    mTower2.Terminate();
+    mTower3.Terminate();
     mExplosion.Terminate();
     mParticleSystemEffect.Terminate();
     mPlane.Terminate();
@@ -128,20 +170,8 @@ void GameState::ResetCinematic()
     mShakeTime = 0.0f;
     mStanley.transform.position = {0.0f, 0.0f, 0.0f};
     mStanleyAnimator.PlayAnimation(0, true);
-    if (mGiantLoaded)
-    {
-        mGiantStanley.Terminate();
-        mDancerLeft.Terminate();
-        mDancerRight.Terminate();
-        mGiantLoaded = false;
-    }
-    if (mTowerLoaded)
-    {
-        mTower.Terminate();
-        mTower2.Terminate();
-        mTower3.Terminate();
-        mTowerLoaded = false;
-    }
+    mTowerLoaded = false;
+    mGiantLoaded = false;
     SoundEffectManager::Get()->Stop(mMusicId);
     SoundEffectManager::Get()->Play(mMusicId, true);
 }
@@ -458,66 +488,11 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         mExplosion.SpawnParticles();
         break;
     case 11:
-        if (!mTowerLoaded)
-        {
-            Quaternion towerRot =
-                Quaternion::CreateFromYawPitchRoll(0.0f, Math::Constants::Pi * 0.5f, 0.0f);
-            Math::Vector3 towerScale = {0.1f, 0.1f, 0.1f};
-
-            mTower.Initialize("Tower/tower.model");
-            mTower.transform.position = {50.0f, 0.0f, 30.0f};
-            mTower.transform.rotation = towerRot;
-            mTower.transform.scale = towerScale;
-
-            mTower2.Initialize("Tower/tower.model");
-            mTower2.transform.position = {50.0f, 0.0f, 50.0f};
-            mTower2.transform.rotation = towerRot;
-            mTower2.transform.scale = towerScale;
-
-            mTower3.Initialize("Tower/tower.model");
-            mTower3.transform.position = {70.0f, 0.0f, 40.0f};
-            mTower3.transform.rotation = towerRot;
-            mTower3.transform.scale = towerScale;
-
-            mTowerLoaded = true;
-        }
+        mTowerLoaded = true;
         mPlaneShaking = true;
         break;
     case 13:
-        if (!mGiantLoaded)
-        {
-            mGiantStanley.Initialize("stanley/stanley.model");
-            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
-            Math::Vector3 shot13End = towerTop + Math::Vector3{60.0f, 5.0f, 0.0f};
-            mGiantStanley.transform.position = shot13End + Math::Vector3{60.0f, -30.0f, 0.0f};
-            mGiantStanley.transform.scale = {100.0f, 100.0f, 100.0f};
-            mGiantStanley.transform.rotation =
-                Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
-            mGiantStanley.animator = &mGiantAnimator;
-            mGiantAnimator.Initialize(mGiantStanley.modelId);
-            mGiantAnimator.PlayAnimation(1, true);
-
-            Math::Vector3 giantPos = mGiantStanley.transform.position;
-            Quaternion giantRot = mGiantStanley.transform.rotation;
-
-            mDancerLeft.Initialize("stanley/stanley.model");
-            mDancerLeft.transform.position = giantPos + Math::Vector3{0.0f, 15.0f, -40.0f};
-            mDancerLeft.transform.scale = {50.0f, 50.0f, 50.0f};
-            mDancerLeft.transform.rotation = giantRot;
-            mDancerLeft.animator = &mDancerLeftAnimator;
-            mDancerLeftAnimator.Initialize(mDancerLeft.modelId);
-            mDancerLeftAnimator.PlayAnimation(0, true);
-
-            mDancerRight.Initialize("stanley/stanley.model");
-            mDancerRight.transform.position = giantPos + Math::Vector3{0.0f, 15.0f, 40.0f};
-            mDancerRight.transform.scale = {50.0f, 50.0f, 50.0f};
-            mDancerRight.transform.rotation = giantRot;
-            mDancerRight.animator = &mDancerRightAnimator;
-            mDancerRightAnimator.Initialize(mDancerRight.modelId);
-            mDancerRightAnimator.PlayAnimation(0, true);
-
-            mGiantLoaded = true;
-        }
+        mGiantLoaded = true;
         break;
     case 14:
         mPlaneShaking = false;
