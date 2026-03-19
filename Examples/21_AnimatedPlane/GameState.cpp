@@ -316,17 +316,20 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot14Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot14Start), 0.0f, 1.0f);
             Math::Vector3 giantPos = mGiantStanley.transform.position;
-            Math::Vector3 giantChest = giantPos + Math::Vector3{0.0f, 15.0f, 0.0f};
-            Math::Vector3 planeStart = giantChest + Math::Vector3{-40.0f, 10.0f, -20.0f};
-            Math::Vector3 planeEnd = giantChest;
+            Math::Vector3 giantCenter = giantPos + Math::Vector3{0.0f, 40.0f, 0.0f};
+            Math::Vector3 towerTop2 = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            Math::Vector3 shot13End2 = towerTop2 + Math::Vector3{60.0f, 5.0f, 0.0f};
+            Math::Vector3 planeStart = shot13End2;
+            Math::Vector3 planeEnd = giantCenter;
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
             mPlane.transform.position = planePos;
             mPlane.transform.rotation =
                 Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(planePos + Math::Vector3{5.0f, 5.0f, -15.0f});
-            mCamera.SetLookAt(giantChest);
+            Math::Vector3 camPos = planePos + Math::Vector3{0.0f, 2.0f, -10.0f};
+            mCamera.SetPosition(camPos);
+            mCamera.SetLookAt(Math::Lerp(planePos, giantCenter, 0.7f));
             break;
         }
         }
@@ -341,8 +344,14 @@ void GameState::Update(float deltaTime)
 
     if (mExplosion.IsActive())
     {
-        mExplosion.SetPositon(smoothT.position);
+        mExplosion.SetPositon(mPlane.transform.position);
         mExplosion.Update(deltaTime);
+    }
+
+    if (mCurrentShot == 13)
+    {
+        mExplosion.SetPositon(mPlane.transform.position);
+        mExplosion.SpawnParticles();
     }
 }
 
@@ -416,10 +425,12 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         if (!mGiantLoaded)
         {
             mGiantStanley.Initialize("stanley/stanley.model");
-            mGiantStanley.transform.position = {40.0f, 0.0f, 30.0f};
-            mGiantStanley.transform.scale = {10.0f, 10.0f, 10.0f};
+            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            Math::Vector3 shot13End = towerTop + Math::Vector3{60.0f, 5.0f, 0.0f};
+            mGiantStanley.transform.position = shot13End + Math::Vector3{60.0f, -5.0f, 0.0f};
+            mGiantStanley.transform.scale = {50.0f, 50.0f, 50.0f};
             mGiantStanley.transform.rotation =
-                Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+                Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mGiantStanley.animator = &mGiantAnimator;
             mGiantAnimator.Initialize(mGiantStanley.modelId);
             mGiantAnimator.PlayAnimation(1, true);
