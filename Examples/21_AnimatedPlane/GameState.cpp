@@ -261,23 +261,20 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot12Start;
             float duration = mCinematicEnd - mShot12Start;
             float t = Math::Clamp(shotT / duration, 0.0f, 1.0f);
-            Math::Vector3 towerCenter =
-                mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
-            float radius = 30.0f;
-            float startAngle = Math::Constants::Pi;
-            float endAngle = 0.0f;
-            float angle = startAngle + (endAngle - startAngle) * t;
-            float arcY = towerCenter.y + sinf(t * Math::Constants::Pi) * 10.0f;
-            Math::Vector3 planePos = {
-                towerCenter.x + cosf(angle) * radius, arcY, towerCenter.z + sinf(angle) * radius};
+            Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
+            Math::Vector3 shot11End = towerTop + Math::Vector3{-15.0f, 0.0f, 0.0f};
+            Math::Vector3 planeEnd = towerTop + Math::Vector3{30.0f, 5.0f, 0.0f};
+            Math::Vector3 planePos = Math::Lerp(shot11End, planeEnd, t);
             mPlane.transform.position = planePos;
-            float yaw = angle - Math::Constants::Pi * 0.5f;
-            mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(yaw, 0.0f, 0.0f);
+            float spin = shotT * 8.0f;
+            mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(
+                -Math::Constants::Pi * 0.5f + sinf(spin * 0.7f) * 1.5f,
+                sinf(spin * 1.3f) * 2.0f,
+                spin);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            Math::Vector3 camOffset = {cosf(angle - 0.5f) * 6.0f, 3.0f, sinf(angle - 0.5f) * 6.0f};
-            mCamera.SetPosition(planePos + camOffset);
-            mCamera.SetLookAt(towerCenter);
+            mCamera.SetPosition(planePos + Math::Vector3{-4.0f, 3.0f, -6.0f});
+            mCamera.SetLookAt(planePos);
             break;
         }
         }
