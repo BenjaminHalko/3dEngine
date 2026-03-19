@@ -416,13 +416,13 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         if (!mGiantLoaded)
         {
             mGiantStanley.Initialize("stanley/stanley.model");
-            mGiantStanley.transform.position = {100.0f, 0.0f, 50.0f};
+            mGiantStanley.transform.position = {40.0f, 0.0f, 30.0f};
             mGiantStanley.transform.scale = {10.0f, 10.0f, 10.0f};
+            mGiantStanley.transform.rotation =
+                Quaternion::CreateFromYawPitchRoll(Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
             mGiantStanley.animator = &mGiantAnimator;
-            ModelManager::Get()->AddAnimation(mGiantStanley.modelId,
-                                              "Assets/Models/stanley/salute.animset");
             mGiantAnimator.Initialize(mGiantStanley.modelId);
-            mGiantAnimator.PlayAnimation(0, true);
+            mGiantAnimator.PlayAnimation(1, true);
             mGiantLoaded = true;
         }
         mPlaneShaking = false;
