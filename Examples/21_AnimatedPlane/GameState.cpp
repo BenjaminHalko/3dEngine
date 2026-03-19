@@ -183,8 +183,8 @@ void GameState::Update(float deltaTime)
     if (mPlaneShaking)
     {
         mShakeTime += deltaTime;
-        planeT.position.y += sinf(mShakeTime * 30.0f) * 0.15f;
-        planeT.position.x += sinf(mShakeTime * 25.0f) * 0.08f;
+        planeT.position.y += sinf(mShakeTime * 15.0f) * 0.15f;
+        planeT.position.x += sinf(mShakeTime * 12.0f) * 0.08f;
     }
     mPlane.transform = planeT;
 
@@ -324,10 +324,10 @@ void GameState::Update(float deltaTime)
             Math::Vector3 planeEnd = shot12End + Math::Vector3{30.0f, 5.0f, 0.0f};
             Math::Vector3 planePos = Math::Lerp(shot12End, planeEnd, t);
             mPlane.transform.position = planePos;
-            float spin = shotT * 15.0f;
+            float spin = shotT * 5.0f;
             mPlane.transform.rotation = Quaternion::CreateFromYawPitchRoll(
-                -Math::Constants::Pi * 0.5f + sinf(spin * 1.1f) * 2.5f,
-                sinf(spin * 1.7f) * 3.0f,
+                -Math::Constants::Pi * 0.5f + sinf(spin * 0.7f) * 1.5f,
+                sinf(spin * 1.1f) * 1.0f,
                 spin);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
@@ -369,7 +369,7 @@ void GameState::Update(float deltaTime)
         mExplosion.Update(deltaTime);
     }
 
-    if (mCurrentShot == 13)
+    if (mCurrentShot == 13 && fmodf(mCinematicTime, 0.5f) < deltaTime)
     {
         mExplosion.SetPositon(mPlane.transform.position);
         mExplosion.SpawnParticles();
@@ -524,6 +524,7 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
+    ImGui::SetNextWindowCollapsed(true, ImGuiCond_FirstUseEver);
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("Shot: %d / 14   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
