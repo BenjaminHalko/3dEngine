@@ -44,9 +44,9 @@ void GameState::Initialize()
     mPlaneAnimTime = 0.0f;
     mPlaneFlightAnimation =
         AnimationBuilder()
-            .AddPositionKey({-20.0f, 4.0f, 5.0f}, 0.0f)
-            .AddPositionKey({0.0f, 4.0f, 0.0f}, flightDuration * 0.5f)
-            .AddPositionKey({20.0f, 4.0f, -5.0f}, flightDuration)
+            .AddPositionKey({-20.0f, 3.5f, 5.0f}, 0.0f)
+            .AddPositionKey({0.0f, 3.5f, 0.0f}, flightDuration * 0.5f)
+            .AddPositionKey({20.0f, 3.5f, -5.0f}, flightDuration)
             .AddRotationKey(
                 Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f), 0.0f)
             .AddRotationKey(
