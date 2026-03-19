@@ -42,6 +42,11 @@ class GameState : public Engine::AppState
     Engine::Graphics::RenderGroup mTower3;
     bool mTowerLoaded = false;
 
+    // Giant saluting Stanley (lazy-loaded on Shot 14)
+    Engine::Graphics::RenderGroup mGiantStanley;
+    Engine::Graphics::Animator mGiantAnimator;
+    bool mGiantLoaded = false;
+
     // Shaking state
     bool mPlaneShaking = false;
     float mShakeTime = 0.0f;
@@ -70,7 +75,8 @@ class GameState : public Engine::AppState
     float mShot11Start = 25.0f;
     float mShot12Start = 30.0f;
     float mShot13Start = 35.0f;
-    float mCinematicEnd = 40.0f;
+    float mShot14Start = 40.0f;
+    float mCinematicEnd = 47.0f;
 
     // Audio
     Engine::Audio::SoundId mMusicId = 0;

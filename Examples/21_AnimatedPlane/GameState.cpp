@@ -21,6 +21,7 @@ void GameState::Initialize()
     mStanley.transform.position = {0.0f, 0.0f, 0.0f};
     mStanley.animator = &mStanleyAnimator;
     ModelManager::Get()->AddAnimation(mStanley.modelId, "Assets/Models/stanley/stanley.animset");
+    ModelManager::Get()->AddAnimation(mStanley.modelId, "Assets/Models/stanley/salute.animset");
     mStanleyAnimator.Initialize(mStanley.modelId);
 
     Mesh groundMesh = MeshBuilder::CreatePlane(20, 20, 1.0f, true);
@@ -81,6 +82,8 @@ void GameState::Initialize()
 
 void GameState::Terminate()
 {
+    if (mGiantLoaded)
+        mGiantStanley.Terminate();
     if (mTowerLoaded)
     {
         mTower.Terminate();
@@ -106,6 +109,11 @@ void GameState::ResetCinematic()
     mShakeTime = 0.0f;
     mStanley.transform.position = {0.0f, 0.0f, 0.0f};
     mStanleyAnimator.PlayAnimation(0, true);
+    if (mGiantLoaded)
+    {
+        mGiantStanley.Terminate();
+        mGiantLoaded = false;
+    }
     if (mTowerLoaded)
     {
         mTower.Terminate();
@@ -120,6 +128,8 @@ void GameState::ResetCinematic()
 void GameState::Update(float deltaTime)
 {
     mStanleyAnimator.Update(deltaTime);
+    if (mGiantLoaded)
+        mGiantAnimator.Update(deltaTime);
 
     if (!mPaused && !mCinematicDone)
     {
@@ -165,7 +175,9 @@ void GameState::Update(float deltaTime)
     }
 
     int prevShot = mCurrentShot;
-    if (mCinematicTime >= mShot13Start)
+    if (mCinematicTime >= mShot14Start)
+        mCurrentShot = 14;
+    else if (mCinematicTime >= mShot13Start)
         mCurrentShot = 13;
     else if (mCinematicTime >= mShot12Start)
         mCurrentShot = 12;
@@ -299,6 +311,24 @@ void GameState::Update(float deltaTime)
             mCamera.SetLookAt(planePos);
             break;
         }
+        case 14:
+        {
+            float shotT = mCinematicTime - mShot14Start;
+            float t = Math::Clamp(shotT / (mCinematicEnd - mShot14Start), 0.0f, 1.0f);
+            Math::Vector3 giantPos = mGiantStanley.transform.position;
+            Math::Vector3 giantChest = giantPos + Math::Vector3{0.0f, 15.0f, 0.0f};
+            Math::Vector3 planeStart = giantChest + Math::Vector3{-40.0f, 10.0f, -20.0f};
+            Math::Vector3 planeEnd = giantChest;
+            Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
+            mPlane.transform.position = planePos;
+            mPlane.transform.rotation =
+                Quaternion::CreateFromYawPitchRoll(-Math::Constants::Pi * 0.5f, 0.0f, 0.0f);
+            mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
+            mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
+            mCamera.SetPosition(planePos + Math::Vector3{5.0f, 5.0f, -15.0f});
+            mCamera.SetLookAt(giantChest);
+            break;
+        }
         }
     }
     else
@@ -382,6 +412,21 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         }
         mPlaneShaking = true;
         break;
+    case 14:
+        if (!mGiantLoaded)
+        {
+            mGiantStanley.Initialize("stanley/stanley.model");
+            mGiantStanley.transform.position = {100.0f, 0.0f, 50.0f};
+            mGiantStanley.transform.scale = {10.0f, 10.0f, 10.0f};
+            mGiantStanley.animator = &mGiantAnimator;
+            ModelManager::Get()->AddAnimation(mGiantStanley.modelId,
+                                              "Assets/Models/stanley/salute.animset");
+            mGiantAnimator.Initialize(mGiantStanley.modelId);
+            mGiantAnimator.PlayAnimation(0, true);
+            mGiantLoaded = true;
+        }
+        mPlaneShaking = false;
+        break;
     default:
         break;
     }
@@ -399,6 +444,8 @@ void GameState::Render()
         mStandardEffect.Render(mTower2);
         mStandardEffect.Render(mTower3);
     }
+    if (mGiantLoaded)
+        mStandardEffect.Render(mGiantStanley);
     mStandardEffect.End();
 
     mParticleSystemEffect.Begin();
@@ -410,7 +457,7 @@ void GameState::DebugUI()
 {
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text("Shot: %d / 13   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
+    ImGui::Text("Shot: %d / 14   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
     ImGui::Text(
         "Shaking: %s   Done: %s", mPlaneShaking ? "YES" : "NO", mCinematicDone ? "YES" : "NO");
 
@@ -426,7 +473,7 @@ void GameState::DebugUI()
 
     ImGui::Separator();
     ImGui::Text("Skip to shot:");
-    for (int i = 1; i <= 13; ++i)
+    for (int i = 1; i <= 14; ++i)
     {
         if (i > 1)
             ImGui::SameLine();
@@ -446,7 +493,8 @@ void GameState::DebugUI()
                                mShot10Start,
                                mShot11Start,
                                mShot12Start,
-                               mShot13Start};
+                               mShot13Start,
+                               mShot14Start};
             mCinematicTime = targets[i - 1];
             mCinematicDone = false;
         }
@@ -466,8 +514,9 @@ void GameState::DebugUI()
     ImGui::DragFloat("Shot 10", &mShot10Start, 0.1f, mShot9Start + 0.5f, mShot11Start - 0.5f);
     ImGui::DragFloat("Shot 11", &mShot11Start, 0.1f, mShot10Start + 0.5f, mShot12Start - 0.5f);
     ImGui::DragFloat("Shot 12", &mShot12Start, 0.1f, mShot11Start + 0.5f, mShot13Start - 0.5f);
-    ImGui::DragFloat("Shot 13", &mShot13Start, 0.1f, mShot12Start + 0.5f, mCinematicEnd - 0.5f);
-    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot13Start + 0.5f, 60.0f);
+    ImGui::DragFloat("Shot 13", &mShot13Start, 0.1f, mShot12Start + 0.5f, mShot14Start - 0.5f);
+    ImGui::DragFloat("Shot 14", &mShot14Start, 0.1f, mShot13Start + 0.5f, mCinematicEnd - 0.5f);
+    ImGui::DragFloat("End", &mCinematicEnd, 0.1f, mShot14Start + 0.5f, 60.0f);
 
     ImGui::Separator();
     ImGui::Text("Camera Pos: %.1f %.1f %.1f",
