@@ -23,6 +23,11 @@ class InputSystem final
 
     void Update();
 
+    GLFWwindow* GetWindow() const
+    {
+        return mWindow;
+    }
+
     bool IsKeyDown(KeyCode key) const;
     bool IsKeyPressed(KeyCode key) const;
 

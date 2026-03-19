@@ -1,5 +1,4 @@
 #include "GameState.h"
-#include <GLFW/glfw3.h>
 
 using namespace Engine;
 using namespace Engine::Graphics;
@@ -333,7 +332,7 @@ void GameState::Update(float deltaTime)
                 spin);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            float camAngle = shotT * 3.0f;
+            float camAngle = shotT * 1.5f;
             float camRadius = 8.0f;
             mCamera.SetPosition(planePos + Math::Vector3{cosf(camAngle) * camRadius,
                                                          3.0f,
@@ -474,7 +473,7 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
         }
         mPlaneShaking = true;
         break;
-    case 14:
+    case 13:
         if (!mGiantLoaded)
         {
             mGiantStanley.Initialize("stanley/stanley.model");
@@ -509,6 +508,8 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 
             mGiantLoaded = true;
         }
+        break;
+    case 14:
         mPlaneShaking = false;
         break;
     default:
@@ -519,7 +520,7 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 void GameState::Render()
 {
     if (mWindowHandle == nullptr)
-        mWindowHandle = glfwGetCurrentContext();
+        mWindowHandle = InputSystem::Get()->GetWindow();
 
     {
         const Math::Matrix4 matView = mCamera.GetViewMatrix();
