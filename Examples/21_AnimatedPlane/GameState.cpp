@@ -284,8 +284,8 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot13Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot13Start), 0.0f, 1.0f);
             Math::Vector3 towerTop = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
-            Math::Vector3 shot12End = towerTop + Math::Vector3{-15.0f, 0.0f, 0.0f};
-            Math::Vector3 planeEnd = towerTop + Math::Vector3{30.0f, 5.0f, 0.0f};
+            Math::Vector3 shot12End = towerTop + Math::Vector3{30.0f, 0.0f, 0.0f};
+            Math::Vector3 planeEnd = shot12End + Math::Vector3{30.0f, 5.0f, 0.0f};
             Math::Vector3 planePos = Math::Lerp(shot12End, planeEnd, t);
             mPlane.transform.position = planePos;
             float spin = shotT * 15.0f;
