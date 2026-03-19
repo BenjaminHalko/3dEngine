@@ -333,7 +333,11 @@ void GameState::Update(float deltaTime)
                 spin);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            mCamera.SetPosition(planePos + Math::Vector3{-4.0f, 3.0f, -6.0f});
+            float camAngle = shotT * 3.0f;
+            float camRadius = 8.0f;
+            mCamera.SetPosition(planePos + Math::Vector3{cosf(camAngle) * camRadius,
+                                                         3.0f,
+                                                         sinf(camAngle) * camRadius});
             mCamera.SetLookAt(planePos);
             break;
         }
@@ -379,9 +383,9 @@ void GameState::Update(float deltaTime)
 
     if (mCinematicDone)
     {
-        GLFWwindow* win = glfwGetCurrentContext();
-        if (win != nullptr)
+        if (mWindowHandle != nullptr)
         {
+            GLFWwindow* win = mWindowHandle;
             if (!mWindowShakeStarted)
             {
                 glfwGetWindowPos(win, &mWindowBaseX, &mWindowBaseY);
@@ -514,6 +518,9 @@ void GameState::OnShotEnter(int shot, const Engine::Graphics::Transform& smoothT
 
 void GameState::Render()
 {
+    if (mWindowHandle == nullptr)
+        mWindowHandle = glfwGetCurrentContext();
+
     {
         const Math::Matrix4 matView = mCamera.GetViewMatrix();
         const Math::Matrix4 matProj = mCamera.GetProjectionMatrix();

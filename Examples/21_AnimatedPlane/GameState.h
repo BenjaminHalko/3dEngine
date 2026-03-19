@@ -59,6 +59,7 @@ class GameState : public Engine::AppState
     bool mGiantLoaded = false;
 
     // Window shake
+    GLFWwindow* mWindowHandle = nullptr;
     float mWindowShakeTime = 0.0f;
     int mWindowBaseX = 0;
     int mWindowBaseY = 0;
