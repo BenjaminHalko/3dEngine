@@ -399,9 +399,19 @@ void GameState::Update(float deltaTime)
                 int offY = static_cast<int>(sinf(mWindowShakeTime * 43.0f) * 15.0f * intensity);
                 glfwSetWindowPos(win, mWindowBaseX + offX, mWindowBaseY + offY);
             }
-            else
+            else if (mWindowShakeTime < 6.0f)
             {
                 glfwSetWindowPos(win, mWindowBaseX, mWindowBaseY);
+            }
+            else if (mWindowShakeTime < 7.0f)
+            {
+                float slideT = (mWindowShakeTime - 6.0f);
+                int slideY = static_cast<int>(slideT * slideT * 2000.0f);
+                glfwSetWindowPos(win, mWindowBaseX, mWindowBaseY + slideY);
+            }
+            else
+            {
+                glfwSetWindowShouldClose(win, GLFW_TRUE);
             }
         }
     }
