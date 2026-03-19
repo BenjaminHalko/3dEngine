@@ -93,7 +93,7 @@ class GameState : public Engine::AppState
     float mShot12Start = 30.0f;
     float mShot13Start = 35.0f;
     float mShot14Start = 40.0f;
-    float mCinematicEnd = 47.0f;
+    float mCinematicEnd = 45.0f;
 
     // Audio
     Engine::Audio::SoundId mMusicId = 0;
