@@ -6,11 +6,13 @@ using namespace Engine;
 using namespace Engine::Core;
 
 #ifdef _WIN32
-    #include <windows.h>
-    #define PLATFORM_BREAK() DebugBreak()
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define PLATFORM_BREAK() DebugBreak()
 #else
-    #include <signal.h>
-    #define PLATFORM_BREAK() raise(SIGTRAP)
+#include <signal.h>
+#define PLATFORM_BREAK() raise(SIGTRAP)
 #endif
 
 #if defined(_DEBUG)
@@ -33,7 +35,7 @@ using namespace Engine::Core;
         if (!(condition))                                                                          \
         {                                                                                          \
             LOG("ASSERT! %s(%d)\n" format, __FILE__, __LINE__, __VA_ARGS__);                       \
-            PLATFORM_BREAK();                                                                          \
+            PLATFORM_BREAK();                                                                      \
         }                                                                                          \
     } while (false)
 #else
