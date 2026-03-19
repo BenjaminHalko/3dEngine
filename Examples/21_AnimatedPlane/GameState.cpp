@@ -332,7 +332,7 @@ void GameState::Update(float deltaTime)
                 spin);
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
-            float camAngle = shotT * 1.5f;
+            float camAngle = shotT * 0.8f;
             float camRadius = 8.0f;
             mCamera.SetPosition(planePos + Math::Vector3{cosf(camAngle) * camRadius,
                                                          3.0f,
@@ -374,7 +374,7 @@ void GameState::Update(float deltaTime)
         mExplosion.Update(deltaTime);
     }
 
-    if (mCurrentShot == 13 && fmodf(mCinematicTime, 0.5f) < deltaTime)
+    if ((mCurrentShot == 13 || mCurrentShot == 14) && fmodf(mCinematicTime, 0.5f) < deltaTime)
     {
         mExplosion.SetPositon(mPlane.transform.position);
         mExplosion.SpawnParticles();
@@ -560,7 +560,7 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
-    ImGui::SetNextWindowCollapsed(true, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowCollapsed(true, ImGuiCond_Always);
     ImGui::Begin("Cinematic Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("Shot: %d / 14   Time: %.1f / %.1f", mCurrentShot, mCinematicTime, mCinematicEnd);
