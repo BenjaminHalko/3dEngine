@@ -340,7 +340,7 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot14Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot14Start), 0.0f, 1.0f);
             Math::Vector3 giantPos = mGiantStanley.transform.position;
-            Math::Vector3 giantHead = giantPos + Math::Vector3{0.0f, 30.0f, 0.0f};
+            Math::Vector3 giantHead = giantPos + Math::Vector3{0.0f, 50.0f, 0.0f};
             Math::Vector3 planeStart = {giantHead.x - 60.0f, giantHead.y, giantHead.z};
             Math::Vector3 planeEnd = giantHead;
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
