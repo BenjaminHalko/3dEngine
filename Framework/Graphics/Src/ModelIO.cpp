@@ -89,23 +89,35 @@ void ModelIO::SaveModel(std::filesystem::path filePath, const Model& model)
         fprintf_s(file, "VertexCount: %d\n", vertexCount);
         for (const Vertex& v : mesh.vertices)
         {
-            fprintf_s(file, "%f %f %f %f %f %f %f %f %f %f %f %d %d %d %d %f %f %f %f\n",
-                v.position.x, v.position.y, v.position.z,
-                v.normal.x, v.normal.y, v.normal.z,
-                v.tangent.x, v.tangent.y, v.tangent.z,
-                v.uvCoord.x, v.uvCoord.y,
-                v.boneIndices[0], v.boneIndices[1], v.boneIndices[2], v.boneIndices[3],
-                v.boneWeights[0], v.boneWeights[1], v.boneWeights[2], v.boneWeights[3]);
+            fprintf_s(file,
+                      "%f %f %f %f %f %f %f %f %f %f %f %d %d %d %d %f %f %f %f\n",
+                      v.position.x,
+                      v.position.y,
+                      v.position.z,
+                      v.normal.x,
+                      v.normal.y,
+                      v.normal.z,
+                      v.tangent.x,
+                      v.tangent.y,
+                      v.tangent.z,
+                      v.uvCoord.x,
+                      v.uvCoord.y,
+                      v.boneIndices[0],
+                      v.boneIndices[1],
+                      v.boneIndices[2],
+                      v.boneIndices[3],
+                      v.boneWeights[0],
+                      v.boneWeights[1],
+                      v.boneWeights[2],
+                      v.boneWeights[3]);
         }
 
         const uint32_t indexCount = static_cast<uint32_t>(mesh.indices.size());
         fprintf_s(file, "IndexCount: %d\n", indexCount);
         for (uint32_t i = 2; i < indexCount; i += 3)
         {
-            fprintf_s(file, "%d %d %d\n",
-                mesh.indices[i - 2],
-                mesh.indices[i - 1],
-                mesh.indices[i]);
+            fprintf_s(
+                file, "%d %d %d\n", mesh.indices[i - 2], mesh.indices[i - 1], mesh.indices[i]);
         }
     }
     fclose(file);
@@ -136,13 +148,27 @@ void ModelIO::LoadModel(std::filesystem::path filePath, Model& model)
         mesh.vertices.resize(vertexCount);
         for (Vertex& v : mesh.vertices)
         {
-            fscanf_s(file, "%f %f %f %f %f %f %f %f %f %f %f %d %d %d %d %f %f %f %f\n",
-                &v.position.x, &v.position.y, &v.position.z,
-                &v.normal.x, &v.normal.y, &v.normal.z,
-                &v.tangent.x, &v.tangent.y, &v.tangent.z,
-                &v.uvCoord.x, &v.uvCoord.y,
-                &v.boneIndices[0], &v.boneIndices[1], &v.boneIndices[2], &v.boneIndices[3],
-                &v.boneWeights[0], &v.boneWeights[1], &v.boneWeights[2], &v.boneWeights[3]);
+            fscanf_s(file,
+                     "%f %f %f %f %f %f %f %f %f %f %f %d %d %d %d %f %f %f %f\n",
+                     &v.position.x,
+                     &v.position.y,
+                     &v.position.z,
+                     &v.normal.x,
+                     &v.normal.y,
+                     &v.normal.z,
+                     &v.tangent.x,
+                     &v.tangent.y,
+                     &v.tangent.z,
+                     &v.uvCoord.x,
+                     &v.uvCoord.y,
+                     &v.boneIndices[0],
+                     &v.boneIndices[1],
+                     &v.boneIndices[2],
+                     &v.boneIndices[3],
+                     &v.boneWeights[0],
+                     &v.boneWeights[1],
+                     &v.boneWeights[2],
+                     &v.boneWeights[3]);
         }
 
         uint32_t indexCount = 0;
@@ -150,10 +176,8 @@ void ModelIO::LoadModel(std::filesystem::path filePath, Model& model)
         mesh.indices.resize(indexCount);
         for (uint32_t i = 2; i < indexCount; i += 3)
         {
-            fscanf_s(file, "%d %d %d\n",
-                &mesh.indices[i - 2],
-                &mesh.indices[i - 1],
-                &mesh.indices[i]);
+            fscanf_s(
+                file, "%d %d %d\n", &mesh.indices[i - 2], &mesh.indices[i - 1], &mesh.indices[i]);
         }
     }
     fclose(file);
@@ -189,10 +213,20 @@ void ModelIO::SaveMaterial(std::filesystem::path filePath, const Model& model)
         fprintf_s(file, "%f %f %f %f\n", m.specular.r, m.specular.g, m.specular.b, m.specular.a);
         fprintf_s(file, "Shininess: %f\n", m.shininess);
 
-        fprintf_s(file, "%s\n", materialData.diffuseMapName.empty() ? "<NONE>" : materialData.diffuseMapName.c_str());
-        fprintf_s(file, "%s\n", materialData.specMapName.empty() ? "<NONE>" : materialData.specMapName.c_str());
-        fprintf_s(file, "%s\n", materialData.normalMapName.empty() ? "<NONE>" : materialData.normalMapName.c_str());
-        fprintf_s(file, "%s\n", materialData.bumpMapName.empty() ? "<NONE>" : materialData.bumpMapName.c_str());
+        fprintf_s(file,
+                  "%s\n",
+                  materialData.diffuseMapName.empty() ? "<NONE>"
+                                                      : materialData.diffuseMapName.c_str());
+        fprintf_s(file,
+                  "%s\n",
+                  materialData.specMapName.empty() ? "<NONE>" : materialData.specMapName.c_str());
+        fprintf_s(file,
+                  "%s\n",
+                  materialData.normalMapName.empty() ? "<NONE>"
+                                                     : materialData.normalMapName.c_str());
+        fprintf_s(file,
+                  "%s\n",
+                  materialData.bumpMapName.empty() ? "<NONE>" : materialData.bumpMapName.c_str());
     }
 
     fclose(file);
@@ -212,18 +246,18 @@ void ModelIO::LoadMaterial(std::filesystem::path filePath, Model& model)
     }
 
     auto TryReadTextureName = [&](auto& fileName)
-        {
-            char buffer[MAX_PATH];
+    {
+        char buffer[MAX_PATH];
 #ifdef _WIN32
-            fscanf_s(file, "%s\n", buffer, (uint32_t)sizeof(buffer));
+        fscanf_s(file, "%s\n", buffer, (uint32_t) sizeof(buffer));
 #else
-            fscanf(file, "%s\n", buffer);
+        fscanf(file, "%s\n", buffer);
 #endif
-            if (strcmp(buffer, "<NONE>") != 0)
-            {
-                fileName = filePath.replace_filename(buffer).string();
-            }
-        };
+        if (strcmp(buffer, "<NONE>") != 0)
+        {
+            fileName = filePath.replace_filename(buffer).string();
+        }
+    };
 
     uint32_t materialCount = 0;
 
@@ -303,12 +337,12 @@ void ModelIO::LoadSkeleton(std::filesystem::path filePath, Model& model)
     }
 
     auto ReadMatrix = [&file](auto& m)
-        {
-            fscanf_s(file, "%f %f %f %f\n", &m._11, &m._12, &m._13, &m._14);
-            fscanf_s(file, "%f %f %f %f\n", &m._21, &m._22, &m._23, &m._24);
-            fscanf_s(file, "%f %f %f %f\n", &m._31, &m._32, &m._33, &m._34);
-            fscanf_s(file, "%f %f %f %f\n", &m._41, &m._42, &m._43, &m._44);
-        };
+    {
+        fscanf_s(file, "%f %f %f %f\n", &m._11, &m._12, &m._13, &m._14);
+        fscanf_s(file, "%f %f %f %f\n", &m._21, &m._22, &m._23, &m._24);
+        fscanf_s(file, "%f %f %f %f\n", &m._31, &m._32, &m._33, &m._34);
+        fscanf_s(file, "%f %f %f %f\n", &m._41, &m._42, &m._43, &m._44);
+    };
 
     model.skeleton = std::make_unique<Skeleton>();
     uint32_t boneCount = 0;
@@ -326,15 +360,28 @@ void ModelIO::LoadSkeleton(std::filesystem::path filePath, Model& model)
     {
         Bone* boneData = model.skeleton->bones[i].get();
         char nameBuffer[MAX_PATH];
-#ifdef _WIN32
-        fscanf_s(file, "BoneName: %s\n", nameBuffer, (uint32_t)sizeof(nameBuffer));
-#else
-        fscanf(file, "BoneName: %s\n", nameBuffer);
-#endif
+        {
+            char lineBuffer[MAX_PATH + 32];
+            if (fgets(lineBuffer, sizeof(lineBuffer), file))
+            {
+                char* nameStart = strstr(lineBuffer, "BoneName: ");
+                if (nameStart)
+                {
+                    nameStart += 10;
+                    size_t len = strlen(nameStart);
+                    while (len > 0 && (nameStart[len - 1] == '\n' || nameStart[len - 1] == '\r'))
+                        nameStart[--len] = '\0';
+                    strncpy(nameBuffer, nameStart, sizeof(nameBuffer) - 1);
+                    nameBuffer[sizeof(nameBuffer) - 1] = '\0';
+                }
+            }
+        }
         fscanf_s(file, "BoneIndex: %d\n", &boneData->index);
         fscanf_s(file, "ParentIndex: %d\n", &boneData->parentIndex);
         boneData->name = std::move(nameBuffer);
-        boneData->parent = (boneData->parentIndex >= 0) ? model.skeleton->bones[boneData->parentIndex].get() : nullptr;
+        boneData->parent = (boneData->parentIndex >= 0)
+                               ? model.skeleton->bones[boneData->parentIndex].get()
+                               : nullptr;
 
         uint32_t childCount = 0;
         fscanf_s(file, "ChildCount: %d\n", &childCount);
@@ -414,7 +461,7 @@ void ModelIO::LoadAnimation(std::filesystem::path filePath, Model& model)
         AnimationClip& animClipData = model.animationClips.emplace_back();
         char animClipName[MAX_PATH];
 #ifdef _WIN32
-        fscanf_s(file, "AnimClipName: %s\n", animClipName, (uint32_t)sizeof(animClipName));
+        fscanf_s(file, "AnimClipName: %s\n", animClipName, (uint32_t) sizeof(animClipName));
 #else
         fscanf(file, "AnimClipName: %s\n", animClipName);
 #endif
@@ -429,7 +476,7 @@ void ModelIO::LoadAnimation(std::filesystem::path filePath, Model& model)
         {
             char tag[128]{};
 #ifdef _WIN32
-            fscanf_s(file, "%s\n", tag, (uint32_t)sizeof(tag));
+            fscanf_s(file, "%s\n", tag, (uint32_t) sizeof(tag));
 #else
             fscanf(file, "%s\n", tag);
 #endif
