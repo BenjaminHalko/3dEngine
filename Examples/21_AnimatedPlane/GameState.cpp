@@ -326,11 +326,11 @@ void GameState::Update(float deltaTime)
             float shotT = mCinematicTime - mShot14Start;
             float t = Math::Clamp(shotT / (mCinematicEnd - mShot14Start), 0.0f, 1.0f);
             Math::Vector3 giantPos = mGiantStanley.transform.position;
-            Math::Vector3 giantCenter = giantPos + Math::Vector3{0.0f, 40.0f, 0.0f};
+            Math::Vector3 giantHead = giantPos + Math::Vector3{0.0f, 150.0f, 0.0f};
             Math::Vector3 towerTop2 = mTower.transform.position + Math::Vector3{0.0f, 21.0f, 0.0f};
             Math::Vector3 shot13End2 = towerTop2 + Math::Vector3{60.0f, 5.0f, 0.0f};
             Math::Vector3 planeStart = shot13End2;
-            Math::Vector3 planeEnd = giantCenter;
+            Math::Vector3 planeEnd = giantHead;
             Math::Vector3 planePos = Math::Lerp(planeStart, planeEnd, t);
             mPlane.transform.position = planePos;
             mPlane.transform.rotation =
@@ -338,7 +338,7 @@ void GameState::Update(float deltaTime)
             mPlane.transform.scale = {0.3f, 0.3f, 0.3f};
             mStanley.transform.position = planePos + Math::Vector3{0.0f, 0.5f, 0.0f};
             mCamera.SetPosition(planeStart + Math::Vector3{-15.0f, 10.0f, 0.0f});
-            mCamera.SetLookAt(giantCenter);
+            mCamera.SetLookAt(giantHead);
             break;
         }
         }
