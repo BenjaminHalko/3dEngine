@@ -7,3 +7,6 @@
 [submodule "External/assimp"]
 	path = External/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "External/rapidjson"]
+	path = External/rapidjson
+	url = https://github.com/Tencent/rapidjson.git

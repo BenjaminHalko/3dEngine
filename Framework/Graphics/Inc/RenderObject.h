@@ -31,6 +31,7 @@ class RenderGroup
 {
   public:
     void Initialize(const std::filesystem::path& modelFilePath);
+    void Initialize(const Model& model);
     void Terminate();
 
     ModelId modelId;     // Model Identifier

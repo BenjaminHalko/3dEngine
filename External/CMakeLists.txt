@@ -39,3 +39,7 @@ add_subdirectory(assimp)
 
 # ImGui
 add_subdirectory(ImGui)
+
+# RapidJSON (header-only)
+add_library(rapidjson INTERFACE)
+target_include_directories(rapidjson INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/include)

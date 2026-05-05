@@ -1,0 +1,28 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 0.0, 0.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "MeshComponent": {
+      "CastShadow": false,
+      "Shape": {
+        "Type": "Sphere",
+        "Slices": 60,
+        "Rings": 60,
+        "Radius": 1.0
+      },
+      "Material": {
+        "Emissive": [ 0.0, 0.0, 0.0, 1.0 ],
+        "Ambient": [ 0.3, 0.3, 0.3, 1.0 ],
+        "Diffuse": [ 0.8, 0.8, 0.8, 1.0 ],
+        "Specular": [ 1.0, 1.0, 1.0, 1.0 ],
+        "Shininess": 10.0
+      },
+      "Textures": {
+        "DiffuseMap": "Assets/Textures/earth.jpg"
+      }
+    }
+  }
+}
