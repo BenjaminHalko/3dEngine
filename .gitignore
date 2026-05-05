@@ -3,6 +3,7 @@
 .cache/
 .cmake/
 .claude/
+.opencode/
 .sisyphus/
 .DS_Store
 *.log
@@ -10,3 +11,4 @@ CMakeFiles/
 cmake-*/
 build*/
 imgui.ini
+AGENTS.md
