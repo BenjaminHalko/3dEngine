@@ -1,0 +1,35 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 0.0, 0.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "MeshComponent": {
+      "CastShadow": true,
+      "Shape": {
+        "Type": "Sphere",
+        "Slices": 30,
+        "Rings": 30,
+        "Radius": 0.5
+      },
+      "Material": {
+        "Emissive": [ 0.0, 0.0, 0.0, 1.0 ],
+        "Ambient": [ 0.3, 0.3, 0.3, 1.0 ],
+        "Diffuse": [ 0.8, 0.4, 0.4, 1.0 ],
+        "Specular": [ 1.0, 1.0, 1.0, 1.0 ],
+        "Shininess": 10.0
+      },
+      "Textures": {
+        "DiffuseMap": "Assets/Textures/sun.jpg"
+      }
+    },
+    "RigidBodyComponent": {
+      "Mass": 1.0,
+      "ColliderData": {
+        "Shape": "Sphere",
+        "Radius": 0.5
+      }
+    }
+  }
+}

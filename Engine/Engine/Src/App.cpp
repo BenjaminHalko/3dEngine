@@ -12,7 +12,6 @@ void App::Run(const AppConfig& config)
 {
     LOG("App Started");
 
-    // Initialize Everything
     Window myWindow;
     myWindow.Initialize(nullptr, config.appName, config.winWidth, config.winHeight);
     auto handle = myWindow.GetWindowHandle();
@@ -28,11 +27,12 @@ void App::Run(const AppConfig& config)
     SoundEffectManager::StaticInitialize();
     SoundEffectManager::Get()->SetRootPath("Assets/Audio");
 
-    // Last Step Before Running
+    UIFont::StaticInitialize(UIFont::FontType::Verdana);
+    UISpriteRenderer::StaticInitialize();
+
     ASSERT(mCurrentState != nullptr, "App: Need an app state to run");
     mCurrentState->Initialize();
 
-    // Process Updates
     InputSystem* input = InputSystem::Get();
     mRunning = true;
     while (mRunning)
@@ -54,12 +54,13 @@ void App::Run(const AppConfig& config)
             mCurrentState->Initialize();
         }
 
+        AudioSystem::Get()->Update();
+
         float deltaTime = TimeUtil::GetDeltaTime();
 #if defined(_DEBUG)
-        if (deltaTime < 0.5f) // Primarily for handling Breakpoints
+        if (deltaTime < 0.5f)
 #endif
         {
-            Physics::PhysicsWorld::Get()->Update(deltaTime);
             mCurrentState->Update(deltaTime);
         }
 
@@ -74,10 +75,11 @@ void App::Run(const AppConfig& config)
         gs->EndRender();
     }
 
-    // Terminate Everything
     LOG("App Quit");
     mCurrentState->Terminate();
 
+    UISpriteRenderer::StaticTerminate();
+    UIFont::StaticTerminate();
     SoundEffectManager::StaticTerminate();
     AudioSystem::StaticTerminate();
     EventManager::StaticTerminate();

@@ -42,3 +42,7 @@
 #include "AnimationUtil.h"
 #include "Bone.h"
 #include "Skeleton.h"
+
+#include "UIFont.h"
+#include "UISprite.h"
+#include "UISpriteRenderer.h"

@@ -29,11 +29,12 @@ ImageData LoadImageFile(const std::filesystem::path& fileName)
 {
     // Convert to UTF-8 string
     std::string fileStr = fileName.string();
-    
+
     ImageData data;
-    data.pixels = stbi_load(fileStr.c_str(), &data.width, &data.height, &data.channels, 4);  // Force RGBA
-    data.channels = 4;  // stbi_load with last param 4 forces RGBA
-    
+    data.pixels =
+        stbi_load(fileStr.c_str(), &data.width, &data.height, &data.channels, 4); // Force RGBA
+    data.channels = 4; // stbi_load with last param 4 forces RGBA
+
     return data;
 }
 
@@ -45,7 +46,7 @@ void FreeImageData(ImageData& data)
         data.pixels = nullptr;
     }
 }
-}
+} // namespace
 
 void Texture::UnbindPS(uint32_t slot)
 {
@@ -74,16 +75,19 @@ Texture& Texture::operator=(Texture&& rhs) noexcept
 void Texture::Initialize(const std::filesystem::path& fileName)
 {
     auto device = GraphicsSystem::Get()->GetDevice();
-    
+
     // Load image data using stb_image
     ImageData imageData = LoadImageFile(fileName);
-    
+
     if (!imageData.pixels)
     {
         ASSERT(false, "Texture: Failed to load image file %ls", fileName.c_str());
         return;
     }
-    
+
+    mWidth = static_cast<uint32_t>(imageData.width);
+    mHeight = static_cast<uint32_t>(imageData.height);
+
     // Create D3D11 texture from image data
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width = imageData.width;
@@ -97,35 +101,36 @@ void Texture::Initialize(const std::filesystem::path& fileName)
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     textureDesc.CPUAccessFlags = 0;
     textureDesc.MiscFlags = 0;
-    
+
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem = imageData.pixels;
-    initData.SysMemPitch = imageData.width * 4;  // 4 bytes per pixel (RGBA)
+    initData.SysMemPitch = imageData.width * 4; // 4 bytes per pixel (RGBA)
     initData.SysMemSlicePitch = 0;
-    
+
     ID3D11Texture2D* texture = nullptr;
     HRESULT hr = device->CreateTexture2D(&textureDesc, &initData, &texture);
-    
+
     if (FAILED(hr))
     {
         FreeImageData(imageData);
         ASSERT(false, "Texture: Failed to create D3D11 texture from %ls", fileName.c_str());
         return;
     }
-    
+
     // Create shader resource view
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = textureDesc.Format;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.MipLevels = 1;
-    
+
     hr = device->CreateShaderResourceView(texture, &srvDesc, &mShaderResourceView);
-    
+
     SafeRelease(texture);
     FreeImageData(imageData);
-    
-    ASSERT(SUCCEEDED(hr), "Texture: Failed to create shader resource view for %ls", fileName.c_str());
+
+    ASSERT(
+        SUCCEEDED(hr), "Texture: Failed to create shader resource view for %ls", fileName.c_str());
 }
 
 void Texture::Terminate()

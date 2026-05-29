@@ -5,6 +5,7 @@
 #include "RenderObjectComponent.h"
 #include "TransformComponent.h"
 #include "GameWorld.h"
+#include "SaveUtil.h"
 
 using namespace Engine;
 
@@ -39,7 +40,7 @@ void RenderService::Render()
     mStandardEffect.SetCamera(camera);
     for (Entry& entry : mRenderEntries)
     {
-        entry.renderGroup.transform = *entry.transformComponent;
+        entry.renderGroup.transform = entry.transformComponent->GetWorldTransform();
     }
 
     mShadowEffect.Begin();
@@ -80,20 +81,30 @@ void RenderService::DebugUI()
     }
 }
 
+void RenderService::Deserialize(const rapidjson::Value& value)
+{
+    if (SaveUtil::ReadVector3("Direction", mDirectionalLight.direction, value))
+    {
+        mDirectionalLight.direction = Math::Normalize(mDirectionalLight.direction);
+    }
+    SaveUtil::ReadColor("Ambient", mDirectionalLight.ambient, value);
+    SaveUtil::ReadColor("Diffuse", mDirectionalLight.diffuse, value);
+    SaveUtil::ReadColor("Specular", mDirectionalLight.specular, value);
+}
+
 void RenderService::Register(const RenderObjectComponent* renderObjectComponent)
 {
-    auto iter = std::find_if(
-        mRenderEntries.begin(),
-        mRenderEntries.end(),
-        [&](const Entry& entry) {
-            return entry.renderComponent == renderObjectComponent;
-        });
+    auto iter = std::find_if(mRenderEntries.begin(),
+                             mRenderEntries.end(),
+                             [&](const Entry& entry)
+                             { return entry.renderComponent == renderObjectComponent; });
 
     if (iter == mRenderEntries.end())
     {
         Entry& entry = mRenderEntries.emplace_back();
         entry.renderComponent = renderObjectComponent;
-        entry.transformComponent = renderObjectComponent->GetOwner().GetComponent<TransformComponent>();
+        entry.transformComponent =
+            renderObjectComponent->GetOwner().GetComponent<TransformComponent>();
         entry.renderGroup.Initialize(renderObjectComponent->GetModel());
         entry.renderGroup.modelId = renderObjectComponent->GetModelId();
     }
@@ -101,12 +112,10 @@ void RenderService::Register(const RenderObjectComponent* renderObjectComponent)
 
 void RenderService::Unregister(const RenderObjectComponent* renderObjectComponent)
 {
-    auto iter = std::find_if(
-        mRenderEntries.begin(),
-        mRenderEntries.end(),
-        [&](const Entry& entry) {
-            return entry.renderComponent == renderObjectComponent;
-        });
+    auto iter = std::find_if(mRenderEntries.begin(),
+                             mRenderEntries.end(),
+                             [&](const Entry& entry)
+                             { return entry.renderComponent == renderObjectComponent; });
 
     if (iter != mRenderEntries.end())
     {

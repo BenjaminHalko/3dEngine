@@ -19,13 +19,23 @@
 #include "RenderObjectComponent.h"
 #include "MeshComponent.h"
 #include "ModelComponent.h"
+#include "AnimatorComponent.h"
+#include "RigidBodyComponent.h"
+#include "SoundEventComponent.h"
+#include "SoundBankComponent.h"
+#include "UIComponent.h"
+#include "UITextComponent.h"
+#include "UISpriteComponent.h"
+#include "UIButtonComponent.h"
 
 #include "Service.h"
 #include "CameraService.h"
 #include "RenderService.h"
+#include "PhysicsService.h"
+#include "UIRenderService.h"
 
 namespace Engine
 {
 class App;
 App& MainApp();
-}
+} // namespace Engine

@@ -1,0 +1,10 @@
+{
+  "Components": {
+    "UITextComponent": {
+      "Text": "Hello UI",
+      "Position": [ 20.0, 20.0 ],
+      "Color": [ 1.0, 1.0, 1.0, 1.0 ],
+      "Size": 24.0
+    }
+  }
+}

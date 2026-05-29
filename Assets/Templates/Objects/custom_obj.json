@@ -1,0 +1,11 @@
+{
+  "Components": {
+    "CustomDebugDrawComponent": {
+      "Slices": 30,
+      "Rings": 30,
+      "Radius": 2.0,
+      "Position": [ 0.0, 0.0, 0.0 ],
+      "Color": [ 0.8, 0.8, 1.0, 1.0 ]
+    }
+  }
+}

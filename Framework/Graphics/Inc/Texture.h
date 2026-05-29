@@ -27,7 +27,18 @@ class Texture
 
     [[nodiscard]] void* GetRawData() const;
 
+    uint32_t GetWidth() const
+    {
+        return mWidth;
+    }
+    uint32_t GetHeight() const
+    {
+        return mHeight;
+    }
+
   protected:
     ID3D11ShaderResourceView* mShaderResourceView = nullptr;
+    uint32_t mWidth = 0;
+    uint32_t mHeight = 0;
 };
 } // namespace Engine::Graphics

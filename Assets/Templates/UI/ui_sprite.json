@@ -1,0 +1,9 @@
+{
+  "Components": {
+    "UISpriteComponent": {
+      "Texture": "Assets/Textures/paper.jpg",
+      "Position": [ 100.0, 100.0 ],
+      "Pivot": "TopLeft"
+    }
+  }
+}

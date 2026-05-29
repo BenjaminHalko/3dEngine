@@ -1,8 +1,26 @@
 #include "Precompiled.h"
+
+#include <rapidjson/filereadstream.h>
+
 #include "GameWorld.h"
 #include "GameObjectFactory.h"
 
+#include "CameraService.h"
+#include "RenderService.h"
+#include "PhysicsService.h"
+#include "UIRenderService.h"
+
 using namespace Engine;
+
+namespace
+{
+CustomService TryAddService;
+}
+
+void GameWorld::SetCustomService(CustomService customService)
+{
+    TryAddService = customService;
+}
 
 void GameWorld::Initialize(uint32_t capacity)
 {
@@ -120,6 +138,64 @@ void GameWorld::DestroyGameObject(const GameObjectHandle& handle)
     Slot& slot = mGameObjectSlots[handle.mIndex];
     ++slot.generation;
     mToBeDestroyed.push_back(handle.mIndex);
+}
+
+void GameWorld::LoadLevel(const std::filesystem::path& levelFile)
+{
+    FILE* file = nullptr;
+    auto err = fopen_s(&file, levelFile.string().c_str(), "r");
+    ASSERT(
+        err == 0 && file != nullptr, "GameWorld: Failed to open %s!", levelFile.string().c_str());
+
+    char readBuffer[65536];
+    rapidjson::FileReadStream readStream(file, readBuffer, sizeof(readBuffer));
+
+    rapidjson::Document doc;
+    doc.ParseStream(readStream);
+    fclose(file);
+
+    auto services = doc["Services"].GetObj();
+    for (auto& service : services)
+    {
+        std::string serviceName = service.name.GetString();
+        Service* newService = nullptr;
+        if (serviceName == "CameraService")
+        {
+            newService = AddService<CameraService>();
+        }
+        else if (serviceName == "RenderService")
+        {
+            newService = AddService<RenderService>();
+        }
+        else if (serviceName == "PhysicsService")
+        {
+            newService = AddService<PhysicsService>();
+        }
+        else if (serviceName == "UIRenderService")
+        {
+            newService = AddService<UIRenderService>();
+        }
+        else if (TryAddService)
+        {
+            newService = TryAddService(serviceName, *this);
+        }
+
+        ASSERT(newService != nullptr, "GameWorld: Failed to add service %s!", serviceName.c_str());
+        newService->Deserialize(service.value);
+    }
+
+    uint32_t capacity = static_cast<uint32_t>(doc["Capacity"].GetInt());
+    Initialize(capacity);
+
+    auto gameObjects = doc["GameObjects"].GetObj();
+    for (auto& gameObject : gameObjects)
+    {
+        std::string name = gameObject.name.GetString();
+        std::string templateFile = gameObject.value["Template"].GetString();
+        GameObject* go = CreateGameObject(name, templateFile);
+        GameObjectFactory::OverrideDeserialize(gameObject.value, *go);
+        go->Initialize();
+    }
 }
 
 bool GameWorld::IsValid(const GameObjectHandle& handle)

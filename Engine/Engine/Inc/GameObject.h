@@ -5,93 +5,103 @@
 
 namespace Engine
 {
-    class GameWorld;
+class GameWorld;
 
-    class GameObject final
+class GameObject final
+{
+  public:
+    GameObject() = default;
+
+    void Initialize();
+    void Terminate();
+    void Update(float deltaTime);
+    void DebugUI();
+
+    void SetName(std::string& name);
+    const std::string& GetName() const;
+    uint32_t GetId() const;
+
+    const GameObjectHandle& GetHandle() const;
+
+    GameWorld& GetWorld();
+    const GameWorld& GetWorld() const;
+
+    void AddChild(GameObject* child);
+    uint32_t GetChildCount() const;
+
+    GameObject* GetChild(uint32_t index);
+    const GameObject* GetChild(uint32_t index) const;
+
+    void SetParent(GameObject* parent);
+    GameObject* GetParent();
+    const GameObject* GetParent() const;
+
+    template <class ComponentType> ComponentType* AddComponent()
     {
-      public:
-        GameObject() = default;
+        static_assert(std::is_base_of_v<Component, ComponentType>,
+                      "GameObject: ComponentType must be of type Component!");
+        ASSERT(!mInitialized, "GameObject: Can't add components when Initialized!");
+        ASSERT(!HasA<ComponentType>(), "GameObject: Already has a component type added!");
+        ASSERT(ComponentType::StaticGetTypeId() != static_cast<uint32_t>(ComponentId::Invalid),
+               "GameObject: Component has an invalid ID!");
 
-        void Initialize();
-        void Terminate();
-        void Update(float deltaTime);
-        void DebugUI();
+        auto& newComponent = mComponents.emplace_back(std::make_unique<ComponentType>());
+        newComponent->mOwner = this;
+        return static_cast<ComponentType*>(newComponent.get());
+    }
 
-        void SetName(std::string& name);
-        const std::string& GetName() const;
-        uint32_t GetId() const;
+    template <class ComponentType> bool HasA()
+    {
+        static_assert(std::is_base_of_v<Component, ComponentType>,
+                      "GameObject: ComponentType must be of type Component!");
 
-        const GameObjectHandle& GetHandle() const;
-
-        GameWorld& GetWorld();
-        const GameWorld& GetWorld() const;
-
-        template <class ComponentType>
-        ComponentType* AddComponent()
+        for (auto& component : mComponents)
         {
-            static_assert(std::is_base_of_v<Component, ComponentType>,
-                "GameObject: ComponentType must be of type Component!");
-            ASSERT(!mInitialized, "GameObject: Can't add components when Initialized!");
-            ASSERT(!HasA<ComponentType>(), "GameObject: Already has a component type added!");
-            ASSERT(ComponentType::StaticGetTypeId() != static_cast<uint32_t>(ComponentId::Invalid),
-                "GameObject: Component has an invalid ID!");
-
-            auto& newComponent = mComponents.emplace_back(std::make_unique<ComponentType>());
-            newComponent->mOwner = this;
-            return static_cast<ComponentType*>(newComponent.get());
-        }
-
-        template <class ComponentType>
-        bool HasA()
-        {
-            static_assert(std::is_base_of_v<Component, ComponentType>,
-                "GameObject: ComponentType must be of type Component!");
-
-            for (auto& component : mComponents)
+            if (component->GetTypeId() == ComponentType::StaticGetTypeId())
             {
-                if (component->GetTypeId() == ComponentType::StaticGetTypeId())
-                {
-                    return true;
-                }
+                return true;
             }
-            return false;
         }
+        return false;
+    }
 
-        template <class ComponentType>
-        const ComponentType* GetComponent() const
+    template <class ComponentType> const ComponentType* GetComponent() const
+    {
+        static_assert(std::is_base_of_v<Component, ComponentType>,
+                      "GameObject: ComponentType must be of type Component!");
+
+        for (auto& component : mComponents)
         {
-            static_assert(std::is_base_of_v<Component, ComponentType>,
-                "GameObject: ComponentType must be of type Component!");
-
-            for (auto& component : mComponents)
+            if (component->GetTypeId() == ComponentType::StaticGetTypeId())
             {
-                if (component->GetTypeId() == ComponentType::StaticGetTypeId())
-                {
-                    return static_cast<ComponentType*>(component.get());
-                }
+                return static_cast<ComponentType*>(component.get());
             }
-            return nullptr;
         }
+        return nullptr;
+    }
 
-        template <class ComponentType>
-        ComponentType* GetComponent()
-        {
-            const GameObject* thisConst = static_cast<const GameObject*>(this);
-            return const_cast<ComponentType*>(thisConst->GetComponent<ComponentType>());
-        }
+    template <class ComponentType> ComponentType* GetComponent()
+    {
+        const GameObject* thisConst = static_cast<const GameObject*>(this);
+        return const_cast<ComponentType*>(thisConst->GetComponent<ComponentType>());
+    }
 
-      private:
-        friend class GameWorld;
+  private:
+    friend class GameWorld;
 
-        std::string mName = "EMPTY";
-        bool mInitialized = false;
-        uint32_t mId = 0;
+    std::string mName = "EMPTY";
+    bool mInitialized = false;
+    uint32_t mId = 0;
 
-        GameObjectHandle mHandle;
+    GameObjectHandle mHandle;
 
-        GameWorld* mWorld = nullptr;
+    GameWorld* mWorld = nullptr;
 
-        using Components = std::vector<std::unique_ptr<Component>>;
-        Components mComponents;
-    };
-}
+    using Components = std::vector<std::unique_ptr<Component>>;
+    Components mComponents;
+
+    using Children = std::vector<GameObject*>;
+    Children mChildren;
+    GameObject* mParent = nullptr;
+};
+} // namespace Engine
