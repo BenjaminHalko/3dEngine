@@ -5,6 +5,7 @@
 .claude/
 .opencode/
 .sisyphus/
+.omo/
 .DS_Store
 *.log
 CMakeFiles/
