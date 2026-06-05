@@ -11,5 +11,6 @@ add_executable(26_CriticalCore
     StubComponent.cpp
     RoundConfig.cpp
     Collision.cpp
-    RenderTarget2D.cpp)
+    RenderTarget2D.cpp
+    CameraShakeService.cpp)
 target_set_windows_application(26_CriticalCore)

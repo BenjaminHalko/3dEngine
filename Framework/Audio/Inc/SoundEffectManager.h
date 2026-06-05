@@ -25,6 +25,13 @@ class SoundEffectManager final
     void Play(SoundId id, bool loop = false);
     void Stop(SoundId id);
 
+    // THREAD-SAFETY: callers must never Stop/Clear a handle while another thread
+    // polls its cursor — the ma_sound is read by the audio thread. The music
+    // handle must stay alive for the whole game when its cursor is polled.
+    float GetCursorSeconds(SoundId id) const;
+    void SetVolume(SoundId id, float v);
+    float GetVolume(SoundId id) const;
+
   private:
     std::unordered_map<SoundId, void*> mInventory;
     std::filesystem::path mRoot;

@@ -28,6 +28,22 @@ namespace Engine::CriticalCore
 constexpr int kInternalWidth = 256;
 constexpr int kInternalHeight = 224;
 
+// Logical font selector. Font maps to the fFont atlas (uppercase + digits HUD
+// glyphs); Score maps to the fScore atlas (full ASCII score popups).
+enum class Font2D
+{
+    Font,
+    Score
+};
+
+// Horizontal anchor for DrawText. Vertical placement is the caller's via y.
+enum class TextAlign
+{
+    Left,
+    Center,
+    Right
+};
+
 // Builds the y-DOWN orthographic projection for a given internal resolution:
 // x in [0, width]  -> clip x in [-1, +1]
 // y in [0, height] -> clip y in [+1, -1]   (top-left origin, +y downward)
@@ -74,6 +90,26 @@ class Render2D final
 
     // Thick line as a single quad from (x0,y0) to (x1,y1).
     void DrawLine(float x0, float y0, float x1, float y1, float thickness, const Graphics::Color& color);
+
+    // ---- Bitmap text (task-4 baked atlases) ------------------------------
+    // Loads one atlas PNG + its glyph-metrics JSON into the given Font2D slot.
+    // atlasPng / glyphJson are paths relative to build/bin (e.g.
+    // "Assets/Fonts/CriticalCore/fFont.png"). Safe to call again to replace.
+    void LoadFont(Font2D font, const std::string& atlasPng, const std::string& glyphJson);
+
+    // Draws text as tinted glyph quads through the sprite-quad path, advancing
+    // the pen by each glyph's xadvance and offsetting by xoffset/yoffset. The
+    // pen origin is (x, y) (top-left of the line cell); Center/Right shift the
+    // start by MeasureText. Unknown chars advance by the space width, no draw.
+    void DrawText(Font2D font,
+                  const std::string& text,
+                  float x,
+                  float y,
+                  const Graphics::Color& color,
+                  TextAlign align = TextAlign::Left);
+
+    // Total pen advance for text in the given font, matching the drawn width.
+    float MeasureText(Font2D font, const std::string& text) const;
 
   private:
     struct SpriteData
@@ -130,5 +166,48 @@ class Render2D final
     Graphics::VertexShader mColorVertexShader;
     Graphics::PixelShader mColorPixelShader;
     ColorBuffer mColorBuffer;
+
+    // ---- Bitmap-font path ------------------------------------------------
+    // One baked glyph: source sub-rect in atlas pixels plus pen metrics.
+    struct Glyph
+    {
+        float u = 0.0f;
+        float v = 0.0f;
+        float w = 0.0f;
+        float h = 0.0f;
+        float xoffset = 0.0f;
+        float yoffset = 0.0f;
+        float xadvance = 0.0f;
+    };
+
+    struct FontData
+    {
+        Graphics::TextureId texture = 0;
+        bool loaded = false;
+        float atlasWidth = 1.0f;
+        float atlasHeight = 1.0f;
+        float lineHeight = 0.0f;
+        float spaceAdvance = 0.0f;
+        std::unordered_map<int, Glyph> glyphs;
+    };
+
+    // Largest text submit before clamping: kMaxGlyphsPerDraw glyphs * 6 verts.
+    static constexpr uint32_t kMaxGlyphsPerDraw = 256u;
+    static constexpr uint32_t kMaxGlyphVertices = kMaxGlyphsPerDraw * 6u;
+
+    const FontData& GetFont(Font2D font) const;
+
+    // Appends the two-triangle quad (6 VertexPX) for one glyph at (gx,gy).
+    void AppendGlyphQuad(std::vector<Graphics::VertexPX>& verts,
+                         float gx,
+                         float gy,
+                         const Glyph& glyph,
+                         const FontData& fontData) const;
+
+    std::array<FontData, 2> mFonts;
+
+    // Text path: reused dynamic VertexPX mesh, shares the sprite VS/PS, sampler
+    // and SpriteData cbuffer (world identity, verts authored in pixel space).
+    Graphics::MeshBuffer mGlyphMesh;
 };
 } // namespace Engine::CriticalCore

@@ -103,3 +103,39 @@ void SoundEffectManager::Stop(SoundId id)
         ma_sound_stop(sound);
     }
 }
+
+float SoundEffectManager::GetCursorSeconds(SoundId id) const
+{
+    auto iter = mInventory.find(id);
+    if (iter != mInventory.end() && iter->second != nullptr)
+    {
+        ma_sound* sound = static_cast<ma_sound*>(iter->second);
+        float cursor = 0.0f;
+        if (ma_sound_get_cursor_in_seconds(sound, &cursor) == MA_SUCCESS)
+        {
+            return cursor;
+        }
+    }
+    return 0.0f;
+}
+
+void SoundEffectManager::SetVolume(SoundId id, float v)
+{
+    auto iter = mInventory.find(id);
+    if (iter != mInventory.end() && iter->second != nullptr)
+    {
+        ma_sound* sound = static_cast<ma_sound*>(iter->second);
+        ma_sound_set_volume(sound, v);
+    }
+}
+
+float SoundEffectManager::GetVolume(SoundId id) const
+{
+    auto iter = mInventory.find(id);
+    if (iter != mInventory.end() && iter->second != nullptr)
+    {
+        ma_sound* sound = static_cast<ma_sound*>(iter->second);
+        return ma_sound_get_volume(sound);
+    }
+    return 0.0f;
+}

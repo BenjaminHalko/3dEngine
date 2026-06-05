@@ -2,7 +2,11 @@
 
 #include "GmHelpers.h"
 
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+
 #include <cmath>
+#include <cstdio>
 #include <vector>
 
 using namespace Engine;
@@ -53,10 +57,15 @@ void Render2D::Initialize()
     mColorMesh.SetTopology(MeshBuffer::Topology::Triangles);
 
     mColorBuffer.Initialize();
+
+    mGlyphMesh.Initialize(nullptr, static_cast<uint32_t>(sizeof(VertexPX)), kMaxGlyphVertices);
+    mGlyphMesh.SetTopology(MeshBuffer::Topology::Triangles);
 }
 
 void Render2D::Terminate()
 {
+    mGlyphMesh.Terminate();
+
     mColorBuffer.Terminate();
     mColorPixelShader.Terminate();
     mColorVertexShader.Terminate();
@@ -250,5 +259,177 @@ void Render2D::DrawLine(float x0, float y0, float x1, float y1, float thickness,
     verts.reserve(6);
     AppendSegmentQuad(verts, x0, y0, x1, y1, thickness, color);
     SubmitColorMesh(verts);
+}
+
+const Render2D::FontData& Render2D::GetFont(Font2D font) const
+{
+    return mFonts[static_cast<size_t>(font)];
+}
+
+void Render2D::LoadFont(Font2D font, const std::string& atlasPng, const std::string& glyphJson)
+{
+    FontData& fontData = mFonts[static_cast<size_t>(font)];
+    fontData.glyphs.clear();
+    fontData.loaded = false;
+
+    // The atlas lives under Assets/Fonts, not the TextureManager root
+    // (Assets/Textures), so bypass the root-dir prefix.
+    fontData.texture = TextureManager::Get()->LoadTexture(atlasPng, false);
+
+    FILE* file = nullptr;
+    const errno_t err = fopen_s(&file, glyphJson.c_str(), "r");
+    if (err != 0 || file == nullptr)
+    {
+        return;
+    }
+
+    char readBuffer[65536];
+    rapidjson::FileReadStream readStream(file, readBuffer, sizeof(readBuffer));
+    rapidjson::Document doc;
+    doc.ParseStream(readStream);
+    fclose(file);
+
+    if (doc.HasParseError() || !doc.IsObject())
+    {
+        return;
+    }
+
+    fontData.atlasWidth = static_cast<float>(doc["atlasWidth"].GetInt());
+    fontData.atlasHeight = static_cast<float>(doc["atlasHeight"].GetInt());
+    fontData.lineHeight = static_cast<float>(doc["lineHeight"].GetInt());
+
+    const auto& glyphArray = doc["glyphs"];
+    for (const auto& entry : glyphArray.GetArray())
+    {
+        const int code = entry["char"].GetInt();
+        Glyph glyph;
+        glyph.u = static_cast<float>(entry["u"].GetInt());
+        glyph.v = static_cast<float>(entry["v"].GetInt());
+        glyph.w = static_cast<float>(entry["w"].GetInt());
+        glyph.h = static_cast<float>(entry["h"].GetInt());
+        glyph.xoffset = static_cast<float>(entry["xoffset"].GetInt());
+        glyph.yoffset = static_cast<float>(entry["yoffset"].GetInt());
+        glyph.xadvance = static_cast<float>(entry["xadvance"].GetInt());
+        fontData.glyphs[code] = glyph;
+    }
+
+    // Space (ASCII 32) advance doubles as the fallback for missing glyphs.
+    const auto spaceIt = fontData.glyphs.find(32);
+    fontData.spaceAdvance = (spaceIt != fontData.glyphs.end()) ? spaceIt->second.xadvance : 0.0f;
+
+    fontData.loaded = true;
+}
+
+float Render2D::MeasureText(Font2D font, const std::string& text) const
+{
+    const FontData& fontData = GetFont(font);
+    if (!fontData.loaded)
+    {
+        return 0.0f;
+    }
+
+    float width = 0.0f;
+    for (const char ch : text)
+    {
+        const int code = static_cast<unsigned char>(ch);
+        const auto it = fontData.glyphs.find(code);
+        width += (it != fontData.glyphs.end()) ? it->second.xadvance : fontData.spaceAdvance;
+    }
+    return width;
+}
+
+void Render2D::AppendGlyphQuad(std::vector<VertexPX>& verts,
+                               float gx,
+                               float gy,
+                               const Glyph& glyph,
+                               const FontData& fontData) const
+{
+    // Normalized atlas sub-rect. Source pixels are y-DOWN like the ortho, so
+    // v increases downward and no flip is needed (unlike DrawSprite).
+    const float u0 = glyph.u / fontData.atlasWidth;
+    const float v0 = glyph.v / fontData.atlasHeight;
+    const float u1 = (glyph.u + glyph.w) / fontData.atlasWidth;
+    const float v1 = (glyph.v + glyph.h) / fontData.atlasHeight;
+
+    const Vector3 topLeft(gx, gy, 0.0f);
+    const Vector3 topRight(gx + glyph.w, gy, 0.0f);
+    const Vector3 bottomLeft(gx, gy + glyph.h, 0.0f);
+    const Vector3 bottomRight(gx + glyph.w, gy + glyph.h, 0.0f);
+
+    verts.push_back({topLeft, {u0, v0}});
+    verts.push_back({topRight, {u1, v0}});
+    verts.push_back({bottomRight, {u1, v1}});
+    verts.push_back({topLeft, {u0, v0}});
+    verts.push_back({bottomRight, {u1, v1}});
+    verts.push_back({bottomLeft, {u0, v1}});
+}
+
+void Render2D::DrawText(
+    Font2D font, const std::string& text, float x, float y, const Color& color, TextAlign align)
+{
+    const FontData& fontData = GetFont(font);
+    if (!fontData.loaded)
+    {
+        return;
+    }
+
+    const Texture* texture = TextureManager::Get()->GetTexture(fontData.texture);
+    if (texture == nullptr)
+    {
+        return;
+    }
+
+    float penX = x;
+    if (align == TextAlign::Center)
+    {
+        penX = x - MeasureText(font, text) * 0.5f;
+    }
+    else if (align == TextAlign::Right)
+    {
+        penX = x - MeasureText(font, text);
+    }
+
+    std::vector<VertexPX> verts;
+    verts.reserve(text.size() * 6);
+
+    for (const char ch : text)
+    {
+        if (verts.size() >= kMaxGlyphVertices)
+        {
+            break;
+        }
+
+        const int code = static_cast<unsigned char>(ch);
+        const auto it = fontData.glyphs.find(code);
+        if (it == fontData.glyphs.end())
+        {
+            penX += fontData.spaceAdvance;
+            continue;
+        }
+
+        const Glyph& glyph = it->second;
+        AppendGlyphQuad(verts, penX + glyph.xoffset, y + glyph.yoffset, glyph, fontData);
+        penX += glyph.xadvance;
+    }
+
+    if (verts.empty())
+    {
+        return;
+    }
+
+    mVertexShader.Bind();
+    mPixelShader.Bind();
+    mSampler.BindPS(0);
+
+    SpriteData data;
+    data.wvp = Transpose(mOrtho);
+    data.tint = color;
+    mSpriteBuffer.Update(data);
+    mSpriteBuffer.BindVS(0);
+    mSpriteBuffer.BindPS(0);
+
+    texture->BindPS(0);
+    mGlyphMesh.Update(verts.data(), static_cast<uint32_t>(verts.size()));
+    mGlyphMesh.Render();
 }
 } // namespace Engine::CriticalCore

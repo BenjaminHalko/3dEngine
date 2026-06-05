@@ -28,6 +28,9 @@ class AudioSystem final
         return mAudioEngine;
     }
 
+    void SetMasterVolume(float v);
+    float GetMasterVolume() const;
+
   private:
     friend class SoundEffectManager;
     ma_engine* mAudioEngine = nullptr;

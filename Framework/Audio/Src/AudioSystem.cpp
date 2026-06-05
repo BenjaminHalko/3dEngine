@@ -84,6 +84,23 @@ void AudioSystem::Terminate()
     }
 }
 
+void AudioSystem::SetMasterVolume(float v)
+{
+    if (mAudioEngine != nullptr)
+    {
+        ma_engine_set_volume(mAudioEngine, v);
+    }
+}
+
+float AudioSystem::GetMasterVolume() const
+{
+    if (mAudioEngine != nullptr)
+    {
+        return ma_engine_get_volume(mAudioEngine);
+    }
+    return 0.0f;
+}
+
 void AudioSystem::Update()
 {
     // miniaudio handles updates internally
