@@ -12,5 +12,9 @@ add_executable(26_CriticalCore
     RoundConfig.cpp
     Collision.cpp
     RenderTarget2D.cpp
-    CameraShakeService.cpp)
+    CameraShakeService.cpp
+    CriticalCore2DRenderService.cpp
+    Render2DComponent.cpp
+    MusicController.cpp
+    Leaderboard.cpp)
 target_set_windows_application(26_CriticalCore)
