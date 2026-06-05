@@ -142,7 +142,12 @@ namespace
 {
 // HelperFunctions.gml:114 -> _offset = 0.5 + (!BROWSER and !OPERA)*0.5. On the
 // native desktop target (neither a browser nor Opera) that resolves to 1.0px.
-constexpr float kPixelOffset = 1.0f;
+// The original GameMaker drawCircle drew FILLED circles shifted +1,+1 from their
+// start position; under our top-left/y-DOWN coordinate handling we reproduce the
+// match by shifting filled circles -1,-1. This applies to DrawCircleFilled ONLY
+// (player blob, bubbles, core HP disc, particles) - NOT outlines, lines, sprites,
+// or text, which have no such offset in the source.
+constexpr float kFilledCircleOffset = 1.0f;
 } // namespace
 
 void Render2D::AppendSegmentQuad(std::vector<VertexPC>& verts,
@@ -224,8 +229,8 @@ void Render2D::SubmitColorMesh(const std::vector<VertexPC>& verts)
 
 void Render2D::DrawCircleFilled(float x, float y, float radius, const Color& color, bool outline)
 {
-    const float cx = x - kPixelOffset;
-    const float cy = y - kPixelOffset;
+    const float cx = x - kFilledCircleOffset;
+    const float cy = y - kFilledCircleOffset;
 
     // Filled disc as a triangle list (D3D11 has no triangle-fan topology):
     // each slice is (center, p_i, p_{i+1}).
@@ -258,7 +263,9 @@ void Render2D::DrawCircleFilled(float x, float y, float radius, const Color& col
 
 void Render2D::DrawCircleOutline(float x, float y, float radius, const Color& color)
 {
-    DrawRing(x - kPixelOffset, y - kPixelOffset, radius, 1.0f, color);
+    // No pixel offset here: only FILLED circles (DrawCircleFilled) carry the
+    // -1,-1 shift. Outlines draw at their exact requested position.
+    DrawRing(x, y, radius, 1.0f, color);
 }
 
 void Render2D::DrawLine(float x0, float y0, float x1, float y1, float thickness, const Color& color)
