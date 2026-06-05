@@ -1,0 +1,146 @@
+{
+  "sCore": {
+    "files": [
+      "sCore.png"
+    ],
+    "width": 208,
+    "height": 208,
+    "xorigin": 104,
+    "yorigin": 104,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sSpike": {
+    "files": [
+      "sSpike.png"
+    ],
+    "width": 8,
+    "height": 8,
+    "xorigin": 4,
+    "yorigin": 4,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sWall": {
+    "files": [
+      "sWall.png"
+    ],
+    "width": 4,
+    "height": 4,
+    "xorigin": 0,
+    "yorigin": 0,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sTitle": {
+    "files": [
+      "sTitle.png"
+    ],
+    "width": 140,
+    "height": 53,
+    "xorigin": 70,
+    "yorigin": 26,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sArrow": {
+    "files": [
+      "sArrow.png"
+    ],
+    "width": 6,
+    "height": 3,
+    "xorigin": 3,
+    "yorigin": 3,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sAudio": {
+    "files": [
+      "sAudio.png"
+    ],
+    "width": 8,
+    "height": 6,
+    "xorigin": 0,
+    "yorigin": 3,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sAudioLine": {
+    "files": [
+      "sAudioLine_0.png",
+      "sAudioLine_1.png"
+    ],
+    "width": 60,
+    "height": 5,
+    "xorigin": 0,
+    "yorigin": 2,
+    "frames": 2,
+    "layout": "numbered"
+  },
+  "sBGBubbles": {
+    "files": [
+      "sBGBubbles_0.png",
+      "sBGBubbles_1.png",
+      "sBGBubbles_2.png",
+      "sBGBubbles_3.png"
+    ],
+    "width": 6,
+    "height": 6,
+    "xorigin": 3,
+    "yorigin": 3,
+    "frames": 4,
+    "layout": "numbered"
+  },
+  "sSparkle": {
+    "files": [
+      "sSparkle_0.png",
+      "sSparkle_1.png",
+      "sSparkle_2.png",
+      "sSparkle_3.png",
+      "sSparkle_4.png"
+    ],
+    "width": 3,
+    "height": 3,
+    "xorigin": 0,
+    "yorigin": 0,
+    "frames": 5,
+    "layout": "numbered"
+  },
+  "sSparkle2": {
+    "files": [
+      "sSparkle2_0.png",
+      "sSparkle2_1.png",
+      "sSparkle2_2.png",
+      "sSparkle2_3.png",
+      "sSparkle2_4.png"
+    ],
+    "width": 3,
+    "height": 3,
+    "xorigin": 0,
+    "yorigin": 0,
+    "frames": 5,
+    "layout": "numbered"
+  },
+  "sCoreTargetLine": {
+    "files": [
+      "sCoreTargetLine.png"
+    ],
+    "width": 5,
+    "height": 5,
+    "xorigin": 0,
+    "yorigin": 2,
+    "frames": 1,
+    "layout": "single"
+  },
+  "sPlayerMask": {
+    "files": [
+      "sPlayerMask.png"
+    ],
+    "width": 16,
+    "height": 16,
+    "xorigin": 8,
+    "yorigin": 8,
+    "frames": 1,
+    "layout": "single"
+  }
+}
