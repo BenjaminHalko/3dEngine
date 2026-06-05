@@ -13,7 +13,7 @@ void RenderService::Initialize()
 {
     mCameraService = GetWorld().GetService<CameraService>();
 
-    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.fx";
+    std::filesystem::path shaderFile = L"Assets/Shaders/Standard.hlsl";
     mStandardEffect.Initialize(shaderFile);
     mStandardEffect.SetDirectionalLight(mDirectionalLight);
     mStandardEffect.SetLightCamera(mShadowEffect.GetLightCamera());

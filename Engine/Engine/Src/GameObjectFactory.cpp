@@ -19,6 +19,8 @@
 #include "UITextComponent.h"
 #include "UISpriteComponent.h"
 #include "UIButtonComponent.h"
+#include "PlayerControllerComponent.h"
+#include "TPSCameraComponent.h"
 
 using namespace Engine;
 
@@ -78,6 +80,14 @@ Component* AddComponent(const std::string& componentName, GameObject& gameObject
     {
         newComponent = gameObject.AddComponent<UIButtonComponent>();
     }
+    else if (componentName == "PlayerControllerComponent")
+    {
+        newComponent = gameObject.AddComponent<PlayerControllerComponent>();
+    }
+    else if (componentName == "TPSCameraComponent")
+    {
+        newComponent = gameObject.AddComponent<TPSCameraComponent>();
+    }
     else if (TryMakeComponent)
     {
         newComponent = TryMakeComponent(componentName, gameObject);
@@ -132,6 +142,14 @@ Component* GetComponent(const std::string& componentName, GameObject& gameObject
     else if (componentName == "UIButtonComponent")
     {
         component = gameObject.GetComponent<UIButtonComponent>();
+    }
+    else if (componentName == "PlayerControllerComponent")
+    {
+        component = gameObject.GetComponent<PlayerControllerComponent>();
+    }
+    else if (componentName == "TPSCameraComponent")
+    {
+        component = gameObject.GetComponent<TPSCameraComponent>();
     }
     else if (TryGetComponent)
     {

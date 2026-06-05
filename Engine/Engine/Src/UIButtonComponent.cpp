@@ -133,7 +133,7 @@ void UIButtonComponent::Deserialize(const rapidjson::Value& value)
         {
             buttonPivot = Pivot::Left;
         }
-        else if (pivot == "Center")
+        else if (pivot == "Center" || pivot == "Centre")
         {
             buttonPivot = Pivot::Centre;
         }

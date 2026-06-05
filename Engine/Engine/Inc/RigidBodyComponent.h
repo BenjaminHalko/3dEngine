@@ -15,6 +15,10 @@ class RigidBodyComponent : public Component
 
     void SetPosition(const Math::Vector3& position);
     void SetVelocity(const Math::Vector3& velocity);
+    const Math::Vector3 GetVelocity() const;
+
+    void SetAngularVelocity(const Math::Vector3& velocity);
+    const Math::Vector3 GetAngularVelocity() const;
 
   private:
     friend class PhysicsService;

@@ -27,6 +27,8 @@
 #include "UITextComponent.h"
 #include "UISpriteComponent.h"
 #include "UIButtonComponent.h"
+#include "PlayerControllerComponent.h"
+#include "TPSCameraComponent.h"
 
 #include "Service.h"
 #include "CameraService.h"

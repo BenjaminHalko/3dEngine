@@ -75,6 +75,13 @@ void GameWorld::Update(float deltaTime)
     {
         service->Update(deltaTime);
     }
+    for (Slot& slot : mGameObjectSlots)
+    {
+        if (slot.gameObject != nullptr)
+        {
+            slot.gameObject->LateUpdate(deltaTime);
+        }
+    }
 
     ProcessDestroyList();
 }

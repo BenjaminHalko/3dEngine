@@ -1,0 +1,23 @@
+{
+  "Components": {
+    "UIButtonComponent": {
+      "Position": [ 0.0, 0.0 ],
+      "Pivot": "Centre",
+      "Default": {
+        "Texture": "Assets/Textures/paper.jpg"
+      },
+      "Hover": {
+        "Texture": "Assets/Textures/paper.jpg",
+        "Scale": [ 1.25, 1.25 ]
+      },
+      "Click": {
+        "Texture": "Assets/Textures/paper.jpg",
+        "Scale": [ 0.8, 0.8 ]
+      },
+      "Disabled": {
+        "Texture": "Assets/Textures/paper.jpg",
+        "Color": [ 0.3, 0.3, 0.3, 0.5 ]
+      }
+    }
+  }
+}

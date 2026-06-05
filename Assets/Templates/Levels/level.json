@@ -13,18 +13,11 @@
       "Gravity": [ 0.0, -9.81, 0.0 ]
     },
     "CustomDebugDrawService": {
+    },
+    "UIRenderService": {
     }
   },
   "GameObjects": {
-    "Camera": {
-      "Template": "Assets/Templates/Objects/fps_camera.json",
-      "Components": {
-        "CameraComponent": {
-          "Position": [ 0.0, 5.0, -10.0 ],
-          "LookAt": [ 0.0, 1.0, 1.0 ]
-        }
-      }
-    },
     "SphereObj": {
       "Template": "Assets/Templates/Objects/mesh_obj.json",
       "Components": {
@@ -55,6 +48,12 @@
     },
     "CustomDebugDrawObj": {
       "Template": "Assets/Templates/Objects/custom_obj.json"
+    },
+    "HUD": {
+      "Template": "Assets/Templates/UI/hud_screen.json"
+    },
+    "Player": {
+      "Template": "Assets/Templates/Objects/player_obj.json"
     }
   }
 }

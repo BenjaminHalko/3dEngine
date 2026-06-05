@@ -66,9 +66,8 @@ void App::Run(const AppConfig& config)
 
         GraphicsSystem* gs = GraphicsSystem::Get();
         gs->BeginRender();
-        mCurrentState->Render();
-
         DebugUI::BeginRender();
+        mCurrentState->Render();
         mCurrentState->DebugUI();
         DebugUI::EndRender();
 

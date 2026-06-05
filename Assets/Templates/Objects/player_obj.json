@@ -1,0 +1,48 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 0.0, 0.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "MeshComponent": {
+      "CastShadow": true,
+      "Shape": {
+        "Type": "Sphere",
+        "Slices": 30,
+        "Rings": 30,
+        "Radius": 0.5
+      },
+      "Material": {
+        "Emissive": [ 0.0, 0.0, 0.0, 1.0 ],
+        "Ambient": [ 0.3, 0.3, 0.3, 1.0 ],
+        "Diffuse": [ 0.2, 0.8, 0.2, 1.0 ],
+        "Specular": [ 1.0, 1.0, 1.0, 1.0 ],
+        "Shininess": 10.0
+      },
+      "Textures": {
+        "DiffuseMap": "Assets/Textures/earth.jpg"
+      }
+    },
+    "RigidBodyComponent": {
+      "Mass": 1.0,
+      "ColliderData": {
+        "Shape": "Hull",
+        "HalfExtents": [ 0.5, 1.0, 0.5 ],
+        "Origin": [ 0.0, 1.0, 0.0 ]
+      }
+    },
+    "PlayerControllerComponent": {
+      "ShiftSpeed": 10.0,
+      "MoveSpeed": 1.0,
+      "TurnSpeed": 0.1,
+      "JumpSpeed": 4.0
+    },
+    "CameraComponent": {
+    },
+    "TPSCameraComponent": {
+      "Offset": [ 0.20, 1.80, -2.0 ],
+      "Smoothing": 2.0
+    }
+  }
+}
