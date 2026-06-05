@@ -1,0 +1,189 @@
+{
+  "Capacity": 512,
+  "Services": {
+    "CriticalCore2DRenderService": {
+    },
+    "BeatService": {
+    },
+    "CameraShakeService": {
+    }
+  },
+  "GameObjects": {
+    "Background": {
+      "Template": "Assets/Templates/Objects/CriticalCore/background.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 128.0, 112.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "BackgroundComponent": {
+          "Depth": 100.0,
+          "BubbleCount": 200
+        }
+      }
+    },
+    "MusicController": {
+      "Template": "Assets/Templates/Objects/CriticalCore/music.json",
+      "Components": {
+        "MusicControllerComponent": {
+          "musicPath": "CriticalCore/mMusic.ogg"
+        }
+      }
+    },
+    "WallTop": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 104.0, 8.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 0,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallTopLeftDiag": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 24.0, 88.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 1,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallLeft": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 24.0, 136.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 2,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallBottomLeftDiag": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 104.0, 216.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 3,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallBottom": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 152.0, 216.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 4,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallBottomRightDiag": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 232.0, 136.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 5,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallRight": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 232.0, 88.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 6,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "WallTopRightDiag": {
+      "Template": "Assets/Templates/Objects/CriticalCore/wall.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 152.0, 8.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "WallComponent": {
+          "Index": 7,
+          "Flipped": false,
+          "BossWall": false,
+          "Depth": 5.0
+        }
+      }
+    },
+    "Gui": {
+      "Template": "Assets/Templates/Objects/CriticalCore/gui.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 0.0, 0.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "GuiComponent": {
+          "Depth": -1000.0
+        }
+      }
+    },
+    "Menu": {
+      "Template": "Assets/Templates/Objects/CriticalCore/menu.json",
+      "Components": {
+        "TransformComponent": {
+          "Position": [ 128.0, 112.0, 0.0 ],
+          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+          "Scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "MenuComponent": {
+          "Depth": -100.0
+        }
+      }
+    }
+  }
+}

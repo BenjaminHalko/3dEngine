@@ -1,0 +1,12 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 128.0, 112.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "MusicControllerComponent": {
+      "musicPath": "CriticalCore/mMusic.ogg"
+    }
+  }
+}
