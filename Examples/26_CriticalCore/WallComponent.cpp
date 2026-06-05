@@ -2,6 +2,7 @@
 
 #include "Collision.h"
 #include "GmHelpers.h"
+#include "MenuComponent.h"
 #include "MusicController.h"
 #include "Render2D.h"
 
@@ -144,7 +145,11 @@ void WallComponent::Update(float deltaTime)
     else
     {
         // oWall/Step_0.gml:10-11 — ease the menu-expand factor toward its target.
-        const float target = mMenuExpand ? 1.0f : 0.0f;
+        // GML target `!instance_exists(oMenu) and !oLeaderboardAPI.draw` is TRUE
+        // only once a game runs; it maps to !IsMenuActive() (==!(sMenuActive &&
+        // !sInGame)). SetMenuExpand stays as an optional external override.
+        const bool inGame = !MenuComponent::IsMenuActive();
+        const float target = (inGame || mMenuExpand) ? 1.0f : 0.0f;
         mScaleMenu = ApproachFade(mScaleMenu, target, 0.04f, 0.8f);
     }
 }
@@ -200,7 +205,8 @@ void WallComponent::DebugUI()
 {
     ImGui::Text("Wall idx=%d %s", mIndex, mBossWall ? "(boss)" : "");
     ImGui::Text("beatPulse=%.2f colorPulse=%.2f", mBeatPulse, mColorPulse);
-    ImGui::Text("scaleMenu=%.2f expand=%d", mScaleMenu, mMenuExpand ? 1 : 0);
+    ImGui::Text("scaleMenu=%.2f inGame=%d expand=%d", mScaleMenu,
+        MenuComponent::IsMenuActive() ? 0 : 1, mMenuExpand ? 1 : 0);
 }
 
 void WallComponent::Deserialize(const rapidjson::Value& value)

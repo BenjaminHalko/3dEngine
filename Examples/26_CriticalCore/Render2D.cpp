@@ -276,6 +276,59 @@ void Render2D::DrawLine(float x0, float y0, float x1, float y1, float thickness,
     SubmitColorMesh(verts);
 }
 
+void Render2D::FillConvexExterior(const Math::Vector2* polygon, int count, const Color& color)
+{
+    if (polygon == nullptr || count < 3)
+    {
+        return;
+    }
+    if (count > 12)
+    {
+        count = 12;
+    }
+
+    float cx = 0.0f;
+    float cy = 0.0f;
+    for (int i = 0; i < count; ++i)
+    {
+        cx += polygon[i].x;
+        cy += polygon[i].y;
+    }
+    cx /= static_cast<float>(count);
+    cy /= static_cast<float>(count);
+
+    constexpr float kExteriorScale = 40.0f;
+
+    std::vector<VertexPC> verts;
+    verts.reserve(static_cast<size_t>(count) * 12);
+
+    auto pushTri = [&](const Vector3& a, const Vector3& b, const Vector3& c)
+    {
+        verts.push_back({a, color});
+        verts.push_back({b, color});
+        verts.push_back({c, color});
+        verts.push_back({a, color});
+        verts.push_back({c, color});
+        verts.push_back({b, color});
+    };
+
+    for (int i = 0; i < count; ++i)
+    {
+        const int j = (i + 1) % count;
+        const Vector3 inI(polygon[i].x, polygon[i].y, 0.0f);
+        const Vector3 inJ(polygon[j].x, polygon[j].y, 0.0f);
+        const Vector3 outI(cx + (polygon[i].x - cx) * kExteriorScale,
+                           cy + (polygon[i].y - cy) * kExteriorScale,
+                           0.0f);
+        const Vector3 outJ(cx + (polygon[j].x - cx) * kExteriorScale,
+                           cy + (polygon[j].y - cy) * kExteriorScale,
+                           0.0f);
+        pushTri(inI, inJ, outJ);
+        pushTri(inI, outJ, outI);
+    }
+    SubmitColorMesh(verts);
+}
+
 const Render2D::FontData& Render2D::GetFont(Font2D font) const
 {
     return mFonts[static_cast<size_t>(font)];

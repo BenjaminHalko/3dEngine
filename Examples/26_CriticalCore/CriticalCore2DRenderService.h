@@ -122,6 +122,17 @@ class CriticalCore2DRenderService final : public Engine::Service
     // Lazily creates mDepthDisabledState on first Render().
     void EnsureDepthDisabledState();
 
+    // Paints the black void around the octagonal arena hole (oBackground mask:
+    // inside the octagon = navy backdrop + game, outside = solid black). Drawn in
+    // world space at the given zoom so the hole tracks the arena; injected
+    // between the world layer and the screen-space HUD (see kVoidMaskDepth).
+    void DrawVoidMask(float worldViewScale);
+
+    // GameMaker depth at which the void mask is painted: ABOVE the navy bubbles
+    // (depth 50) so they are clipped to the octagon, BELOW the HUD (score 20 /
+    // gui 10 / menu 0) so the UI stays on top of the void.
+    static constexpr float kVoidMaskDepth = 30.0f;
+
     Render2D mRender2D;
     RenderTarget2D mRenderTarget;
 

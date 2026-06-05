@@ -86,8 +86,15 @@ void CriticalCore2DRenderService::Render()
     // per component: world components get the camera zoom, UI (screen-space)
     // components get a fixed 1.0 so the HUD/menu/leaderboard never scale.
     float appliedScale = -1.0f;
+    bool voidDrawn = false;
     for (Render2DComponent* renderable : mRenderables)
     {
+        if (!voidDrawn && renderable->GetDepth() <= kVoidMaskDepth)
+        {
+            DrawVoidMask(worldViewScale);
+            appliedScale = worldViewScale;
+            voidDrawn = true;
+        }
         const float scale = renderable->IsScreenSpace() ? 1.0f : worldViewScale;
         if (scale != appliedScale)
         {
@@ -95,6 +102,10 @@ void CriticalCore2DRenderService::Render()
             appliedScale = scale;
         }
         renderable->Draw(mRender2D);
+    }
+    if (!voidDrawn)
+    {
+        DrawVoidMask(worldViewScale);
     }
     mRender2D.SetViewScale(1.0f);
     context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
@@ -106,6 +117,32 @@ void CriticalCore2DRenderService::Render()
     const int windowWidth = static_cast<int>(graphicsSystem->GetBackBufferWidth());
     const int windowHeight = static_cast<int>(graphicsSystem->GetBackBufferHeight());
     mRenderTarget.Present(windowWidth, windowHeight);
+}
+
+void CriticalCore2DRenderService::DrawVoidMask(float worldViewScale)
+{
+    static constexpr float kCenterX = 128.0f;
+    static constexpr float kCenterY = 112.0f;
+    static constexpr float kPoly[8][2] = {{-24.0f, -104.0f},
+                                          {24.0f, -104.0f},
+                                          {104.0f, -24.0f},
+                                          {104.0f, 24.0f},
+                                          {24.0f, 104.0f},
+                                          {-24.0f, 104.0f},
+                                          {-104.0f, 24.0f},
+                                          {-104.0f, -24.0f}};
+
+    Math::Vector2 octagon[8];
+    for (int i = 0; i < 8; ++i)
+    {
+        const float signX = (kPoly[i][0] > 0.0f) ? 1.0f : ((kPoly[i][0] < 0.0f) ? -1.0f : 0.0f);
+        const float signY = (kPoly[i][1] > 0.0f) ? 1.0f : ((kPoly[i][1] < 0.0f) ? -1.0f : 0.0f);
+        octagon[i].x = kCenterX + kPoly[i][0] - signX - mCameraOffsetX;
+        octagon[i].y = kCenterY + kPoly[i][1] - signY - mCameraOffsetY;
+    }
+
+    mRender2D.SetViewScale(worldViewScale);
+    mRender2D.FillConvexExterior(octagon, 8, Graphics::Colors::Black);
 }
 
 void CriticalCore2DRenderService::Register(Render2DComponent* renderable)

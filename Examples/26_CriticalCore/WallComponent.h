@@ -36,10 +36,12 @@ class BeatService;
 // MENU-STATE OUTWARD SCALE (oWall/Step_0.gml:10-16, outer walls only):
 //   scaleMenu eases toward the "expanded" target; _scale = lerp(1,2,scaleMenu) so
 //   the wall lengthens (image_xscale *= _scale) and its origin moves along
-//   lerp(arena_center, xstart, _scale). The expand target maps to the GML
-//   `!instance_exists(oMenu) and !oLeaderboardAPI.draw`; it is pushed in via
-//   SetMenuExpand (default false => walls render at their canonical positions, so
-//   the visual matches Collision out of the box).
+//   lerp(arena_center, xstart, _scale). On the title menu _scale settles at 1 (the
+//   canonical Collision position) and on game start it eases out to 2, so the
+//   octagon visibly EXPANDS outward when a game begins. The expand target maps to
+//   the GML `!instance_exists(oMenu) and !oLeaderboardAPI.draw`, read directly from
+//   MenuComponent::IsMenuActive() (expand == !IsMenuActive()). SetMenuExpand remains
+//   an optional external override that can also force the expand.
 // ---------------------------------------------------------------------------
 
 class WallComponent final : public Render2DComponent

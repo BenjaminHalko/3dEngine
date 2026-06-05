@@ -91,6 +91,15 @@ class Render2D final
     // Thick line as a single quad from (x0,y0) to (x1,y1).
     void DrawLine(float x0, float y0, float x1, float y1, float thickness, const Graphics::Color& color);
 
+    // Fills the region OUTSIDE a convex polygon with a solid color, extruded to a
+    // far bounding ring that covers the whole 256x224 view at any camera zoom.
+    // `polygon` vertices are in 256x224 draw space, ordered around the shape.
+    // This paints the BLACK VOID around the octagonal arena "hole": the original
+    // (oBackground/Draw_0.gml) masks the scene to the octagon - inside is the
+    // navy backdrop + game, everything outside is a solid black void. count must
+    // be <= 12 so the doubled-winding ring fits the shared color mesh.
+    void FillConvexExterior(const Math::Vector2* polygon, int count, const Graphics::Color& color);
+
     // ---- Bitmap text (task-4 baked atlases) ------------------------------
     // Loads one atlas PNG + its glyph-metrics JSON into the given Font2D slot.
     // atlasPng / glyphJson are paths relative to build/bin (e.g.
