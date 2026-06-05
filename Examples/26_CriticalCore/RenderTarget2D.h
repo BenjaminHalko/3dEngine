@@ -81,9 +81,13 @@ class RenderTarget2D final
     }
 
   private:
-    // Two-pass separable blur of the scene RT into mGlowRT1, used as an additive
-    // glow in Present (CriticalCore_Blur.hlsl, the GM shBlur). Best-effort bloom.
-    void BloomPass();
+    // Faithful reproduction of GM oRender Draw_64: the WHOLE scene is blurred via
+    // two separable shBlur passes (vertical then horizontal) into mBlurRT. There
+    // is NO bright-extract / threshold — the full scene is blurred. The composite
+    // (in Present) is: blurred * 0.7 (opaque base) + scene * 0.7 (additive), so
+    // the result is a soft glow over the whole scene, brightest where the scene
+    // is bright (because of the additive sharp copy), not a thresholded bloom.
+    void BlurScene();
 
     // Mirrors CriticalCore_Blur.hlsl BlurBuffer (register b0): pass direction in
     // texels + 1/internalRes texel size. 16 bytes (one float4 register).
@@ -94,15 +98,14 @@ class RenderTarget2D final
     };
     using BlurBuffer = Graphics::TypedConstantBuffer<BlurData>;
 
-    // Mirrors CriticalCore_BrightExtract.hlsl BrightBuffer (register b0).
-    struct BrightData
+    // Mirrors CriticalCore_Upscale.hlsl UpscaleBuffer (register b0): a per-draw
+    // RGBA tint. The composite draws both the blurred base and the additive sharp
+    // copy with a 0.7 grey tint (GM make_color_hsv(0,0,255*0.7)).
+    struct UpscaleData
     {
-        float threshold = 0.0f;
-        float knee = 0.0f;
-        float intensity = 0.0f;
-        float pad0 = 0.0f;
+        Math::Vector4 tint{1.0f, 1.0f, 1.0f, 1.0f};
     };
-    using BrightBuffer = Graphics::TypedConstantBuffer<BrightData>;
+    using UpscaleBuffer = Graphics::TypedConstantBuffer<UpscaleData>;
 
     int mInternalWidth = 256;
     int mInternalHeight = 224;
@@ -112,17 +115,18 @@ class RenderTarget2D final
     Graphics::VertexShader mVertexShader;
     Graphics::PixelShader mPixelShader;
     Graphics::Sampler mSampler;
+    UpscaleBuffer mUpscaleBuffer;
 
-    // Bloom resources (bright-extract -> separable blur -> additive composite).
-    Graphics::RenderTarget mGlowRT0;
-    Graphics::RenderTarget mGlowRT1;
-    Graphics::VertexShader mBrightVertexShader;
-    Graphics::PixelShader mBrightPixelShader;
-    BrightBuffer mBrightBuffer;
+    // Full-scene blur resources (two separable shBlur passes, no bright-extract).
+    //   mPongRT = VBlur(scene)               (the GM "surfacePong")
+    //   mBlurRT = HBlur(VBlur(scene))        (the fully blurred scene)
+    Graphics::RenderTarget mPongRT;
+    Graphics::RenderTarget mBlurRT;
     Graphics::VertexShader mBlurVertexShader;
     Graphics::PixelShader mBlurPixelShader;
     BlurBuffer mBlurBuffer;
     Graphics::Sampler mLinearSampler;
-    ID3D11BlendState* mGlowBlendState = nullptr;
+    // Additive (One/One) blend state for the sharp-scene add pass.
+    ID3D11BlendState* mAddBlendState = nullptr;
 };
 } // namespace Engine::CriticalCore

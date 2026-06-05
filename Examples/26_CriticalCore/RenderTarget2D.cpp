@@ -19,34 +19,30 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     MeshPX screenQuadMesh = MeshBuilder::CreateScreenQuadPX();
     mScreenQuad.Initialize(screenQuadMesh);
 
-    // Self-contained upscale shaders (passthrough VS + texture-sampling PS).
+    // Self-contained upscale shaders (passthrough VS + tinted texture-sampling PS).
     const std::filesystem::path shaderFile = L"Assets/Shaders/CriticalCore_Upscale.hlsl";
     mVertexShader.Initialize<VertexPX>(shaderFile);
     mPixelShader.Initialize(shaderFile);
+    mUpscaleBuffer.Initialize();
 
     // POINT sampling only -> crisp pixel-art upscale (NO linear filtering).
     // Clamp avoids edge bleed when the upscaled quad samples the RT borders.
     mSampler.Initialize(Sampler::Filter::Point, Sampler::AddressMode::Clamp);
 
-    // ---- Bloom: two ping-pong glow targets + the separable blur shader ----
-    mGlowRT0.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
-    mGlowRT1.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
-
-    const std::filesystem::path brightFile = L"Assets/Shaders/CriticalCore_BrightExtract.hlsl";
-    mBrightVertexShader.Initialize<VertexPX>(brightFile);
-    mBrightPixelShader.Initialize(brightFile);
-    mBrightBuffer.Initialize();
+    // ---- Full-scene blur: two ping-pong targets + the separable shBlur shader ----
+    mPongRT.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
+    mBlurRT.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
 
     const std::filesystem::path blurFile = L"Assets/Shaders/CriticalCore_Blur.hlsl";
     mBlurVertexShader.Initialize<VertexPX>(blurFile);
     mBlurPixelShader.Initialize(blurFile);
     mBlurBuffer.Initialize();
 
-    // LINEAR for the glow (interpolated, unlike the POINT scene upscale).
+    // LINEAR for the blur taps (interpolates between texels, like the GM default
+    // sampler in shBlur), unlike the POINT scene upscale.
     mLinearSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Clamp);
 
-    // Pure additive: dst += glow. The glow is bright-extracted (dark everywhere
-    // except the bright core/title/walls), so adding it only blooms those.
+    // dst += src: the additive sharp-scene pass (GM gpu_set_blendmode(bm_add)).
     D3D11_BLEND_DESC blendDesc{};
     blendDesc.RenderTarget[0].BlendEnable = TRUE;
     blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
@@ -56,22 +52,20 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    GraphicsSystem::Get()->GetDevice()->CreateBlendState(&blendDesc, &mGlowBlendState);
+    GraphicsSystem::Get()->GetDevice()->CreateBlendState(&blendDesc, &mAddBlendState);
 }
 
 void RenderTarget2D::Terminate()
 {
-    SafeRelease(mGlowBlendState);
+    SafeRelease(mAddBlendState);
     mLinearSampler.Terminate();
     mBlurBuffer.Terminate();
     mBlurPixelShader.Terminate();
     mBlurVertexShader.Terminate();
-    mBrightBuffer.Terminate();
-    mBrightPixelShader.Terminate();
-    mBrightVertexShader.Terminate();
-    mGlowRT1.Terminate();
-    mGlowRT0.Terminate();
+    mBlurRT.Terminate();
+    mPongRT.Terminate();
 
+    mUpscaleBuffer.Terminate();
     mSampler.Terminate();
     mPixelShader.Terminate();
     mVertexShader.Terminate();
@@ -114,62 +108,42 @@ RenderTarget2D::LetterboxRect RenderTarget2D::ComputeLetterbox(int windowW, int 
     return rect;
 }
 
-void RenderTarget2D::BloomPass()
+void RenderTarget2D::BlurScene()
 {
-    // Spread > 1 widens the 5-tap gaussian so the glow reads as a bloom halo
-    // rather than a 5px smudge (the taps step spread*texel each).
-    constexpr float kSpread = 2.5f;
-    const float texelX = kSpread / static_cast<float>(mInternalWidth);
-    const float texelY = kSpread / static_cast<float>(mInternalHeight);
+    // GM shBlur steps one internal-res texel per tap (no spread): texel = 1/res.
+    BlurData blur;
+    blur.texelSize = {1.0f / static_cast<float>(mInternalWidth),
+                      1.0f / static_cast<float>(mInternalHeight)};
 
-    // Pass 0 - bright-extract the scene RT into mGlowRT0 (keep only bright px).
-    mBrightVertexShader.Bind();
-    mBrightPixelShader.Bind();
-    mLinearSampler.BindPS(0);
-    BrightData bright;
-    bright.threshold = 0.35f;
-    bright.knee = 0.25f;
-    bright.intensity = 1.0f;
-    mGlowRT0.BeginRender(Colors::Black);
-    mBrightBuffer.Update(bright);
-    mBrightBuffer.BindPS(0);
-    mRenderTarget.BindPS(0);
-    mScreenQuad.Render();
-    Texture::UnbindPS(0);
-    mGlowRT0.EndRender();
-
-    // Pass 1 - horizontal blur of the extracted glow (mGlowRT0 -> mGlowRT1).
     mBlurVertexShader.Bind();
     mBlurPixelShader.Bind();
     mLinearSampler.BindPS(0);
-    BlurData horizontal;
-    horizontal.blurVector = {1.0f, 0.0f};
-    horizontal.texelSize = {texelX, texelY};
-    mGlowRT1.BeginRender(Colors::Black);
-    mBlurBuffer.Update(horizontal);
-    mBlurBuffer.BindPS(0);
-    mGlowRT0.BindPS(0);
-    mScreenQuad.Render();
-    Texture::UnbindPS(0);
-    mGlowRT1.EndRender();
 
-    // Pass 2 - vertical blur (mGlowRT1 -> mGlowRT0). mGlowRT0 holds the bloom.
-    BlurData vertical;
-    vertical.blurVector = {0.0f, 1.0f};
-    vertical.texelSize = {texelX, texelY};
-    mGlowRT0.BeginRender(Colors::Black);
-    mBlurBuffer.Update(vertical);
+    // PASS 1 (GM Draw_64:6-8) - vertical blur of the scene into the pong target.
+    blur.blurVector = {0.0f, 1.0f};
+    mPongRT.BeginRender(Colors::Black);
+    mBlurBuffer.Update(blur);
     mBlurBuffer.BindPS(0);
-    mGlowRT1.BindPS(0);
+    mRenderTarget.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
-    mGlowRT0.EndRender();
+    mPongRT.EndRender();
+
+    // PASS 2 (GM Draw_64:11) - horizontal blur of the pong -> fully blurred scene.
+    blur.blurVector = {1.0f, 0.0f};
+    mBlurRT.BeginRender(Colors::Black);
+    mBlurBuffer.Update(blur);
+    mBlurBuffer.BindPS(0);
+    mPongRT.BindPS(0);
+    mScreenQuad.Render();
+    Texture::UnbindPS(0);
+    mBlurRT.EndRender();
 }
 
 void RenderTarget2D::Present(int windowW, int windowH)
 {
-    // Blur the just-rendered scene into mGlowRT1 (additively composited below).
-    BloomPass();
+    // mBlurRT = HBlur(VBlur(scene)): the soft full-scene blur (no bright-extract).
+    BlurScene();
 
     const LetterboxRect rect = ComputeLetterbox(windowW, windowH);
 
@@ -187,22 +161,28 @@ void RenderTarget2D::Present(int windowW, int windowH)
     viewport.MaxDepth = 1.0f;
     context->RSSetViewports(1, &viewport);
 
+    // Both composite draws use the POINT upscale shader with a 0.7 grey tint
+    // (GM make_color_hsv(0,0,255*0.7)). The GM order is blurred-base (normal) then
+    // sharp (additive); since the scene is opaque, normal-blend equals an opaque
+    // write, so the two draws are reordered to sharp-opaque-base + blurred-additive
+    // (addition commutes) — identical pixels, drawn in the proven upscale order.
+    UpscaleData tint;
+    tint.tint = {0.7f, 0.7f, 0.7f, 1.0f};
     mVertexShader.Bind();
     mPixelShader.Bind();
+    mUpscaleBuffer.Update(tint);
+    mUpscaleBuffer.BindPS(0);
     mSampler.BindPS(0);
+
+    // BASE (GM Draw_64:16 term) - the sharp scene * 0.7, opaque.
+    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
     mRenderTarget.BindPS(0);
-
     mScreenQuad.Render();
-
-    // Unbind the RT as a shader resource so it can be re-bound as a render
-    // target next frame without a read/write hazard.
     Texture::UnbindPS(0);
 
-    // mGlowRT0 holds the bright-extracted + blurred bloom; a pure ADD only
-    // brightens the glowing core/title/walls and leaves the navy backdrop dark.
-    context->OMSetBlendState(mGlowBlendState, nullptr, 0xffffffffu);
-    mLinearSampler.BindPS(0);
-    mGlowRT0.BindPS(0);
+    // GLOW (GM Draw_64:12 term) - the blurred scene * 0.7, additive (bm_add).
+    context->OMSetBlendState(mAddBlendState, nullptr, 0xffffffffu);
+    mBlurRT.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
     context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
