@@ -60,10 +60,14 @@ void Render2D::Initialize()
 
     mGlyphMesh.Initialize(nullptr, static_cast<uint32_t>(sizeof(VertexPX)), kMaxGlyphVertices);
     mGlyphMesh.SetTopology(MeshBuffer::Topology::Triangles);
+
+    InitializeNebula();
 }
 
 void Render2D::Terminate()
 {
+    TerminateNebula();
+
     mGlyphMesh.Terminate();
 
     mColorBuffer.Terminate();
@@ -443,5 +447,96 @@ void Render2D::DrawText(
     texture->BindPS(0);
     mGlyphMesh.Update(verts.data(), static_cast<uint32_t>(verts.size()));
     mGlyphMesh.Render();
+}
+
+void Render2D::InitializeNebula()
+{
+    const std::filesystem::path coreShaderPath = L"Assets/Shaders/CriticalCore_Core.hlsl";
+    mNebulaVertexShader.Initialize<VertexPX>(coreShaderPath);
+    mNebulaPixelShader.Initialize(coreShaderPath);
+    mNebulaBuffer.Initialize();
+    mNebulaMesh.Initialize(nullptr, static_cast<uint32_t>(sizeof(VertexPX)), kNebulaVertices);
+    mNebulaMesh.SetTopology(MeshBuffer::Topology::Triangles);
+}
+
+void Render2D::TerminateNebula()
+{
+    mNebulaMesh.Terminate();
+    mNebulaBuffer.Terminate();
+    mNebulaPixelShader.Terminate();
+    mNebulaVertexShader.Terminate();
+}
+
+void Render2D::SetViewScale(float scale)
+{
+    mViewScale = (scale > 1.0e-4f) ? scale : 1.0f;
+
+    // Zoom the y-DOWN ortho about the screen centre (internalW/2, internalH/2):
+    // a point P maps to clip = 2*(P - centre)/(res*scale), so the view shows
+    // res*scale of the room centred on the screen middle.
+    const float w = static_cast<float>(kInternalWidth);
+    const float h = static_cast<float>(kInternalHeight);
+    mOrtho = Matrix4(2.0f / (w * mViewScale), 0.0f, 0.0f, 0.0f,
+                     0.0f, -2.0f / (h * mViewScale), 0.0f, 0.0f,
+                     0.0f, 0.0f, 1.0f, 0.0f,
+                     -1.0f / mViewScale, 1.0f / mViewScale, 0.0f, 1.0f);
+}
+
+void Render2D::DrawNebulaCircle(
+    float x, float y, float radius, const Color& tint, float intensity, float iTime)
+{
+    if (radius <= 0.0f)
+    {
+        return;
+    }
+
+    const float w = static_cast<float>(kInternalWidth);
+    const float h = static_cast<float>(kInternalHeight);
+    const float cx = w * 0.5f;
+    const float cy = h * 0.5f;
+
+    // Fold the same view zoom the ortho uses (this primitive emits NDC directly,
+    // bypassing the ortho), so the nebula tracks the camera zoom with everything else.
+    auto toNdcX = [&](float sx) { return (((sx - cx) / mViewScale + cx) / w) * 2.0f - 1.0f; };
+    auto toNdcY = [&](float sy) { return 1.0f - (((sy - cy) / mViewScale + cy) / h) * 2.0f; };
+
+    std::vector<VertexPX> verts;
+    verts.reserve(kNebulaVertices);
+
+    const Vector3 centerPos(toNdcX(x), toNdcY(y), 0.0f);
+    const Vector2 centerUv(0.5f, 0.5f);
+
+    for (int i = 0; i < kNebulaSides; ++i)
+    {
+        const float a0 = (static_cast<float>(i) / kNebulaSides) * Constants::TwoPi;
+        const float a1 = (static_cast<float>(i + 1) / kNebulaSides) * Constants::TwoPi;
+        const float dx0 = radius * std::cos(a0);
+        const float dy0 = radius * std::sin(a0);
+        const float dx1 = radius * std::cos(a1);
+        const float dy1 = radius * std::sin(a1);
+
+        verts.push_back({centerPos, centerUv});
+        verts.push_back({{toNdcX(x + dx0), toNdcY(y + dy0), 0.0f}, {0.5f + dx0 / w, 0.5f + dy0 / h}});
+        verts.push_back({{toNdcX(x + dx1), toNdcY(y + dy1), 0.0f}, {0.5f + dx1 / w, 0.5f + dy1 / h}});
+    }
+
+    mNebulaMesh.Update(verts.data(), static_cast<uint32_t>(verts.size()));
+
+    NebulaData data;
+    data.iTime = iTime;
+    data.iResX = w;
+    data.iResY = h;
+    data.iResZ = 0.0f;
+    data.intensity = intensity;
+    data.tintR = tint.r;
+    data.tintG = tint.g;
+    data.tintB = tint.b;
+    data.tintA = tint.a;
+
+    mNebulaVertexShader.Bind();
+    mNebulaPixelShader.Bind();
+    mNebulaBuffer.Update(data);
+    mNebulaBuffer.BindPS(0);
+    mNebulaMesh.Render();
 }
 } // namespace Engine::CriticalCore

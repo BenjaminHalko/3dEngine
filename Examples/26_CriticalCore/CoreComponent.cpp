@@ -48,6 +48,9 @@ std::unordered_map<const GameObject*, CoreComponent::LaunchParams> gPendingLaunc
 // Process-global mirror of the live Core scale (CoreComponent::CoreScale()).
 float gCoreScale = 0.0f;
 
+// Process-global mirror of the shCore animation clock (CoreComponent::EffectTime()).
+float gCoreEffectTime = 0.0f;
+
 // snFireHit - a fireball striking the Core (CoreFunctions.gml:2, DamageCore).
 Engine::Audio::SoundId FireHitSfx()
 {
@@ -72,6 +75,11 @@ bool CoreComponent::ConsumeLaunch(const GameObject* gameObject, LaunchParams& ou
 float CoreComponent::CoreScale()
 {
     return gCoreScale;
+}
+
+float CoreComponent::EffectTime()
+{
+    return gCoreEffectTime;
 }
 
 void CoreComponent::Initialize()
@@ -202,6 +210,7 @@ void CoreComponent::Update(float deltaTime)
 
     SyncTransform();
     gCoreScale = mScale;
+    gCoreEffectTime = (mBeatService != nullptr) ? mBeatService->CoreEffectTime() : 0.0f;
 }
 
 void CoreComponent::UpdateWeaponFlag(int beatIndex)
@@ -450,6 +459,8 @@ void CoreComponent::BeginRound(int round)
 
 void CoreComponent::Draw(Render2D& render2D)
 {
+    const float viewScale = render2D.GetViewScale();
+
     float drawX = 0.0f;
     float drawY = 0.0f;
     GetDrawPosition(drawX, drawY); // Core centre in draw space (camera applied)
@@ -469,7 +480,7 @@ void CoreComponent::Draw(Render2D& render2D)
     //     Core BODY is the raymarched nebula, drawn whenever HP is not yet full. ---
     if (mHpDraw < 0.995f)
     {
-        DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White);
+        DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White, viewScale);
     }
 
     // --- HP octagon (oCore/Draw_0.gml:29-43): the SAME shCore octagon at intensity
@@ -484,19 +495,63 @@ void CoreComponent::Draw(Render2D& render2D)
         }
         const Graphics::Color hpBase = {1.0f, 0.0f, 94.0f / 255.0f, 1.0f}; // #FF005E
         const Graphics::Color hpColor = MergeColor(hpBase, Graphics::Colors::Red, mPulse);
-        DrawCoreOctagon(drawX, drawY, hpScale, 0.0f, hpColor);
+        DrawCoreOctagon(drawX, drawY, hpScale, 0.0f, hpColor, viewScale);
+    }
+
+    // --- Boss walls (oCore creates oWall bossWall instances at depth-1; their
+    //     length = walls[i].scale * (scale + 0.12) grows with the Core). They are
+    //     rendered HERE by the owning Core (it computes the live geometry in
+    //     UpdateBossWalls) instead of spawning 8 child GameObjects. ---
+    DrawBossWalls(render2D);
+}
+
+void CoreComponent::DrawBossWalls(Render2D& render2D)
+{
+    const Graphics::Color pulseColor =
+        (mBeatService != nullptr) ? mBeatService->WallPulseColor() : Graphics::Colors::Red;
+    const float colorPulse = Math::Clamp(mPulse, 0.0f, 1.0f);
+    const float healFraction =
+        (CoreWaitToHeal() > 0.0f) ? Math::Clamp(mHpWaitHeal / CoreWaitToHeal(), 0.0f, 1.0f) : 0.0f;
+
+    // oWall/Step_0.gml:5-8 — white -> pulseColor by colorPulse, boss walls tint
+    // further toward pulseColor by the heal fraction.
+    Graphics::Color blend = MergeColor(Graphics::Colors::White, pulseColor, colorPulse);
+    blend = MergeColor(blend, pulseColor, healFraction);
+    blend.a = 1.0f;
+
+    // oWall/Draw_0.gml — drawn thickness pulses from the 4px sprite (here a thin
+    // inner cage scaled down): 3px at rest, ~6px on the beat pulse.
+    const float thickness = 3.0f + 3.0f * colorPulse;
+
+    for (const WallSegment& seg : mBossWalls)
+    {
+        float ax = seg.ax;
+        float ay = seg.ay;
+        float bx = seg.bx;
+        float by = seg.by;
+        ApplyCameraOffset(ax, ay);
+        ApplyCameraOffset(bx, by);
+        render2D.DrawLine(ax, ay, bx, by, thickness, blend);
     }
 }
 
-void CoreComponent::DrawCoreOctagon(float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint)
+void CoreComponent::DrawCoreOctagon(
+    float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint, float viewScale)
 {
     // Build the filled nebula octagon as a triangle fan (center, p_i, p_{i+1}).
     // Positions are NDC (shCore VS is a passthrough); uv = world / internal res,
     // matching GM's draw_vertex_texture(x, y, x/RES_WIDTH, y/RES_HEIGHT).
     std::array<Graphics::VertexPX, kCoreVertexCount> verts{};
 
-    const float centerNdcX = ToNdcX(drawX);
-    const float centerNdcY = ToNdcY(drawY);
+    // Fold the scene view zoom (Render2D::GetViewScale) about the screen centre
+    // into the manual NDC, since this octagon bypasses Render2D's ortho.
+    const float cx = static_cast<float>(kInternalWidth) * 0.5f;
+    const float cy = static_cast<float>(kInternalHeight) * 0.5f;
+    auto zoomX = [&](float sx) { return (sx - cx) / viewScale + cx; };
+    auto zoomY = [&](float sy) { return (sy - cy) / viewScale + cy; };
+
+    const float centerNdcX = ToNdcX(zoomX(drawX));
+    const float centerNdcY = ToNdcY(zoomY(drawY));
     const Math::Vector2 centerUv = {mX / static_cast<float>(kInternalWidth),
                                     mY / static_cast<float>(kInternalHeight)};
 
@@ -520,9 +575,9 @@ void CoreComponent::DrawCoreOctagon(float drawX, float drawY, float scale, float
         ApplyCameraOffset(dxj, dyj);
 
         verts[v++] = {{centerNdcX, centerNdcY, 0.0f}, centerUv};
-        verts[v++] = {{ToNdcX(dxi), ToNdcY(dyi), 0.0f},
+        verts[v++] = {{ToNdcX(zoomX(dxi)), ToNdcY(zoomY(dyi)), 0.0f},
                       {wxi / static_cast<float>(kInternalWidth), wyi / static_cast<float>(kInternalHeight)}};
-        verts[v++] = {{ToNdcX(dxj), ToNdcY(dyj), 0.0f},
+        verts[v++] = {{ToNdcX(zoomX(dxj)), ToNdcY(zoomY(dyj)), 0.0f},
                       {wxj / static_cast<float>(kInternalWidth), wyj / static_cast<float>(kInternalHeight)}};
     }
 

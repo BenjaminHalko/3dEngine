@@ -486,8 +486,10 @@ void BubbleComponent::Draw(Render2D& render2D)
         return;
     }
 
-    // oBubble/Draw_0.gml: tint by state, then drawCircle (filled disc + the
-    // desaturated 1px outline = Render2D's outline=true bubble branch).
+    // oBubble/Draw_0.gml: tint by state. The flat filled disc is upgraded to the
+    // shCore nebula (tinted by the state colour, intensity 0.5) so bubbles get the
+    // same volumetric look as the Core; the desaturated 1px ring (drawCircle bubble
+    // branch) is kept on top for the bubble outline.
     Graphics::Color color = kColorNormal;
     switch (mState)
     {
@@ -503,7 +505,12 @@ void BubbleComponent::Draw(Render2D& render2D)
         break;
     }
 
-    render2D.DrawCircleFilled(x, y, mDrawRadius, color, /*outline=*/true);
+    Graphics::Color outlineColor =
+        MakeColorHSV(ColorGetHue(color), ColorGetSat(color) * 0.3f, ColorGetValue(color));
+    outlineColor.a = color.a;
+
+    render2D.DrawNebulaCircle(x, y, mDrawRadius, color, 0.5f, CoreComponent::EffectTime());
+    render2D.DrawCircleOutline(x, y, mDrawRadius, outlineColor);
 }
 
 void BubbleComponent::Deserialize(const rapidjson::Value& value)

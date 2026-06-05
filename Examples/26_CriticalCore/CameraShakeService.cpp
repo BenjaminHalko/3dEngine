@@ -1,6 +1,9 @@
 #include "CameraShakeService.h"
 
+#include "BubbleComponent.h"
+#include "CoreComponent.h"
 #include "GmHelpers.h"
+#include "PlayerComponent.h"
 
 #include <algorithm>
 #include <cmath>
@@ -14,6 +17,13 @@ namespace
 // the follow target toward the Core; the camera eases toward it with divisor 12.
 constexpr float kFollowLerp = 0.35f; // lerp(target, core, 0.35)  (:5-6)
 constexpr float kEaseDivisor = 12.0f; // x += (aim - x)/12         (:26-27)
+
+// Arena half-extent used to clamp the follow aim so the zoomed-out view keeps
+// the octagon centred (oCamera/Step_0.gml:14-15: room_center +/- 104/scale).
+constexpr float kArenaHalfExtent = 104.0f;
+
+// Process-global mirror of the live view scale (CameraShakeService::ViewScale()).
+float gViewScale = 1.0f;
 } // namespace
 
 void CameraShakeService::Initialize(int internalW, int internalH)
@@ -47,9 +57,34 @@ void CameraShakeService::SetTargets(float playerX, float playerY, float coreX, f
 
 void CameraShakeService::Update()
 {
+    // 0. View zoom (Step_0.gml:8-12). The target scale grows with the player size
+    //    + Core sprite size, clamped to [1, 1.5]. With no live player (title /
+    //    death gap) it eases back to 1. roundIntro's force-to-1 is simplified out
+    //    (no roundIntro signal here); documented in learnings.
+    PlayerComponent* player = BubbleComponent::Player();
+    const float coreSpriteWidth = 208.0f * CoreComponent::CoreScale();
+    if (player != nullptr)
+    {
+        const float metric = player->Radius() * 0.5f + coreSpriteWidth / 8.0f;
+        const float target = Math::Clamp(1.0f + ValuePercent(metric, 13.0f, 50.0f) * 1.5f, 1.0f, 1.5f);
+        mViewScale = ApproachFade(mViewScale, target, 0.01f, 0.9f);
+    }
+    else
+    {
+        mViewScale = ApproachFade(mViewScale, 1.0f, 0.05f, 0.8f);
+    }
+    gViewScale = mViewScale;
+
     // 1. Follow aim = floor(lerp(target, core, 0.35))   (Step_0.gml:5-6).
-    const float aimX = std::floor(Math::Lerp(mPlayerX, mCoreX, kFollowLerp));
-    const float aimY = std::floor(Math::Lerp(mPlayerY, mCoreY, kFollowLerp));
+    float aimX = std::floor(Math::Lerp(mPlayerX, mCoreX, kFollowLerp));
+    float aimY = std::floor(Math::Lerp(mPlayerY, mCoreY, kFollowLerp));
+
+    // Clamp the aim so the zoomed view keeps the arena centred (Step_0.gml:14-15).
+    const float halfW = static_cast<float>(mInternalWidth) * 0.5f;
+    const float halfH = static_cast<float>(mInternalHeight) * 0.5f;
+    const float limit = kArenaHalfExtent / mViewScale;
+    aimX = Math::Clamp(aimX, halfW - limit, halfW + limit);
+    aimY = Math::Clamp(aimY, halfH - limit, halfH + limit);
 
     // 2. Ease the camera centre toward the aim (Step_0.gml:26-27).
     mX += (aimX - mX) / kEaseDivisor;
@@ -98,6 +133,11 @@ void CameraShakeService::GetCameraOffset(float& outX, float& outY) const
 void CameraShakeService::GetShake(float& outMag) const
 {
     outMag = mShakeRemain;
+}
+
+float CameraShakeService::ViewScale()
+{
+    return gViewScale;
 }
 
 bool CameraShakeService::ShakeSelfTest(std::string& csvOut)

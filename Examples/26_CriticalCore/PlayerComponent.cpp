@@ -1,6 +1,7 @@
 #include "PlayerComponent.h"
 
 #include "Collision.h"
+#include "CoreComponent.h"
 #include "GmHelpers.h"
 #include "Render2D.h"
 #include "TrailComponent.h"
@@ -179,15 +180,15 @@ void PlayerComponent::Draw(Render2D& render2D)
         render2D.DrawCircleOutline(x, y, mOuterSize, outerColor);
     }
 
-    // oPlayer/Draw_0.gml:13-40 — the blob. The shCore volumetric shader is
-    // replaced by a flat filled disc tinted by image_blend (Render2D primitives
-    // only, per task). The blob jitters by +/-3px * fireballChargeUp while
+    // oPlayer/Draw_0.gml:13-40 — the blob, drawn with the shCore volumetric
+    // shader (intensity 0.5, tinted by image_blend) exactly like the original,
+    // not a flat disc. The blob jitters by +/-3px * fireballChargeUp while
     // charging (OPERA == 0 on desktop so the -_offset term is 0).
     if (radius > 0.0f)
     {
         const float jx = x + RandomRange(-3.0f, 3.0f) * mFireballChargeUp;
         const float jy = y + RandomRange(-3.0f, 3.0f) * mFireballChargeUp;
-        render2D.DrawCircleFilled(jx, jy, radius, mImageBlend, /*outline=*/false);
+        render2D.DrawNebulaCircle(jx, jy, radius, mImageBlend, 0.5f, CoreComponent::EffectTime());
 
         // oPlayer/Draw_0.gml:42 — the inner ring at the true (un-jittered) pos.
         render2D.DrawCircleOutline(x, y, radius, mImageBlend);

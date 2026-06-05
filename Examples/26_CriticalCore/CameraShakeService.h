@@ -77,6 +77,15 @@ class CameraShakeService final : public Engine::Service
     // the scene translation task 34 consumes (inside 256x224, pre-upscale).
     void GetCameraOffset(float& outX, float& outY) const;
 
+    // Current view zoom scale (oCamera.scale, 1.0..1.5). The render service folds
+    // this into Render2D::SetViewScale each frame. Also mirrored to a process
+    // global so the render service can read it without a service pointer.
+    float GetViewScale() const
+    {
+        return mViewScale;
+    }
+    static float ViewScale();
+
     // Current shake residual (the |jitter| envelope). For selftest/HUD.
     void GetShake(float& outMag) const;
 
@@ -93,6 +102,9 @@ class CameraShakeService final : public Engine::Service
     // Camera centre in room coordinates (eased toward the follow aim).
     float mX = 128.0f;
     float mY = 112.0f;
+
+    // View zoom scale (oCamera.scale), eased toward the intensity-driven target.
+    float mViewScale = 1.0f;
 
     // Follow targets (player + Core), set per step via SetTargets.
     float mPlayerX = 128.0f;

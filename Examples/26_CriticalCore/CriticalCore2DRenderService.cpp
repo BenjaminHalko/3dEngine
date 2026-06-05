@@ -1,4 +1,5 @@
 #include "CriticalCore2DRenderService.h"
+#include "CameraShakeService.h"
 #include "Render2DComponent.h"
 
 #include <algorithm>
@@ -48,6 +49,11 @@ void CriticalCore2DRenderService::Render()
     // Ensure GameMaker draw order (depth descending) before painting.
     SortIfNeeded();
     EnsureAlphaBlendState();
+
+    // Fold the camera's dynamic zoom (oCamera.scale) into the 2D view so every
+    // draw this frame tracks it. Read from the static mirror so the render
+    // service needs no CameraShakeService pointer.
+    mRender2D.SetViewScale(CameraShakeService::ViewScale());
 
     auto context = GraphicsSystem::Get()->GetContext();
 

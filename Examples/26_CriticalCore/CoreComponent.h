@@ -70,6 +70,11 @@ class CoreComponent final : public Render2DComponent
     // and other readers can sample it without holding a Core pointer.
     static float CoreScale();
 
+    // Live shCore animation clock (coreEffectTime), mirrored to a process-global
+    // so the player + bubbles can sample it for their nebula draw without a Core
+    // pointer. 0 before the Core spawns (a static nebula, harmless).
+    static float EffectTime();
+
     void Initialize() override;
     void Terminate() override;
     void Update(float deltaTime) override;
@@ -183,7 +188,9 @@ class CoreComponent final : public Render2DComponent
     void OnDashAlarm();
     void UpdateBossWalls();
     void SyncTransform();
-    void DrawCoreOctagon(float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint);
+    void DrawBossWalls(Render2D& render2D);
+    void DrawCoreOctagon(
+        float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint, float viewScale);
 
     // shCore constant buffer (register b0) - layout per task 31 / the HLSL header
     // in Assets/Shaders/CriticalCore_Core.hlsl. 48 bytes = 3 float4 rows.

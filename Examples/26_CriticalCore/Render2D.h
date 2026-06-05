@@ -111,7 +111,44 @@ class Render2D final
     // Total pen advance for text in the given font, matching the drawn width.
     float MeasureText(Font2D font, const std::string& text) const;
 
+    // Filled n-sided disc drawn through the shCore volumetric shader, tinted by
+    // `tint` and modulated by `intensity` (0 = raw nebula, 0.5 = bright Core).
+    // (x,y) is DRAW-space; iTime is CoreComponent::EffectTime(). One shared
+    // shader/mesh/cbuffer serves every caller. uv per GM oPlayer/Draw_0.gml.
+    void DrawNebulaCircle(
+        float x, float y, float radius, const Graphics::Color& tint, float intensity, float iTime);
+
+    // Scene view zoom (oCamera scale 1.0..1.5): rebuilds the ortho as a zoom
+    // about the screen centre so every draw tracks it; the nebula primitive
+    // folds the same zoom in via GetViewScale().
+    void SetViewScale(float scale);
+    float GetViewScale() const
+    {
+        return mViewScale;
+    }
+
   private:
+    void InitializeNebula();
+    void TerminateNebula();
+
+    // Mirrors CriticalCore_Core.hlsl CoreBuffer (register b0). 48 bytes = 3 rows.
+    struct NebulaData
+    {
+        float iTime = 0.0f;
+        float iResX = 0.0f;
+        float iResY = 0.0f;
+        float iResZ = 0.0f;
+        float intensity = 0.0f;
+        float pad0 = 0.0f;
+        float pad1 = 0.0f;
+        float pad2 = 0.0f;
+        float tintR = 1.0f;
+        float tintG = 1.0f;
+        float tintB = 1.0f;
+        float tintA = 1.0f;
+    };
+    using NebulaBuffer = Graphics::TypedConstantBuffer<NebulaData>;
+
     struct SpriteData
     {
         Math::Matrix4 wvp;
@@ -209,5 +246,18 @@ class Render2D final
     // Text path: reused dynamic VertexPX mesh, shares the sprite VS/PS, sampler
     // and SpriteData cbuffer (world identity, verts authored in pixel space).
     Graphics::MeshBuffer mGlyphMesh;
+
+    // Nebula path: own shCore VS/PS + dynamic mesh + CoreBuffer, shared by all
+    // callers (player blob + every bubble). Triangle fan, kNebulaSides sectors.
+    static constexpr int kNebulaSides = 20;
+    static constexpr uint32_t kNebulaVertices = static_cast<uint32_t>(kNebulaSides) * 3u;
+    Graphics::VertexShader mNebulaVertexShader;
+    Graphics::PixelShader mNebulaPixelShader;
+    Graphics::MeshBuffer mNebulaMesh;
+    NebulaBuffer mNebulaBuffer;
+
+    // Current scene view zoom (1.0 = no zoom). Folded into mOrtho by SetViewScale
+    // and into the nebula primitive's manual NDC.
+    float mViewScale = 1.0f;
 };
 } // namespace Engine::CriticalCore
