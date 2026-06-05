@@ -29,5 +29,6 @@ add_executable(26_CriticalCore
     PlayerComponent.cpp
     BubbleComponent.cpp
     FireballComponent.cpp
-    SpikeComponent.cpp)
+    SpikeComponent.cpp
+    GameFlow.cpp)
 target_set_windows_application(26_CriticalCore)
