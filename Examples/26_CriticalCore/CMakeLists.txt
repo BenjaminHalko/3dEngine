@@ -1,4 +1,12 @@
 project(26_CriticalCore)
 include(${CMAKE_SOURCE_DIR}/Cmake/example.cmake)
-add_executable(26_CriticalCore WinMain.cpp GameState.cpp)
+add_executable(26_CriticalCore
+    WinMain.cpp
+    GameState.cpp
+    AnimCurve.cpp
+    GmHelpers.cpp
+    Render2D.cpp
+    GameClock.cpp
+    CustomRegistration.cpp
+    StubComponent.cpp)
 target_set_windows_application(26_CriticalCore)
