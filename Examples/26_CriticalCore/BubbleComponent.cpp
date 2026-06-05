@@ -29,6 +29,24 @@ namespace
     const Graphics::Color kColorDouble{0.0f, 1.0f, 0.0f, 1.0f}; // c_lime
     const Graphics::Color kColorWeapon{1.0f, 0.0f, 1.0f, 1.0f}; // c_fuchsia
 
+    // --- SFX (Load-once static-local handles, same idiom as GameFlow.cpp) ------
+    // absorb() audio (oBubble/Step_0.gml:9-10): a DOUBLE_POINTS bubble plays
+    // snPointBoost; every other absorbed bubble plays snCollect. (The GM pitch
+    // args on snCollect have no SoundEffectManager equivalent, so only the play
+    // is ported.)
+    Engine::Audio::SoundId CollectSfx()
+    {
+        static Engine::Audio::SoundId id =
+            Engine::Audio::SoundEffectManager::Get()->Load("CriticalCore/snCollect.wav");
+        return id;
+    }
+    Engine::Audio::SoundId PointBoostSfx()
+    {
+        static Engine::Audio::SoundId id =
+            Engine::Audio::SoundEffectManager::Get()->Load("CriticalCore/snPointBoost.wav");
+        return id;
+    }
+
     // --- Null-safe static bridges (see header) --------------------------------
     PlayerComponent* gPlayer = nullptr;
     const std::array<WallSegment, 8>* gBossWalls = nullptr;
@@ -286,6 +304,12 @@ void BubbleComponent::Absorb()
     if (gPlayer == nullptr)
     {
         return;
+    }
+
+    // Step_0.gml:9-10 - DOUBLE_POINTS plays snPointBoost, otherwise snCollect.
+    if (Engine::Audio::SoundEffectManager* sfx = Engine::Audio::SoundEffectManager::Get())
+    {
+        sfx->Play(mState == State::DOUBLE_POINTS ? PointBoostSfx() : CollectSfx());
     }
 
     // Score popup above the absorber's head (Step_0.gml:11-14). The amount shown

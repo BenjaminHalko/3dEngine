@@ -56,5 +56,4 @@ class GameState : public Engine::AppState
     Engine::CriticalCore::CriticalCore2DRenderService* mRenderService = nullptr;
     Engine::CriticalCore::CameraShakeService* mCameraShake = nullptr;
     Engine::CriticalCore::BeatService* mBeatService = nullptr;
-    Engine::CriticalCore::GuiComponent* mGui = nullptr;
 };

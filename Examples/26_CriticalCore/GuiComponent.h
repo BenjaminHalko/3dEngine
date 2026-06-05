@@ -69,6 +69,13 @@ class GuiComponent final : public Render2DComponent
 
     void Deserialize(const rapidjson::Value& value) override;
 
+    // --- Static GuiState bridge (level-placed Gui) ---
+    // A level-placed GuiComponent has no C++ handle for SetState(), so it pulls
+    // the shared HUD state from this static (set once by GameState before
+    // LoadLevel). Initialize() reads it; null leaves the standalone DefaultState().
+    static void SetActiveState(const GuiState* state);
+    static const GuiState* GetActiveState();
+
     // --- Shared HUD state (task 34 wires the pointer; task 27 owns/mutates it) ---
     void SetState(const GuiState* state)
     {

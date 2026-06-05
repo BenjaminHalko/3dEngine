@@ -54,6 +54,21 @@ bool Held(KeyCode key)
     const InputSystem* in = InputSystem::Get();
     return (in != nullptr) && in->IsKeyDown(key);
 }
+
+// snBlip - menu nav / select / volume blip (oMenu/Step_0.gml:25,46,52,79).
+Engine::Audio::SoundId BlipSfx()
+{
+    static Engine::Audio::SoundId id =
+        Engine::Audio::SoundEffectManager::Get()->Load("CriticalCore/snBlip.wav");
+    return id;
+}
+void PlayBlip()
+{
+    if (Engine::Audio::SoundEffectManager* sfx = Engine::Audio::SoundEffectManager::Get())
+    {
+        sfx->Play(BlipSfx());
+    }
+}
 } // namespace
 
 // Shared single-menu signals.
@@ -194,6 +209,8 @@ void MenuComponent::UpdateNavigation()
         // GameMaker Wrap(option, 0, 3) is the integer-inclusive branch => 4
         // options cycling 0..3 (see learnings task-8 Wrap deviation note).
         mOption = ((mOption + delta) % kOptionCount + kOptionCount) % kOptionCount;
+
+        PlayBlip(); // Step_0.gml:25 - nav blip on option change.
     }
 
     const bool select = Pressed(KeyCode::RETURN);
@@ -210,8 +227,9 @@ void MenuComponent::UpdateNavigation()
         }
         else
         {
-            // No name -> red flash prompt (Step_0.gml:45).
+            // No name -> red flash prompt (Step_0.gml:45-46).
             mUsernameFlash = 1.0f;
+            PlayBlip(); // Step_0.gml:46 - blip on the empty-username miss.
         }
     }
     else if (mOption == kOptLeaderboard && select)
@@ -219,6 +237,7 @@ void MenuComponent::UpdateNavigation()
         // Step_0.gml:50-53 GotoLeaderboard, now a local in-place screen.
         mLeaderboard.Load(); // refresh to show the latest board
         mShowLeaderboard = true;
+        PlayBlip(); // Step_0.gml:52 - blip on the leaderboard select.
     }
 }
 
@@ -298,6 +317,7 @@ void MenuComponent::UpdateVolume()
         audio->SetMasterVolume(mVolume); // audio_master_gain(global.audioVol)
     }
     mLeaderboard.Save();
+    PlayBlip(); // Step_0.gml:79 - blip on a volume change.
 }
 
 void MenuComponent::EnsureAssets(Render2D& render2D)

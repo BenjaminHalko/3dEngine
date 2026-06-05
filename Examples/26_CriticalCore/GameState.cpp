@@ -17,8 +17,6 @@ namespace
 // is live yet (title/menu, or the brief window between PlayerExplode and Respawn).
 constexpr float kArenaCenterX = 128.0f;
 constexpr float kArenaCenterY = 112.0f;
-
-constexpr const char* kGuiTemplate = "Assets/Templates/Objects/CriticalCore/gui.json";
 } // namespace
 
 void GameState::Initialize()
@@ -35,6 +33,13 @@ void GameState::Initialize()
 
 void GameState::LoadAndWire()
 {
+    // The HUD is level-placed (gui.json, Depth -1000). Publish the flow's shared
+    // GuiState through the static bridge BEFORE LoadLevel, because LoadLevel
+    // Initialize()s the Gui object immediately (GameWorld.cpp:204) and
+    // GuiComponent::Initialize() reads the static then. GetGuiState() is a stable
+    // member pointer, valid before GameFlow::Initialize() populates its values.
+    GuiComponent::SetActiveState(mGameFlow.GetGuiState());
+
     // LoadLevel ONLY (it calls Initialize(capacity) from the JSON "Capacity"
     // internally - calling GameWorld::Initialize() as well would double-init).
     // This also constructs + Initialize()s the 3 custom services (render / beat /
@@ -54,24 +59,8 @@ void GameState::LoadAndWire()
         mCameraShake->Initialize(256, 224);
     }
 
-    // The HUD is owned by GameState (NOT level-placed) so we can hand it the
-    // GameFlow's GuiState pointer - the engine exposes no way to look up a
-    // level-placed GameObject's component after LoadLevel. CreateGameObject runs
-    // the template Deserialize (Depth -1000) but NOT Initialize; we wire the state
-    // pointer then Initialize so it registers with the render service.
     mClock.Reset();
     mGameFlow.Initialize(&mGameWorld);
-
-    GameObject* guiObject = mGameWorld.CreateGameObject("Gui", kGuiTemplate);
-    if (guiObject != nullptr)
-    {
-        mGui = guiObject->GetComponent<GuiComponent>();
-        if (mGui != nullptr)
-        {
-            mGui->SetState(mGameFlow.GetGuiState());
-        }
-        guiObject->Initialize();
-    }
 }
 
 void GameState::ReloadLevel()
@@ -80,7 +69,6 @@ void GameState::ReloadLevel()
     // dangles, then tear the world down and rebuild from the level - a clean
     // restart back to the title/menu.
     mGameFlow.Terminate();
-    mGui = nullptr;
     mRenderService = nullptr;
     mCameraShake = nullptr;
     mBeatService = nullptr;
@@ -94,7 +82,7 @@ void GameState::Terminate()
     mGameFlow.Terminate();
     mGameWorld.Terminate();
 
-    mGui = nullptr;
+    GuiComponent::SetActiveState(nullptr);
     mRenderService = nullptr;
     mCameraShake = nullptr;
     mBeatService = nullptr;

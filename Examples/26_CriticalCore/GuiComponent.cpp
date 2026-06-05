@@ -25,11 +25,28 @@ std::string DisplayNumber(int value)
     std::snprintf(buffer, sizeof(buffer), "%05d", value);
     return std::string(buffer);
 }
+
+const GuiState* gActiveState = nullptr;
 } // namespace
+
+void GuiComponent::SetActiveState(const GuiState* state)
+{
+    gActiveState = state;
+}
+
+const GuiState* GuiComponent::GetActiveState()
+{
+    return gActiveState;
+}
 
 void GuiComponent::Initialize()
 {
     Render2DComponent::Initialize();
+
+    if (mState == nullptr)
+    {
+        mState = gActiveState;
+    }
 }
 
 void GuiComponent::Terminate()

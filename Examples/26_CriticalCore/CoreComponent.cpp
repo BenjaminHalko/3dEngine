@@ -47,6 +47,14 @@ std::unordered_map<const GameObject*, CoreComponent::LaunchParams> gPendingLaunc
 
 // Process-global mirror of the live Core scale (CoreComponent::CoreScale()).
 float gCoreScale = 0.0f;
+
+// snFireHit - a fireball striking the Core (CoreFunctions.gml:2, DamageCore).
+Engine::Audio::SoundId FireHitSfx()
+{
+    static Engine::Audio::SoundId id =
+        Engine::Audio::SoundEffectManager::Get()->Load("CriticalCore/snFireHit.wav");
+    return id;
+}
 } // namespace
 
 bool CoreComponent::ConsumeLaunch(const GameObject* gameObject, LaunchParams& out)
@@ -391,8 +399,12 @@ void CoreComponent::SyncTransform()
 
 void CoreComponent::DamageCore()
 {
-    // CoreFunctions.gml DamageCore. (snFireHit audio + oBackground.bgFlash are
-    // driven by their own systems; the screenshake we can raise here.)
+    // CoreFunctions.gml DamageCore:2-3 - snFireHit then ScreenShake(10,20).
+    // (oBackground.bgFlash is driven by its own system.)
+    if (Engine::Audio::SoundEffectManager* sfx = Engine::Audio::SoundEffectManager::Get())
+    {
+        sfx->Play(FireHitSfx());
+    }
     if (mCameraShake != nullptr)
     {
         mCameraShake->ScreenShake(10.0f, 20);
