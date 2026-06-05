@@ -6,7 +6,7 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "FireballComponent": {
-      "Depth": 50.0
+      "Depth": 44.0
     }
   }
 }

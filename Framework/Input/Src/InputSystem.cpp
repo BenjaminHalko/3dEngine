@@ -141,21 +141,19 @@ void InputSystem::Terminate()
 
 void InputSystem::Update()
 {
-    // Update previous state
-    std::memcpy(mPrevKeys, mCurrKeys, sizeof(mCurrKeys));
-    std::memcpy(mPrevMouseButtons, mCurrMouseButtons, sizeof(mCurrMouseButtons));
-
-    // Calculate pressed keys
+    // Edge must be computed against last frame's prev, THEN snapshot. Snapshotting
+    // first makes (!prev && curr) always false.
     for (int i = 0; i < 512; ++i)
     {
         mPressedKeys[i] = !mPrevKeys[i] && mCurrKeys[i];
     }
+    std::memcpy(mPrevKeys, mCurrKeys, sizeof(mCurrKeys));
 
-    // Calculate pressed mouse buttons
     for (int i = 0; i < 3; ++i)
     {
         mPressedMouseButtons[i] = !mPrevMouseButtons[i] && mCurrMouseButtons[i];
     }
+    std::memcpy(mPrevMouseButtons, mCurrMouseButtons, sizeof(mCurrMouseButtons));
 
     // Calculate mouse movement
     mMouseMoveX = mCurrMouseX - mPrevMouseX;

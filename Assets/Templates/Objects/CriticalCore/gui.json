@@ -6,7 +6,8 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "GuiComponent": {
-      "Depth": 10.0
+      "Depth": 10.0,
+      "ScreenSpace": true
     }
   }
 }

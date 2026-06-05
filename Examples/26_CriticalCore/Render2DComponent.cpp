@@ -33,6 +33,7 @@ void Render2DComponent::Terminate()
 void Render2DComponent::Deserialize(const rapidjson::Value& value)
 {
     SaveUtil::ReadFloat("Depth", mDepth, value);
+    SaveUtil::ReadBool("ScreenSpace", mScreenSpace, value);
 }
 
 float Render2DComponent::GetWorldX() const

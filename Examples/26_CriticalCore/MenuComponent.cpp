@@ -503,20 +503,24 @@ void MenuComponent::DrawMenu(Render2D& render2D)
 
 void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
 {
-    // Faithful port of oLeaderboardAPI/Draw_64.gml (non-gxGames branch): a
-    // PLACE / NAME / SCORE column board, the player's own row in c_yellow, and a
-    // PRESS ENTER TO CONTINUE prompt. The local board (task 30) stores name+score
-    // only, so the GM ROUND/level column is dropped.
+    // Port of oLeaderboardAPI/Draw_64.gml (non-gxGames branch): a PLACE / NAME /
+    // SCORE board in fScore with the player's own row in c_yellow and the GM's
+    // two-line "PRESS ENTER TO / CONTINUE" prompt. Rows step 9px exactly like the
+    // source (_scoreY = _y + i*9). Headers and rows share the same column anchors
+    // so the three columns line up cleanly. The local board (task 30) stores
+    // name+score only, so the GM ROUND/level column is dropped.
     constexpr float kCenterX = static_cast<float>(kInternalWidth) * 0.5f;
-    constexpr float kPlaceX = 24.0f;
-    constexpr float kNameX = 76.0f;
-    constexpr float kScoreX = 232.0f; // right-aligned
+    constexpr float kPlaceX = 48.0f;       // ordinal, left
+    constexpr float kNameX = 88.0f;        // name, left
+    constexpr float kScoreRightX = 208.0f; // score, right-aligned
+    constexpr float kHeaderY = 40.0f;
+    constexpr float kRowStep = 9.0f; // _scoreY step (oLeaderboardAPI/Draw_64:33)
 
-    render2D.DrawText(Font2D::Font, "LEADERBOARD", kCenterX, 10.0f, kWhite, TextAlign::Center);
+    render2D.DrawText(Font2D::Font, "LEADERBOARD", kCenterX, 14.0f, kWhite, TextAlign::Center);
 
-    render2D.DrawText(Font2D::Score, "PLACE", kPlaceX, 30.0f, kDkGray, TextAlign::Left);
-    render2D.DrawText(Font2D::Score, "NAME", kNameX, 30.0f, kDkGray, TextAlign::Left);
-    render2D.DrawText(Font2D::Score, "SCORE", kScoreX, 30.0f, kDkGray, TextAlign::Right);
+    render2D.DrawText(Font2D::Score, "PLACE", kPlaceX, kHeaderY, kDkGray, TextAlign::Left);
+    render2D.DrawText(Font2D::Score, "NAME", kNameX, kHeaderY, kDkGray, TextAlign::Left);
+    render2D.DrawText(Font2D::Score, "SCORE", kScoreRightX, kHeaderY, kDkGray, TextAlign::Right);
 
     const std::vector<Leaderboard::Entry>& entries = mLeaderboard.Entries();
     if (entries.empty())
@@ -525,7 +529,7 @@ void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
     }
     else
     {
-        float rowY = 48.0f;
+        float rowY = kHeaderY + 14.0f;
         for (std::size_t i = 0; i < entries.size(); ++i)
         {
             const bool isPlayer = !mUsername.empty() && entries[i].name == mUsername;
@@ -534,13 +538,14 @@ void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
             render2D.DrawText(Font2D::Score, Ordinal(static_cast<int>(i) + 1), kPlaceX, rowY, rowCol,
                               TextAlign::Left);
             render2D.DrawText(Font2D::Score, entries[i].name, kNameX, rowY, rowCol, TextAlign::Left);
-            render2D.DrawText(Font2D::Score, std::to_string(entries[i].score), kScoreX, rowY, rowCol,
+            render2D.DrawText(Font2D::Score, std::to_string(entries[i].score), kScoreRightX, rowY, rowCol,
                               TextAlign::Right);
-            rowY += 14.0f;
+            rowY += kRowStep;
         }
     }
 
-    render2D.DrawText(Font2D::Font, "PRESS ENTER TO CONTINUE", kCenterX, 200.0f, kDkGray, TextAlign::Center);
+    render2D.DrawText(Font2D::Score, "PRESS ENTER TO", kCenterX, 168.0f, kDkGray, TextAlign::Center);
+    render2D.DrawText(Font2D::Score, "CONTINUE", kCenterX, 178.0f, kDkGray, TextAlign::Center);
 }
 
 void MenuComponent::DebugUI()

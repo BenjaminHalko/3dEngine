@@ -6,7 +6,8 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "MenuComponent": {
-      "Depth": 0.0
+      "Depth": 0.0,
+      "ScreenSpace": true
     }
   }
 }

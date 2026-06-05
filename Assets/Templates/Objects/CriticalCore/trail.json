@@ -6,7 +6,7 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "TrailComponent": {
-      "Depth": 30.0,
+      "Depth": 46.0,
       "Radius": 4.0,
       "Outline": true,
       "DriftSpeed": 0.0,

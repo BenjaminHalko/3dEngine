@@ -1,6 +1,7 @@
 #include "BubbleComponent.h"
 
 #include "CoreComponent.h"
+#include "CriticalCore2DRenderService.h"
 #include "GmHelpers.h"
 #include "PlayerComponent.h"
 #include "Render2D.h"
@@ -22,6 +23,20 @@ namespace
 
     // Bubble homing speed once claimed by the player (Step_0.gml:98-99).
     constexpr float kHomeSpeed = 5.0f;
+
+    // Depth-by-size (oBubble depth = -radius in GameMaker: bigger radius => lower
+    // depth => drawn on top, smaller => higher depth => behind). Mapped into the
+    // bubble depth band [kBubbleFrontDepth, kBubbleBackDepth] so bubbles still sit
+    // behind the player/trail and in front of the spikes/core.
+    constexpr float kBubbleBackDepth = 56.0f;
+    constexpr float kBubbleFrontDepth = 47.0f;
+    constexpr float kBubbleDepthMaxRadius = 18.0f;
+
+    float BubbleDepthForRadius(float radius)
+    {
+        const float t = Math::Clamp(radius / kBubbleDepthMaxRadius, 0.0f, 1.0f);
+        return kBubbleBackDepth - t * (kBubbleBackDepth - kBubbleFrontDepth);
+    }
 
     // State tints (oBubble/Draw_0.gml): default aqua, double-points lime, weapon
     // fuchsia (all GameMaker built-in colour constants).
@@ -221,6 +236,17 @@ void BubbleComponent::Update(float deltaTime)
 
     // --- Radius ease toward sqrt(mass/pi) (Step_0.gml:128) ---
     mDrawRadius = ApproachFade(mDrawRadius, RadiusFromMass(mass), 1.0f, 0.7f);
+
+    // Bigger bubbles draw on top of smaller ones (GM oBubble depth = -radius).
+    const float sizeDepth = BubbleDepthForRadius(mDrawRadius);
+    if (sizeDepth != GetDepth())
+    {
+        SetDepth(sizeDepth);
+        if (CriticalCore2DRenderService* service = GetRenderService())
+        {
+            service->MarkDepthDirty();
+        }
+    }
 
     // --- Destroy once too small (Step_0.gml:132-134) ---
     if (mass < 1.0f)

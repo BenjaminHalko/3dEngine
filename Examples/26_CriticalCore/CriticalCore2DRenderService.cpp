@@ -69,10 +69,10 @@ void CriticalCore2DRenderService::Render()
     EnsureAlphaBlendState();
     EnsureDepthDisabledState();
 
-    // Fold the camera's dynamic zoom (oCamera.scale) into the 2D view so every
-    // draw this frame tracks it. Read from the static mirror so the render
-    // service needs no CameraShakeService pointer.
-    mRender2D.SetViewScale(CameraShakeService::ViewScale());
+    // The camera's dynamic zoom (oCamera.scale, read from the static mirror) is
+    // applied PER COMPONENT below: world-layer components zoom with it, UI
+    // (screen-space) components stay at a fixed 1.0 scale.
+    const float worldViewScale = CameraShakeService::ViewScale();
 
     auto context = GraphicsSystem::Get()->GetContext();
 
@@ -82,11 +82,21 @@ void CriticalCore2DRenderService::Render()
     context->OMSetDepthStencilState(mDepthDisabledState, 0);
     // mRenderables is sorted by depth DESCENDING, so iterating front-to-back of
     // the vector draws the HIGHEST depth first (behind) and the LOWEST depth
-    // last (in front) - exactly GameMaker's painter order.
+    // last (in front) - exactly GameMaker's painter order. The view zoom is set
+    // per component: world components get the camera zoom, UI (screen-space)
+    // components get a fixed 1.0 so the HUD/menu/leaderboard never scale.
+    float appliedScale = -1.0f;
     for (Render2DComponent* renderable : mRenderables)
     {
+        const float scale = renderable->IsScreenSpace() ? 1.0f : worldViewScale;
+        if (scale != appliedScale)
+        {
+            mRender2D.SetViewScale(scale);
+            appliedScale = scale;
+        }
         renderable->Draw(mRender2D);
     }
+    mRender2D.SetViewScale(1.0f);
     context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
     context->OMSetDepthStencilState(nullptr, 0);
     mRenderTarget.EndScene();

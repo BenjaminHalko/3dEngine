@@ -73,6 +73,18 @@ class Render2DComponent : public Engine::Component
         mDepth = depth;
     }
 
+    // UI components draw at a FIXED 1.0 view scale (no camera zoom/pan); only
+    // world-layer components track the camera. Set via JSON "ScreenSpace".
+    bool IsScreenSpace() const
+    {
+        return mScreenSpace;
+    }
+
+    void SetScreenSpace(bool screenSpace)
+    {
+        mScreenSpace = screenSpace;
+    }
+
   protected:
     // Raw world position from the owning GameObject's TransformComponent
     // (z = 0 plane; .x/.y only). Zero if the object has no transform.
@@ -103,5 +115,6 @@ class Render2DComponent : public Engine::Component
     CriticalCore2DRenderService* mRenderService = nullptr;
 
     float mDepth = 0.0f;
+    bool mScreenSpace = false;
 };
 } // namespace Engine::CriticalCore
