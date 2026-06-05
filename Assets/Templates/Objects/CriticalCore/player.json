@@ -1,0 +1,16 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 128.0, 112.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "Render2DComponent": {
+      "Depth": -5.0
+    },
+    "PlayerComponent": {
+      "Depth": -5.0,
+      "Mass": 500.0
+    }
+  }
+}

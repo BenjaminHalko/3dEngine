@@ -25,5 +25,9 @@ add_executable(26_CriticalCore
     BackgroundComponent.cpp
     ScoreComponent.cpp
     GuiComponent.cpp
-    MenuComponent.cpp)
+    MenuComponent.cpp
+    PlayerComponent.cpp
+    BubbleComponent.cpp
+    FireballComponent.cpp
+    SpikeComponent.cpp)
 target_set_windows_application(26_CriticalCore)
