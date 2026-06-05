@@ -6,7 +6,7 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "SpikeComponent": {
-      "Depth": -40.0,
+      "Depth": 50.0,
       "Mass": 0.0,
       "SpdMult": 0.0
     }

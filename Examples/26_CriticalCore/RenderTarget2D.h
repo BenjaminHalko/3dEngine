@@ -81,6 +81,19 @@ class RenderTarget2D final
     }
 
   private:
+    // Two-pass separable blur of the scene RT into mGlowRT1, used as an additive
+    // glow in Present (CriticalCore_Blur.hlsl, the GM shBlur). Best-effort bloom.
+    void BloomPass();
+
+    // Mirrors CriticalCore_Blur.hlsl BlurBuffer (register b0): pass direction in
+    // texels + 1/internalRes texel size. 16 bytes (one float4 register).
+    struct BlurData
+    {
+        Math::Vector2 blurVector;
+        Math::Vector2 texelSize;
+    };
+    using BlurBuffer = Graphics::TypedConstantBuffer<BlurData>;
+
     int mInternalWidth = 256;
     int mInternalHeight = 224;
 
@@ -89,5 +102,14 @@ class RenderTarget2D final
     Graphics::VertexShader mVertexShader;
     Graphics::PixelShader mPixelShader;
     Graphics::Sampler mSampler;
+
+    // Bloom resources (separable blur + additive composite).
+    Graphics::RenderTarget mGlowRT0;
+    Graphics::RenderTarget mGlowRT1;
+    Graphics::VertexShader mBlurVertexShader;
+    Graphics::PixelShader mBlurPixelShader;
+    BlurBuffer mBlurBuffer;
+    Graphics::Sampler mLinearSampler;
+    ID3D11BlendState* mGlowBlendState = nullptr;
 };
 } // namespace Engine::CriticalCore

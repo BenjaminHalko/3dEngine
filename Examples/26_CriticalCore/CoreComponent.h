@@ -183,10 +183,10 @@ class CoreComponent final : public Render2DComponent
     void OnDashAlarm();
     void UpdateBossWalls();
     void SyncTransform();
-    void DrawCoreShader(float drawX, float drawY);
+    void DrawCoreOctagon(float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint);
 
     // shCore constant buffer (register b0) - layout per task 31 / the HLSL header
-    // in Assets/Shaders/CriticalCore_Core.hlsl. 32 bytes = 2 float4 rows.
+    // in Assets/Shaders/CriticalCore_Core.hlsl. 48 bytes = 3 float4 rows.
     struct CoreData
     {
         float iTime = 0.0f;   // row 0
@@ -197,6 +197,10 @@ class CoreComponent final : public Render2DComponent
         float pad0 = 0.0f;
         float pad1 = 0.0f;
         float pad2 = 0.0f;
+        float tintR = 1.0f;     // row 2 (GM draw_set_color on the shader polygon)
+        float tintG = 1.0f;
+        float tintB = 1.0f;
+        float tintA = 1.0f;
     };
     using CoreBuffer = Graphics::TypedConstantBuffer<CoreData>;
 

@@ -168,12 +168,16 @@ void Render2D::AppendSegmentQuad(std::vector<VertexPC>& verts,
     const Vector3 p2(bx - nx, by - ny, 0.0f);
     const Vector3 p3(ax - nx, ay - ny, 0.0f);
 
+    // Wind clockwise in NDC to match the filled-circle fan: under the y-DOWN ortho
+    // (which flips y) the naive p0,p1,p2 order is counter-clockwise = a back face,
+    // so the default CullMode=BACK rasterizer culls every line/ring. Emit
+    // p0,p2,p1 / p0,p3,p2 so segment quads are front-facing and actually draw.
     verts.push_back({p0, color});
+    verts.push_back({p2, color});
     verts.push_back({p1, color});
-    verts.push_back({p2, color});
     verts.push_back({p0, color});
-    verts.push_back({p2, color});
     verts.push_back({p3, color});
+    verts.push_back({p2, color});
 }
 
 void Render2D::DrawRing(float cx, float cy, float radius, float thickness, const Color& color)

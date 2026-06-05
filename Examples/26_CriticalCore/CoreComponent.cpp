@@ -465,13 +465,16 @@ void CoreComponent::Draw(Render2D& render2D)
         render2D.DrawLine(drawX, drawY, endX, endY, 1.0f, Graphics::Colors::White);
     }
 
-    // --- shCore nebula octagon (oCore/Draw_0.gml:11-27) ---
+    // --- shCore nebula octagon (oCore/Draw_0.gml:11-27): white, intensity 0.5. The
+    //     Core BODY is the raymarched nebula, drawn whenever HP is not yet full. ---
     if (mHpDraw < 0.995f)
     {
-        DrawCoreShader(drawX, drawY);
+        DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White);
     }
 
-    // --- HP overlay disc (oCore/Draw_0.gml:29-43) ---
+    // --- HP octagon (oCore/Draw_0.gml:29-43): the SAME shCore octagon at intensity
+    //     0, tinted merge_color(#FF005E, red, pulse) and scaled by hpDraw, so the HP
+    //     indicator is the nebula MODULATED by pink - NOT a flat filled circle. ---
     if (mHpDraw > 0.01f)
     {
         float hpScale = mScale * mHpDraw;
@@ -479,14 +482,13 @@ void CoreComponent::Draw(Render2D& render2D)
         {
             hpScale = Math::Max(0.05f, hpScale);
         }
-        const float hpRadius = Arena::kCoreSpriteRadius * hpScale;
         const Graphics::Color hpBase = {1.0f, 0.0f, 94.0f / 255.0f, 1.0f}; // #FF005E
         const Graphics::Color hpColor = MergeColor(hpBase, Graphics::Colors::Red, mPulse);
-        render2D.DrawCircleFilled(drawX, drawY, hpRadius, hpColor);
+        DrawCoreOctagon(drawX, drawY, hpScale, 0.0f, hpColor);
     }
 }
 
-void CoreComponent::DrawCoreShader(float drawX, float drawY)
+void CoreComponent::DrawCoreOctagon(float drawX, float drawY, float scale, float intensity, const Graphics::Color& tint)
 {
     // Build the filled nebula octagon as a triangle fan (center, p_i, p_{i+1}).
     // Positions are NDC (shCore VS is a passthrough); uv = world / internal res,
@@ -504,15 +506,15 @@ void CoreComponent::DrawCoreShader(float drawX, float drawY)
         const int j = (i + 1) % 8;
 
         // perimeter point i (world, pixel-snapped like Draw_0.gml:23)
-        const float wxi = mX + kPolygonPoints[i][0] * mScale - Sign(kPolygonPoints[i][0]);
-        const float wyi = mY + kPolygonPoints[i][1] * mScale - Sign(kPolygonPoints[i][1]);
+        const float wxi = mX + kPolygonPoints[i][0] * scale - Sign(kPolygonPoints[i][0]);
+        const float wyi = mY + kPolygonPoints[i][1] * scale - Sign(kPolygonPoints[i][1]);
         float dxi = wxi;
         float dyi = wyi;
         ApplyCameraOffset(dxi, dyi);
 
         // perimeter point j
-        const float wxj = mX + kPolygonPoints[j][0] * mScale - Sign(kPolygonPoints[j][0]);
-        const float wyj = mY + kPolygonPoints[j][1] * mScale - Sign(kPolygonPoints[j][1]);
+        const float wxj = mX + kPolygonPoints[j][0] * scale - Sign(kPolygonPoints[j][0]);
+        const float wyj = mY + kPolygonPoints[j][1] * scale - Sign(kPolygonPoints[j][1]);
         float dxj = wxj;
         float dyj = wyj;
         ApplyCameraOffset(dxj, dyj);
@@ -532,12 +534,14 @@ void CoreComponent::DrawCoreShader(float drawX, float drawY)
     data.iResX = static_cast<float>(kInternalWidth);  // 256
     data.iResY = static_cast<float>(kInternalHeight); // 224
     data.iResZ = 0.0f;
-    // GM nebula intensity baseline is 0.5; we drive it with the beat pulse so the
-    // nebula brightens on the beat (intensity "from the pulse").
-    data.intensity = 0.5f + Math::Clamp(mPulse, 0.0f, 1.0f) * 0.5f;
+    data.intensity = intensity;
     data.pad0 = 0.0f;
     data.pad1 = 0.0f;
     data.pad2 = 0.0f;
+    data.tintR = tint.r;
+    data.tintG = tint.g;
+    data.tintB = tint.b;
+    data.tintA = tint.a;
 
     mCoreVertexShader.Bind();
     mCorePixelShader.Bind();

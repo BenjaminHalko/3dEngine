@@ -188,7 +188,12 @@ void WallComponent::Draw(Render2D& render2D)
     // the drawn thickness pulses from 4 (rest) to 8 (full beat).
     const float thickness = Arena::kWallSpriteThickness * (std::min(1.0f, mBeatPulse) + 1.0f);
 
-    render2D.DrawLine(ax, ay, bx, by, thickness, mImageBlend);
+    // GM image_blend is an RGB-only colour; the wall's image_alpha is always 1.
+    // Our MergeColor lerps the alpha channel too, so force it back to 1 here (else
+    // a low-alpha WallPulseColor would fade the wall to invisible).
+    Color blend = mImageBlend;
+    blend.a = 1.0f;
+    render2D.DrawLine(ax, ay, bx, by, thickness, blend);
 }
 
 void WallComponent::DebugUI()

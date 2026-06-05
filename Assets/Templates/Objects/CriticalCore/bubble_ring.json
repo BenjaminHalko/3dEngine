@@ -6,7 +6,7 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "BubbleComponent": {
-      "Depth": 0.0,
+      "Depth": 50.0,
       "Mass": 150.0,
       "State": 0
     }

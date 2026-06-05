@@ -29,6 +29,7 @@ cbuffer CoreBuffer : register(b0)
     float3 iResolution;  // offset  4  (256, 224, 0)
     float  intensity;    // offset 16
     float3 _pad0;        // offset 20 -> 32
+    float4 tint;         // offset 32 -> 48 (GM draw_set_color on the shader polygon)
 }
 
 // VS input = VertexPX (POSITION float3 + TEXCOORD float2), matching the engine's
@@ -228,7 +229,8 @@ float4 PS(VS_OUTPUT input) : SV_Target
     // GLSL mix(a,b,t) == HLSL lerp(a,b,t)
     col = lerp(col * (1.0 + intensity), float3(intense, intense, intense), intensity * -0.5);
 
-    // GLSL `gl_FragColor = v_vColour * vec4(col,1.0)`. The Core is drawn untinted
-    // (v_vColour = white), so the modulation collapses to vec4(col, 1.0).
-    return float4(col, 1.0);
+    // GLSL `gl_FragColor = v_vColour * vec4(col,1.0)`: the nebula body draws white
+    // (tint = 1), the HP octagon draws merge_color(#FF005E, red, pulse) so the HP
+    // disc is the nebula MODULATED by pink, not a flat fill.
+    return float4(col, 1.0) * tint;
 }

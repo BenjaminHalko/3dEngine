@@ -41,7 +41,7 @@ void App::Run(const AppConfig& config)
 
         input->Update();
 
-        if (!myWindow.IsActive() || input->IsKeyPressed(KeyCode::ESCAPE))
+        if (!myWindow.IsActive() || (mQuitOnEscape && input->IsKeyPressed(KeyCode::ESCAPE)))
         {
             Quit();
             continue;

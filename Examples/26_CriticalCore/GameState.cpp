@@ -23,6 +23,12 @@ void GameState::Initialize()
 {
     mLevelFile = L"Assets/Templates/Levels/CriticalCore.json";
 
+    // Critical Core 2 is a GAME, not a tech demo: ESC must return to the title (a
+    // ReloadLevel below), NOT close the whole application. Opt out of the App's
+    // global ESC-quit (App.cpp), which otherwise fires before this state's Update()
+    // ever sees the key. Other examples keep the default quit-on-ESC convenience.
+    Engine::MainApp().SetQuitOnEscape(false);
+
     // Install the custom component + service factory callbacks ONCE, BEFORE any
     // LoadLevel so GameWorld can resolve the level's unknown component/service
     // names. The callbacks are static and survive reloads.
@@ -93,6 +99,13 @@ void GameState::Update(float deltaTime)
     // ESC -> clean restart back to the title/menu (dev path, like 25_GameWorld's
     // reload). One-shot per press.
     auto* input = Input::InputSystem::Get();
+
+    // F1 toggles the debug overlay (hidden by default; see DebugUI()).
+    if (input != nullptr && input->IsKeyPressed(Input::KeyCode::F1))
+    {
+        mShowDebugUI = !mShowDebugUI;
+    }
+
     if (input != nullptr && input->IsKeyPressed(Input::KeyCode::ESCAPE))
     {
         ReloadLevel();
@@ -149,6 +162,12 @@ void GameState::Render()
 
 void GameState::DebugUI()
 {
+    // Hidden during normal play; F1 (handled in Update) reveals it for debugging.
+    if (!mShowDebugUI)
+    {
+        return;
+    }
+
     ImGui::Begin("Critical Core 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("Round: %d", mGameFlow.GetRound());

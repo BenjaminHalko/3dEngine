@@ -6,10 +6,10 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "Render2DComponent": {
-      "Depth": -5.0
+      "Depth": 45.0
     },
     "PlayerComponent": {
-      "Depth": -5.0,
+      "Depth": 45.0,
       "Mass": 500.0
     }
   }

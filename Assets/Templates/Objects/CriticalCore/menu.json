@@ -6,7 +6,7 @@
       "Scale": [ 1.0, 1.0, 1.0 ]
     },
     "MenuComponent": {
-      "Depth": -100.0
+      "Depth": 0.0
     }
   }
 }

@@ -132,7 +132,8 @@ class CriticalCore2DRenderService final : public Engine::Service
     std::vector<Render2DComponent*> mRenderables;
     bool mSortDirty = false;
 
-    Graphics::Color mClearColor = Graphics::Colors::Black;
+    // Navy backdrop #00001a = RGB(0,0,26) (oBackground/Draw_0.gml:13 merge_color base).
+    Graphics::Color mClearColor = Graphics::Color{0.0f, 0.0f, 26.0f / 255.0f, 1.0f};
 
     // Camera offset applied to the 2D scene (see header notes).
     float mCameraOffsetX = 0.0f;

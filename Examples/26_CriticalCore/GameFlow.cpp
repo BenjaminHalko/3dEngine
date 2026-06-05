@@ -540,8 +540,14 @@ PlayerComponent* GameFlow::SpawnPlayer()
     }
     if (TransformComponent* transform = go->GetComponent<TransformComponent>())
     {
+        // GameStart.gml:69 spawns at (128, 0), ABOVE the octagon's top wall (y=8).
+        // Safe in the GML (oPlayer's collision mask is a fixed 16x16 ellipse, radius
+        // 8, never reaching the wall), but our port collides with the dynamic
+        // mass-radius (~12.6), so a player there overlaps the wall and dies the
+        // instant it moves. Spawn at the arena centre instead (inside, away from all
+        // walls); the "outside-core" gate (pEntity:55) + deathDelay still protect it.
         transform->position.x = Arena::kCenterX; // room_width/2 = 128
-        transform->position.y = 0.0f;            // top of the room (GameStart.gml:69)
+        transform->position.y = Arena::kCenterY; // room_height/2 = 112 (safe interior)
         transform->position.z = 0.0f;
     }
     go->Initialize();

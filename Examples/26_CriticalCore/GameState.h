@@ -52,6 +52,10 @@ class GameState : public Engine::AppState
     Engine::CriticalCore::GameClock mClock;
     Engine::CriticalCore::GameFlow mGameFlow;
 
+    // Debug overlay (round/score/lives/beat) is HIDDEN by default during normal
+    // play; F1 toggles it (checked each frame in Update, gated in DebugUI).
+    bool mShowDebugUI = false;
+
     // Resolved from the world after LoadLevel (refreshed on reload).
     Engine::CriticalCore::CriticalCore2DRenderService* mRenderService = nullptr;
     Engine::CriticalCore::CameraShakeService* mCameraShake = nullptr;

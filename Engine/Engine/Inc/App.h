@@ -21,6 +21,11 @@ class App final
 
     void Quit();
 
+    void SetQuitOnEscape(bool quitOnEscape)
+    {
+        mQuitOnEscape = quitOnEscape;
+    }
+
     template <class StateType> void AddState(const std::string& stateName)
     {
         static_assert(std::is_base_of_v<AppState, StateType>,
@@ -49,5 +54,6 @@ class App final
     AppState* mNextState = nullptr;
 
     bool mRunning = false;
+    bool mQuitOnEscape = true;
 };
 } // namespace Engine
