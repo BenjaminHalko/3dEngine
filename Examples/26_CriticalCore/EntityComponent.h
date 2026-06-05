@@ -66,6 +66,14 @@ class EntityComponent : public Render2DComponent
     static float RadiusFromMass(float mass);
     float Radius() const;
 
+    // Radius for WALL + CORE collision = the GameMaker sprite-mask radius (NOT the
+    // dynamic mass radius). PlayerComponent overrides this to a fixed constant
+    // (oPlayer's 16x16 mask); mass radius is then absorb/visual only.
+    virtual float CollisionRadius() const
+    {
+        return Radius();
+    }
+
     // The base picks NON-player reflection vs player push-out + death from this.
     // PlayerComponent (task 22) overrides to return true.
     virtual bool IsPlayer() const
@@ -85,6 +93,13 @@ class EntityComponent : public Render2DComponent
     virtual void OnWallTouched(const WallHit& hit)
     {
         (void)hit;
+    }
+
+    // Fired when an IsPlayer() entity overlaps the Core. PlayerComponent overrides
+    // it to GameOver (the user-requested "core kills you"); non-player bodies use
+    // their own redirect path and never call it. Default: no-op.
+    virtual void OnCoreTouched()
+    {
     }
 
     // GameMaker pEntity fields (Create_0.gml). Subclasses tune these on spawn:

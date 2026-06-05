@@ -1,12 +1,12 @@
 {
-    "mMusic": { "file": "mMusic.ogg", "duration": 195.692313 },
-    "snBlip": { "file": "snBlip.wav", "duration": 0.131542 },
-    "snCollect": { "file": "snCollect.wav", "duration": 0.039660 },
-    "snExplode": { "file": "snExplode.wav", "duration": 1.686893 },
-    "snFireHit": { "file": "snFireHit.wav", "duration": 0.892721 },
-    "snFireShoot": { "file": "snFireShoot.wav", "duration": 0.548934 },
-    "snHit": { "file": "snHit.wav", "duration": 0.411315 },
-    "snPointBoost": { "file": "snPointBoost.wav", "duration": 1.180272 },
-    "snPointLoss": { "file": "snPointLoss.wav", "duration": 1.180159 },
-    "snStart": { "file": "snStart.wav", "duration": 1.265601 }
+    "mMusic": { "file": "mMusic.ogg", "duration": 195.692313, "volume": 1.0 },
+    "snBlip": { "file": "snBlip.wav", "duration": 0.131542, "volume": 0.15 },
+    "snCollect": { "file": "snCollect.wav", "duration": 0.039660, "volume": 1.0 },
+    "snExplode": { "file": "snExplode.wav", "duration": 1.686893, "volume": 0.4 },
+    "snFireHit": { "file": "snFireHit.wav", "duration": 0.892721, "volume": 0.25 },
+    "snFireShoot": { "file": "snFireShoot.wav", "duration": 0.548934, "volume": 0.25 },
+    "snHit": { "file": "snHit.wav", "duration": 0.411315, "volume": 0.4 },
+    "snPointBoost": { "file": "snPointBoost.wav", "duration": 1.180272, "volume": 1.0 },
+    "snPointLoss": { "file": "snPointLoss.wav", "duration": 1.180159, "volume": 1.0 },
+    "snStart": { "file": "snStart.wav", "duration": 1.265601, "volume": 0.35 }
 }

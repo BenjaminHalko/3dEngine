@@ -67,7 +67,7 @@ void EntityComponent::UpdateEntity()
     float x = (mEntityTransform != nullptr) ? mEntityTransform->position.x : 0.0f;
     float y = (mEntityTransform != nullptr) ? mEntityTransform->position.y : 0.0f;
 
-    const float radius = Radius();
+    const float radius = CollisionRadius();
     const bool isPlayer = IsPlayer();
 
     // place_meeting(x,y,oWall) predicate for the pixel-step marches. Uses the
@@ -124,15 +124,23 @@ void EntityComponent::UpdateEntity()
         }
         else
         {
-            // place_meeting(x,y,oCore) && non-player: radial push-out off the
-            // core (Step_0.gml:49-54) - velocity redirected straight outward.
+            // place_meeting(x,y,oCore): non-player bodies get a radial push-out
+            // off the core (Step_0.gml:49-54); the PLAYER instead dies on contact
+            // (user-requested "the core should kill you").
             const CoreHit core = CircleVsCore(x, y, radius, sCoreScale);
-            if (core.hit && !isPlayer)
+            if (core.hit)
             {
-                const float dir = CoreRedirectDir(x, y);
-                const float len = PointDistance(0.0f, 0.0f, xSpd, ySpd);
-                xSpd = LengthDirX(len, dir);
-                ySpd = LengthDirY(len, dir);
+                if (!isPlayer)
+                {
+                    const float dir = CoreRedirectDir(x, y);
+                    const float len = PointDistance(0.0f, 0.0f, xSpd, ySpd);
+                    xSpd = LengthDirX(len, dir);
+                    ySpd = LengthDirY(len, dir);
+                }
+                else
+                {
+                    OnCoreTouched();
+                }
             }
         }
     }

@@ -23,7 +23,8 @@ class Render2D;
 //       1 = LEADERBOARD  -> opens an in-place leaderboard screen (local board)
 //       2 = USERNAME     -> inline text entry (<=10 chars)
 //       3 = VOLUME       -> LEFT/RIGHT slider, 0..1
-//   * A render/effects toggle (TAB) — the global.render setting; persisted.
+//   * A render/effects toggle (CONTROL key combo, per oGlobalController) — the
+//     global.render setting; persisted. It is NOT a menu list item.
 //
 // All settings (username / volume / render) persist through the local
 // Leaderboard JSON save file (task 30, criticalcore_save.json), which replaced
@@ -75,6 +76,11 @@ class MenuComponent final : public Render2DComponent
     // The game flow (task 27) polls this each fixed step to launch GameStart.
     static bool ConsumeStartRequest();
 
+    // Game-over hand-off (GameStart.gml GameEnd -> GotoLeaderboard): the flow calls
+    // this after posting the score; the dormant menu reactivates and shows the
+    // leaderboard. ENTER there starts a NEW game (oLeaderboardAPI inGame branch).
+    static void RequestGameOverLeaderboard();
+
   private:
     // Loads the title / slider sprites + bitmap fonts into the shared Render2D
     // once (lazy, on first Draw — the service-owned Render2D is guaranteed
@@ -116,6 +122,8 @@ class MenuComponent final : public Render2DComponent
     // --- Menu state (oMenu instance vars) ---
     int mOption = 0;                 // 0..3, wraps inclusively (4 options)
     bool mShowLeaderboard = false;   // leaderboard sub-screen active
+    bool mGameOverMode = false;      // leaderboard shown after GameEnd (ENTER -> new game)
+    bool mSelectDisabled = false;    // skip one ENTER frame (oLeaderboardAPI disableSelect)
     float mUsernameFlash = 0.0f;     // red flash when START pressed with no name
     bool mBlink = false;             // username caret blink (Alarm_0)
     int mBlinkTimer = 0;             // frames until next blink toggle (alarm[0])
@@ -141,5 +149,6 @@ class MenuComponent final : public Render2DComponent
     // --- Shared signals (single-menu game) ---
     static bool sMenuActive;
     static bool sStartRequested;
+    static bool sGameOverLeaderboardRequest;
 };
 } // namespace Engine::CriticalCore

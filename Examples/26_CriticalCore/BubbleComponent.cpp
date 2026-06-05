@@ -31,9 +31,8 @@ namespace
 
     // --- SFX (Load-once static-local handles, same idiom as GameFlow.cpp) ------
     // absorb() audio (oBubble/Step_0.gml:9-10): a DOUBLE_POINTS bubble plays
-    // snPointBoost; every other absorbed bubble plays snCollect. (The GM pitch
-    // args on snCollect have no SoundEffectManager equivalent, so only the play
-    // is ported.)
+    // snPointBoost; every other absorbed bubble plays snCollect at a mass-scaled
+    // pitch (applied at the Absorb() call site via SoundEffectManager::SetPitch).
     Engine::Audio::SoundId CollectSfx()
     {
         static Engine::Audio::SoundId id =
@@ -306,10 +305,23 @@ void BubbleComponent::Absorb()
         return;
     }
 
-    // Step_0.gml:9-10 - DOUBLE_POINTS plays snPointBoost, otherwise snCollect.
+    // Step_0.gml:9-10 - DOUBLE_POINTS plays snPointBoost (default pitch);
+    // otherwise snCollect at a mass-scaled pitch:
+    //   1.25 * min(1.4, (absorbAmount*0.4 + 240)/300 - 0.2)
     if (Engine::Audio::SoundEffectManager* sfx = Engine::Audio::SoundEffectManager::Get())
     {
-        sfx->Play(mState == State::DOUBLE_POINTS ? PointBoostSfx() : CollectSfx());
+        if (mState == State::DOUBLE_POINTS)
+        {
+            sfx->Play(PointBoostSfx());
+        }
+        else
+        {
+            const float pitch =
+                1.25f * std::min(1.4f, (mAbsorbAmount * 0.4f + 240.0f) / 300.0f - 0.2f);
+            const Engine::Audio::SoundId collect = CollectSfx();
+            sfx->SetPitch(collect, pitch);
+            sfx->Play(collect);
+        }
     }
 
     // Score popup above the absorber's head (Step_0.gml:11-14). The amount shown

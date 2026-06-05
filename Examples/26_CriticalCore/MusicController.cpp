@@ -7,6 +7,12 @@
 
 namespace Engine::CriticalCore
 {
+namespace
+{
+    // mMusic authored base gain (sounds/mMusic/mMusic.yy "volume").
+    constexpr float kMusicBaseVolume = 1.0f;
+}
+
 //==================================================================================
 // Pure beat math — single source of truth (production + self-test).
 //==================================================================================
@@ -54,7 +60,7 @@ void MusicControllerComponent::Initialize()
     // Load + play the looping music ONCE. After this we only read the cursor —
     // never Stop/Clear while polling (audio-thread race, SoundEffectManager.h).
     Engine::Audio::SoundEffectManager* sm = Engine::Audio::SoundEffectManager::Get();
-    mMusicId = sm->Load(mMusicPath);
+    mMusicId = sm->Load(mMusicPath, kMusicBaseVolume);
     sm->Play(mMusicId, /*loop=*/true);
     mMusicStarted = true;
 

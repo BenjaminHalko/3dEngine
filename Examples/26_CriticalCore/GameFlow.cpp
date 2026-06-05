@@ -8,6 +8,7 @@
 #include "GmHelpers.h" // LengthDirX/Y, RandomRange, IRandom
 #include "MenuComponent.h"
 #include "PlayerComponent.h"
+#include "SpikeComponent.h"
 #include "TrailComponent.h"
 
 #include <Engine/Inc/Engine.h>
@@ -27,7 +28,6 @@ namespace
 // data-driven through these dedicated templates (mass/state read via Deserialize).
 constexpr const char* kCoreTemplate = "Assets/Templates/Objects/CriticalCore/core.json";
 constexpr const char* kPlayerTemplate = "Assets/Templates/Objects/CriticalCore/player.json";
-constexpr const char* kMenuTemplate = "Assets/Templates/Objects/CriticalCore/menu.json";
 constexpr const char* kBubbleRingTemplate = "Assets/Templates/Objects/CriticalCore/bubble_ring.json";
 constexpr const char* kBubbleWeaponTemplate = "Assets/Templates/Objects/CriticalCore/bubble_weapon.json";
 constexpr const char* kTrailTemplate = "Assets/Templates/Objects/CriticalCore/trail.json";
@@ -116,6 +116,22 @@ void GameFlow::Initialize(Engine::GameWorld* world)
 {
     mWorld = world;
     mCameraShake = (mWorld != nullptr) ? mWorld->GetService<CameraShakeService>() : nullptr;
+
+    // Reset all flow state to a fresh TITLE (inGame=false). The flow instance
+    // outlives a level reload (it is a GameState member), so an ESC->ReloadLevel
+    // must clear the previous run's score/round/lives/flags here or the rebuilt
+    // title would inherit a stale in-game state and never become interactive.
+    mScore = 0;
+    mRound = 1;
+    mLives = 3;
+    mInGame = false;
+    mGameOver = false;
+    mNextRound = false;
+    mRoundIntro = false;
+    mFrame = 0;
+    mScheduled.clear();
+    mCore = nullptr;
+    mPlayer = nullptr;
 
     // Local save: PB + username (the menu writes the same file; we Load to read it).
     mLeaderboard.Load();
@@ -313,8 +329,7 @@ void GameFlow::NextRound()
         mPlayer->SetMass(500.0f);          // with(oPlayer) mass=500 (GameOver.gml:66-68)
     }
 
-    // (instance_destroy(oSpike) (GameOver.gml:69): no spike registry exposed -
-    //  spikes self-destruct on contact; documented deviation.)
+    SpikeComponent::DestroyAllSpikes();    // instance_destroy(oSpike) (GameOver.gml:69)
 
     ScheduleAfter(90, [this]() {           // GameOver.gml:71-75
         if (mInGame)
@@ -339,7 +354,8 @@ void GameFlow::GameOver(bool instant)
     // (with(oCore) dash/hpHit reset (GameOver.gml:8-16) has no setter; the Core
     //  freezes while gameOver and RoundStart re-seeds it next round.)
 
-    BurstAllBubbles(); // burst every non-player bubble (GameOver.gml:17-20)
+    BurstAllBubbles();              // burst every non-player bubble (GameOver.gml:17-20)
+    SpikeComponent::DestroyAllSpikes(); // instance_destroy(oSpike) (GameOver.gml:27,33)
 
     if (!instant)
     {
@@ -409,17 +425,11 @@ void GameFlow::GameEnd()
     mGuiState.inGame = false;
     mGuiState.gameOver = false;
 
-    // Re-create the menu/title (GML ReturnToMenu instance_create_layer(oMenu)); the
-    // MenuComponent's Initialize reactivates the static menu flag. Guarded so we do
-    // not double-create while a menu is already active.
-    if (mWorld != nullptr && !MenuComponent::IsMenuActive())
-    {
-        GameObject* menu = mWorld->CreateGameObject("Menu", kMenuTemplate);
-        if (menu != nullptr)
-        {
-            menu->Initialize();
-        }
-    }
+    // GotoLeaderboard (GameStart.gml:27): the dormant level menu reactivates onto
+    // the post-game leaderboard, where ENTER starts a new game and ESC returns to
+    // the title. The menu object already exists (level-placed), so we only signal
+    // it - no second menu is created.
+    MenuComponent::RequestGameOverLeaderboard();
 }
 
 void GameFlow::PlayerExplode(bool small)
@@ -540,14 +550,13 @@ PlayerComponent* GameFlow::SpawnPlayer()
     }
     if (TransformComponent* transform = go->GetComponent<TransformComponent>())
     {
-        // GameStart.gml:69 spawns at (128, 0), ABOVE the octagon's top wall (y=8).
-        // Safe in the GML (oPlayer's collision mask is a fixed 16x16 ellipse, radius
-        // 8, never reaching the wall), but our port collides with the dynamic
-        // mass-radius (~12.6), so a player there overlaps the wall and dies the
-        // instant it moves. Spawn at the arena centre instead (inside, away from all
-        // walls); the "outside-core" gate (pEntity:55) + deathDelay still protect it.
+        // GameStart.gml:69 spawns at (room_width/2, 0) = (128, 0), just above the
+        // octagon's top wall. This is now SAFE because PlayerComponent collides with
+        // its fixed sprite-mask radius (~7), not the dynamic mass radius - matching
+        // the original game's 1px spawn gap (a prior fix wrongly moved the spawn onto
+        // the Core at the arena centre).
         transform->position.x = Arena::kCenterX; // room_width/2 = 128
-        transform->position.y = Arena::kCenterY; // room_height/2 = 112 (safe interior)
+        transform->position.y = 0.0f;            // room_height topmost (GameStart.gml:69)
         transform->position.z = 0.0f;
     }
     go->Initialize();

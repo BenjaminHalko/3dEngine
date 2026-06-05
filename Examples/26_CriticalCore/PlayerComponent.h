@@ -53,6 +53,15 @@ class PlayerComponent final : public EntityComponent
         return true;
     }
 
+    // oPlayer's collision mask is the FIXED sPlayerMask (16x16 ellipse, origin
+    // (8,8) -> 7px reach toward the top wall), independent of the player's grown
+    // mass. Using this for wall/core collision (instead of the ~12.6 mass radius)
+    // is what keeps the (128,0) spawn safe and matches the original game.
+    float CollisionRadius() const override
+    {
+        return kPlayerMaskRadius;
+    }
+
     // ----- Bubble-absorb grants (task 23 bubble collection) -----
     // Add absorbed mass (oBubble collect -> oPlayer.mass += ...).
     void AddMass(float amount)
@@ -135,10 +144,17 @@ class PlayerComponent final : public EntityComponent
     // the GameOver signal (oPlayer is the player-context for pEntity:44-48).
     void OnWallTouched(const WallHit& hit) override;
 
+    // Fired by EntityComponent when the player overlaps the Core; kills the player.
+    void OnCoreTouched() override;
+
   private:
     void TriggerGameOver();
     void SpawnTrail(float px, float py, float radius);
     void SpawnFireball(float px, float py);
+
+    // Fixed wall/core collision reach matching sPlayerMask (16x16 ellipse, origin
+    // (8,8)): 7px down to the top wall leaves the same 1px spawn gap GameMaker has.
+    static constexpr float kPlayerMaskRadius = 7.0f;
 
     // oPlayer/Create_0.gml state.
     float mPulse = 0.0f;        // purple collect pulse, decays to 0

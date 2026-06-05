@@ -68,6 +68,16 @@ SoundId SoundEffectManager::Load(const std::filesystem::path& fileName)
     return soundId;
 }
 
+SoundId SoundEffectManager::Load(const std::filesystem::path& fileName, float baseVolume)
+{
+    SoundId id = Load(fileName);
+    if (id != 0)
+    {
+        SetVolume(id, baseVolume);
+    }
+    return id;
+}
+
 void SoundEffectManager::Clear()
 {
     for (auto& [id, soundPtr] : mInventory)
@@ -136,6 +146,27 @@ float SoundEffectManager::GetVolume(SoundId id) const
     {
         ma_sound* sound = static_cast<ma_sound*>(iter->second);
         return ma_sound_get_volume(sound);
+    }
+    return 0.0f;
+}
+
+void SoundEffectManager::SetPitch(SoundId id, float pitch)
+{
+    auto iter = mInventory.find(id);
+    if (iter != mInventory.end() && iter->second != nullptr)
+    {
+        ma_sound* sound = static_cast<ma_sound*>(iter->second);
+        ma_sound_set_pitch(sound, pitch);
+    }
+}
+
+float SoundEffectManager::GetPitch(SoundId id) const
+{
+    auto iter = mInventory.find(id);
+    if (iter != mInventory.end() && iter->second != nullptr)
+    {
+        ma_sound* sound = static_cast<ma_sound*>(iter->second);
+        return ma_sound_get_pitch(sound);
     }
     return 0.0f;
 }

@@ -9,8 +9,11 @@ namespace Engine::CriticalCore
 {
 namespace
 {
-// #61FFA0 highlight green (oGUI Draw_64.gml:15,41 — NEW PB! + ROUND COMPLETE!).
+// #61FFA0 highlight green (oGUI Draw_64.gml:41 — ROUND COMPLETE! banner).
 constexpr Graphics::Color kHighlightColor{0.380392163f, 1.0f, 0.627451003f, 1.0f};
+
+// c_lime = RGB(0,255,0): the NEW PB! colour (user-requested override of the GM #61FFA0).
+constexpr Graphics::Color kNewPbColor{0.0f, 1.0f, 0.0f, 1.0f};
 
 // fFont atlas line height (task 4: fFont lineHeight == 8). Two-line HUD labels
 // step down by this; valign==middle banners pre-subtract half of it.
@@ -107,7 +110,7 @@ void GuiComponent::Draw(Render2D& render2D)
     // --- NEW PB! indicator (Draw_64:14-18, #61FFA0). ---
     if (s.newPB)
     {
-        render2D.DrawText(Font2D::Font, "NEW PB!", 8.0f, 32.0f, kHighlightColor);
+        render2D.DrawText(Font2D::Font, "NEW PB!", 8.0f, 32.0f, kNewPbColor);
     }
 
     // --- BL: PB (Draw_64:25). ---
@@ -159,13 +162,10 @@ void GuiComponent::Draw(Render2D& render2D)
                           kCenterY - kFontHalfLine, white, TextAlign::Center);
     }
 
-    // --- GAME OVER (Draw_64:57-61). The cut online oLeaderboardAPI.draw gate is
-    //     dropped (out of scope); the local Leaderboard replaces it. ---
-    if (s.gameOver)
-    {
-        render2D.DrawText(Font2D::Font, "GAME OVER", kCenterX, 46.0f - kFontHalfLine, white,
-                          TextAlign::Center);
-    }
+    // GAME OVER (Draw_64:57-61) is gated in GM on `gameOver and oLeaderboardAPI.draw`
+    // - i.e. ONLY on the post-game leaderboard, which the MenuComponent now renders.
+    // Drawing it on every death (the old unconditional s.gameOver) was unfaithful, so
+    // it is intentionally not drawn here.
 
     // --- MOVE TO START tutorial (Draw_64:63-67, Alarm_1; gated on inGame). ---
     if (mMoveTutorial && s.inGame)

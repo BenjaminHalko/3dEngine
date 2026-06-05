@@ -39,8 +39,22 @@ constexpr float kSliderPixels = 60.0f;                       // sAudioLine width
 // GameMaker named colors used by the menu.
 const Graphics::Color kWhite = Graphics::Colors::White;
 const Graphics::Color kRed = Graphics::Colors::Red;
-const Graphics::Color kDkGray = Graphics::Color{0.25f, 0.25f, 0.25f, 1.0f}; // c_dkgray (64,64,64)
-const Graphics::Color kHighlight = Graphics::Color{0.38f, 1.0f, 0.63f, 1.0f}; // #61FFA0 player row
+const Graphics::Color kDkGray = Graphics::Color{0.25f, 0.25f, 0.25f, 1.0f};  // c_dkgray (64,64,64)
+const Graphics::Color kYellow = Graphics::Color{1.0f, 1.0f, 0.0f, 1.0f};     // c_yellow (player row)
+
+// GameMaker ordinal suffix for a 1-based rank (oLeaderboardAPI Draw_64.gml:35-38).
+std::string Ordinal(int n)
+{
+    const int tens = n % 100;
+    const int ones = n % 10;
+    if (ones == 1 && tens != 11)
+        return std::to_string(n) + "st";
+    if (ones == 2 && tens != 12)
+        return std::to_string(n) + "nd";
+    if (ones == 3 && tens != 13)
+        return std::to_string(n) + "rd";
+    return std::to_string(n) + "th";
+}
 
 // Held = current level key state (true for the whole press). Used directly for
 // modifier keys (shift) and as the basis for the menu's own edge detection.
@@ -69,6 +83,7 @@ void PlayBlip()
 // Shared single-menu signals.
 bool MenuComponent::sMenuActive = false;
 bool MenuComponent::sStartRequested = false;
+bool MenuComponent::sGameOverLeaderboardRequest = false;
 
 bool MenuComponent::IsMenuActive()
 {
@@ -85,6 +100,11 @@ bool MenuComponent::ConsumeStartRequest()
     const bool requested = sStartRequested;
     sStartRequested = false;
     return requested;
+}
+
+void MenuComponent::RequestGameOverLeaderboard()
+{
+    sGameOverLeaderboardRequest = true;
 }
 
 bool MenuComponent::EdgePressed(KeyCode key) const
@@ -183,26 +203,58 @@ void MenuComponent::Update(float deltaTime)
         }
     } snapshotGuard{this};
 
-    // Once START fires the menu stops responding (the flow destroys this object).
+    // Runs even while !sMenuActive (the dormant menu owns the post-game board), so
+    // it must precede the gate below. GameStart.gml GameEnd -> GotoLeaderboard.
+    if (sGameOverLeaderboardRequest)
+    {
+        sGameOverLeaderboardRequest = false;
+        sMenuActive = true;
+        mShowLeaderboard = true;
+        mGameOverMode = true;
+        mSelectDisabled = true; // oLeaderboardAPI disableSelect (ignore stale ENTER)
+        mLeaderboard.Load();
+        mUsername = mLeaderboard.GetUsername();
+    }
+
     if (!sMenuActive)
     {
         return;
     }
 
-    // Leaderboard sub-screen: ENTER or ESC returns to the menu.
     if (mShowLeaderboard)
     {
-        if (EdgePressed(KeyCode::RETURN) || EdgePressed(KeyCode::ESCAPE))
+        if (mSelectDisabled)
+        {
+            mSelectDisabled = false;
+        }
+        else if (EdgePressed(KeyCode::RETURN))
+        {
+            if (mGameOverMode)
+            {
+                // oLeaderboardAPI Step_0:24-29 inGame branch: ENTER -> NEW game.
+                mShowLeaderboard = false;
+                mGameOverMode = false;
+                sStartRequested = true;
+                sMenuActive = false;
+            }
+            else
+            {
+                mShowLeaderboard = false;
+            }
+        }
+        else if (EdgePressed(KeyCode::ESCAPE))
         {
             mShowLeaderboard = false;
+            mGameOverMode = false;
         }
         mUsernameFlash = Approach(mUsernameFlash, 0.0f, 0.04f);
         return;
     }
 
-    // Render/FX toggle (global.render). Bound to TAB so it never collides with
-    // username typing; persisted immediately.
-    if (EdgePressed(KeyCode::TAB))
+    // Render/FX toggle (global.render) - the CONTROL key combo, faithful to
+    // oGlobalController/Step_0.gml:22 (keyboard_check_pressed(vk_control)); NOT a
+    // menu list item. Persisted immediately.
+    if (EdgePressed(KeyCode::LCONTROL) || EdgePressed(KeyCode::RCONTROL))
     {
         mRender = !mRender;
         mLeaderboard.SetRender(mRender);
@@ -444,40 +496,48 @@ void MenuComponent::DrawMenu(Render2D& render2D)
     const float knobX = kMenuX + std::round(kSliderPixels * mVolume);
     render2D.DrawSprite(mAudioLineFillTex, knobX, menuY, 0.0f, 2.0f, 1.0f, 1.0f, 0.0f, kWhite);
     render2D.DrawSprite(mAudioIconTex, kMenuX + 62.0f, menuY, 0.0f, 3.0f, 1.0f, 1.0f, 0.0f, kWhite);
-
-    // Render/FX toggle indicator (TAB) — not in the GML menu, but the brief
-    // requires an in-menu render toggle; shown compactly beneath the slider.
-    render2D.DrawText(Font2D::Font, mRender ? "FX ON" : "FX OFF", kMenuX, menuY + 10.0f, kWhite);
 }
 
 void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
 {
-    // Local board (task 30) — replaces the cut online leaderboard screen.
-    render2D.DrawText(Font2D::Font, "LEADERBOARD", kInternalWidth * 0.5f, 14.0f, kWhite, TextAlign::Center);
+    // Faithful port of oLeaderboardAPI/Draw_64.gml (non-gxGames branch): a
+    // PLACE / NAME / SCORE column board, the player's own row in c_yellow, and a
+    // PRESS ENTER TO CONTINUE prompt. The local board (task 30) stores name+score
+    // only, so the GM ROUND/level column is dropped.
+    constexpr float kCenterX = static_cast<float>(kInternalWidth) * 0.5f;
+    constexpr float kPlaceX = 24.0f;
+    constexpr float kNameX = 76.0f;
+    constexpr float kScoreX = 232.0f; // right-aligned
+
+    render2D.DrawText(Font2D::Font, "LEADERBOARD", kCenterX, 10.0f, kWhite, TextAlign::Center);
+
+    render2D.DrawText(Font2D::Score, "PLACE", kPlaceX, 30.0f, kDkGray, TextAlign::Left);
+    render2D.DrawText(Font2D::Score, "NAME", kNameX, 30.0f, kDkGray, TextAlign::Left);
+    render2D.DrawText(Font2D::Score, "SCORE", kScoreX, 30.0f, kDkGray, TextAlign::Right);
 
     const std::vector<Leaderboard::Entry>& entries = mLeaderboard.Entries();
     if (entries.empty())
     {
-        render2D.DrawText(Font2D::Score, "NO SCORES YET", kInternalWidth * 0.5f, 100.0f, kDkGray, TextAlign::Center);
+        render2D.DrawText(Font2D::Score, "NO SCORES YET", kCenterX, 100.0f, kDkGray, TextAlign::Center);
     }
     else
     {
-        float rowY = 36.0f;
+        float rowY = 48.0f;
         for (std::size_t i = 0; i < entries.size(); ++i)
         {
-            // Highlight the player's own rows by username match (the exact-run
-            // PlayerRowIndex highlight is for the post-game board, not the menu).
             const bool isPlayer = !mUsername.empty() && entries[i].name == mUsername;
-            const Graphics::Color rowCol = isPlayer ? kHighlight : kWhite;
+            const Graphics::Color rowCol = isPlayer ? kYellow : kWhite;
 
-            const std::string rank = std::to_string(i + 1) + ". " + entries[i].name;
-            render2D.DrawText(Font2D::Score, rank, 40.0f, rowY, rowCol, TextAlign::Left);
-            render2D.DrawText(Font2D::Score, std::to_string(entries[i].score), 216.0f, rowY, rowCol, TextAlign::Right);
+            render2D.DrawText(Font2D::Score, Ordinal(static_cast<int>(i) + 1), kPlaceX, rowY, rowCol,
+                              TextAlign::Left);
+            render2D.DrawText(Font2D::Score, entries[i].name, kNameX, rowY, rowCol, TextAlign::Left);
+            render2D.DrawText(Font2D::Score, std::to_string(entries[i].score), kScoreX, rowY, rowCol,
+                              TextAlign::Right);
             rowY += 14.0f;
         }
     }
 
-    render2D.DrawText(Font2D::Font, "PRESS ENTER", kInternalWidth * 0.5f, 208.0f, kWhite, TextAlign::Center);
+    render2D.DrawText(Font2D::Font, "PRESS ENTER TO CONTINUE", kCenterX, 200.0f, kDkGray, TextAlign::Center);
 }
 
 void MenuComponent::DebugUI()

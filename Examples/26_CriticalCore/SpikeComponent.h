@@ -5,6 +5,8 @@
 
 #include <Engine/Inc/Engine.h>
 
+#include <vector>
+
 namespace Engine::CriticalCore
 {
 // ---------------------------------------------------------------------------
@@ -46,10 +48,18 @@ class SpikeComponent final : public EntityComponent
     SET_TYPE_ID(CustomComponentId::SpikeComponent);
 
     void Initialize() override;
+    void Terminate() override;
     void Update(float deltaTime) override; // one call == one fixed step (GameClock::kStep)
     void Draw(Render2D& render2D) override;
 
+    // Live spike registry (mirrors BubbleComponent::AllBubbles). The flow uses it
+    // to clear every spike when the player dies (GameOver.gml instance_destroy(oSpike)).
+    static const std::vector<SpikeComponent*>& AllSpikes();
+    static void DestroyAllSpikes();
+
   private:
+    void DestroySelf();
+
     Graphics::TextureId mSpikeTexture = 0;
     bool mLoaded = false;
     float mImageAngle = 0.0f; // image_angle (deg); decremented 10 per step

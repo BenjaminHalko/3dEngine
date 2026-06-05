@@ -10,6 +10,9 @@
 #include "Render2D.h"
 #include "ScoreComponent.h"
 
+#include <algorithm>
+#include <vector>
+
 using namespace Engine;
 
 namespace Engine::CriticalCore
@@ -18,6 +21,12 @@ namespace
 {
 // oSpike collision mask is sSpike (8x8, origin (4,4)) -> radius 4.
 constexpr float kSpikeRadius = 4.0f;
+
+std::vector<SpikeComponent*>& LiveSpikes()
+{
+    static std::vector<SpikeComponent*> spikes;
+    return spikes;
+}
 
 // Load the snPointLoss SFX once (shared SoundId across all spikes).
 Engine::Audio::SoundId PointLossSfx()
@@ -67,10 +76,37 @@ void SpawnScorePopup(GameWorld& world, float x, float y, int amount)
 }
 } // namespace
 
+const std::vector<SpikeComponent*>& SpikeComponent::AllSpikes()
+{
+    return LiveSpikes();
+}
+
+void SpikeComponent::DestroyAllSpikes()
+{
+    for (SpikeComponent* spike : LiveSpikes())
+    {
+        if (spike != nullptr)
+        {
+            spike->DestroySelf();
+        }
+    }
+}
+
+void SpikeComponent::DestroySelf()
+{
+    if (mDestroyed)
+    {
+        return;
+    }
+    mDestroyed = true;
+    GetOwner().GetWorld().DestroyGameObject(GetOwner().GetHandle());
+}
+
 void SpikeComponent::Initialize()
 {
     // Base caches transforms + registers with the 2D render service.
     EntityComponent::Initialize();
+    LiveSpikes().push_back(this);
 
     // Drain the Core's launch params (initial velocity). Spikes are massless.
     CoreComponent::LaunchParams params;
@@ -89,6 +125,13 @@ void SpikeComponent::Initialize()
         mSpikeTexture = service->GetRender2D().LoadTexture("CriticalCore/sSpike.png");
         mLoaded = true;
     }
+}
+
+void SpikeComponent::Terminate()
+{
+    std::vector<SpikeComponent*>& spikes = LiveSpikes();
+    spikes.erase(std::remove(spikes.begin(), spikes.end(), this), spikes.end());
+    EntityComponent::Terminate();
 }
 
 void SpikeComponent::Update(float deltaTime)
@@ -137,8 +180,7 @@ void SpikeComponent::Update(float deltaTime)
         }
 
         bubble->BurstBubble(); // BurstBubble(_bubble) (Step_0.gml:13-14)
-        mDestroyed = true;     // instance_destroy() (Step_0.gml:24)
-        world.DestroyGameObject(GetOwner().GetHandle());
+        DestroySelf();         // instance_destroy() (Step_0.gml:24)
         return;
     }
 
@@ -153,8 +195,7 @@ void SpikeComponent::Update(float deltaTime)
             AddScoreDelta(-500);                      // global.score -= 500
             player->SetMass(player->Mass() - 200.0f); // _bubble.mass -= 200
 
-            mDestroyed = true; // instance_destroy() (Step_0.gml:24)
-            world.DestroyGameObject(GetOwner().GetHandle());
+            DestroySelf(); // instance_destroy() (Step_0.gml:24)
             return;
         }
     }
