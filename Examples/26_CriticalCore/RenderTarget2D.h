@@ -94,6 +94,16 @@ class RenderTarget2D final
     };
     using BlurBuffer = Graphics::TypedConstantBuffer<BlurData>;
 
+    // Mirrors CriticalCore_BrightExtract.hlsl BrightBuffer (register b0).
+    struct BrightData
+    {
+        float threshold = 0.0f;
+        float knee = 0.0f;
+        float intensity = 0.0f;
+        float pad0 = 0.0f;
+    };
+    using BrightBuffer = Graphics::TypedConstantBuffer<BrightData>;
+
     int mInternalWidth = 256;
     int mInternalHeight = 224;
 
@@ -103,9 +113,12 @@ class RenderTarget2D final
     Graphics::PixelShader mPixelShader;
     Graphics::Sampler mSampler;
 
-    // Bloom resources (separable blur + additive composite).
+    // Bloom resources (bright-extract -> separable blur -> additive composite).
     Graphics::RenderTarget mGlowRT0;
     Graphics::RenderTarget mGlowRT1;
+    Graphics::VertexShader mBrightVertexShader;
+    Graphics::PixelShader mBrightPixelShader;
+    BrightBuffer mBrightBuffer;
     Graphics::VertexShader mBlurVertexShader;
     Graphics::PixelShader mBlurPixelShader;
     BlurBuffer mBlurBuffer;

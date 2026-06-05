@@ -76,6 +76,12 @@ class MenuComponent final : public Render2DComponent
     // The game flow (task 27) polls this each fixed step to launch GameStart.
     static bool ConsumeStartRequest();
 
+    // Flow-authoritative in-game gate (pushed every fixed step by GameFlow). The
+    // menu only owns the screen while NOT in-game; the instant a game starts this
+    // forces the title/menu to stop drawing and consuming input, and clearing it
+    // (back to title or the post-game leaderboard) restores it.
+    static void SetInGame(bool inGame);
+
     // Game-over hand-off (GameStart.gml GameEnd -> GotoLeaderboard): the flow calls
     // this after posting the score; the dormant menu reactivates and shows the
     // leaderboard. ENTER there starts a NEW game (oLeaderboardAPI inGame branch).
@@ -132,7 +138,6 @@ class MenuComponent final : public Render2DComponent
     Leaderboard mLeaderboard;        // local JSON save (settings + board)
     std::string mUsername;           // live edit buffer (<=10 chars)
     float mVolume = 0.7f;            // 0..1 master gain
-    bool mRender = true;             // global.render (FX) toggle
 
     // --- Loaded assets (lazy) ---
     bool mAssetsLoaded = false;
@@ -150,5 +155,6 @@ class MenuComponent final : public Render2DComponent
     static bool sMenuActive;
     static bool sStartRequested;
     static bool sGameOverLeaderboardRequest;
+    static bool sInGame;
 };
 } // namespace Engine::CriticalCore

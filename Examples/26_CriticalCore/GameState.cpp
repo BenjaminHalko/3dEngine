@@ -5,6 +5,7 @@
 #include "CriticalCore2DRenderService.h"
 #include "CustomRegistration.h"
 #include "GuiComponent.h"
+#include "MenuComponent.h"
 #include "MusicController.h" // BeatService
 #include "PlayerComponent.h"
 
@@ -106,7 +107,12 @@ void GameState::Update(float deltaTime)
         mShowDebugUI = !mShowDebugUI;
     }
 
-    if (input != nullptr && input->IsKeyPressed(Input::KeyCode::ESCAPE))
+    // ESC or Backspace -> clean restart back to the title/menu. Both keys are
+    // bound (the user tried Backspace too). Checked every render frame (NOT inside
+    // the fixed-step subloop), so IsKeyPressed's render-frame edge is reliable here
+    // (App::SetQuitOnEscape(false) in Initialize stops the App from quitting first).
+    if (input != nullptr &&
+        (input->IsKeyPressed(Input::KeyCode::ESCAPE) || input->IsKeyPressed(Input::KeyCode::BACKSPACE)))
     {
         ReloadLevel();
         return;

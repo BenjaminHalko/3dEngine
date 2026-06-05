@@ -238,6 +238,11 @@ class CoreComponent final : public Render2DComponent
     float mScale = 0.0f;           // smoothed visual scale (image_xscale)
     int mAlarm0 = -1;              // dash pause alarm (-1 = inactive)
 
+    // Boss-wall cage expansion [0..1]: 0 = collapsed into the Core, 1 = full
+    // size. BeginRound resets it to 0 so the cage visibly grows out of the Core
+    // on every round/game start (the GM scale+0.12 alone is too small to read).
+    float mBossWallExpand = 1.0f;
+
     // ----- Flow state (pushed by task 27) -----
     bool mPlayerHasMoved = false;
     bool mGameOver = false;

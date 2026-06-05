@@ -146,6 +146,11 @@ void GameFlow::Initialize(Engine::GameWorld* world)
     mGuiState.lives = mLives;
     mGuiState.round = mRound;
     mGuiState.pb = mLeaderboard.GetPB();
+
+    // Fresh title: drop the in-game gate immediately so the rebuilt menu is visible
+    // even before the first fixed step runs (an ESC reload from in-game otherwise
+    // leaves sInGame stale-true for a frame).
+    MenuComponent::SetInGame(false);
 }
 
 void GameFlow::Terminate()
@@ -211,6 +216,12 @@ void GameFlow::Update()
 
     // 8) Publish the HUD snapshot for oGUI.
     PushGuiState();
+
+    // 9) Drive the menu's in-game gate: the title/menu must vanish + stop taking
+    //    input the moment a game is running, and reappear (title or post-game
+    //    leaderboard) when it is not. This is authoritative over the menu's own
+    //    START latch so the menu can never linger on top of gameplay.
+    MenuComponent::SetInGame(mInGame);
 }
 
 // ---------------------------------------------------------------------------

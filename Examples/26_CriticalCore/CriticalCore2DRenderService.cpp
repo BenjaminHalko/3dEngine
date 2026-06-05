@@ -18,6 +18,7 @@ void CriticalCore2DRenderService::Initialize()
 void CriticalCore2DRenderService::Terminate()
 {
     mRenderables.clear();
+    SafeRelease(mDepthDisabledState);
     SafeRelease(mAlphaBlendState);
     mRenderTarget.Terminate();
     mRender2D.Terminate();
@@ -44,11 +45,29 @@ void CriticalCore2DRenderService::EnsureAlphaBlendState()
     device->CreateBlendState(&desc, &mAlphaBlendState);
 }
 
+void CriticalCore2DRenderService::EnsureDepthDisabledState()
+{
+    if (mDepthDisabledState != nullptr)
+    {
+        return;
+    }
+
+    D3D11_DEPTH_STENCIL_DESC desc{};
+    desc.DepthEnable = FALSE;
+    desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+    desc.StencilEnable = FALSE;
+
+    auto device = GraphicsSystem::Get()->GetDevice();
+    device->CreateDepthStencilState(&desc, &mDepthDisabledState);
+}
+
 void CriticalCore2DRenderService::Render()
 {
     // Ensure GameMaker draw order (depth descending) before painting.
     SortIfNeeded();
     EnsureAlphaBlendState();
+    EnsureDepthDisabledState();
 
     // Fold the camera's dynamic zoom (oCamera.scale) into the 2D view so every
     // draw this frame tracks it. Read from the static mirror so the render
@@ -60,6 +79,7 @@ void CriticalCore2DRenderService::Render()
     // Render the whole 2D scene into the 256x224 offscreen target.
     mRenderTarget.BeginScene(mClearColor);
     context->OMSetBlendState(mAlphaBlendState, nullptr, 0xffffffffu);
+    context->OMSetDepthStencilState(mDepthDisabledState, 0);
     // mRenderables is sorted by depth DESCENDING, so iterating front-to-back of
     // the vector draws the HIGHEST depth first (behind) and the LOWEST depth
     // last (in front) - exactly GameMaker's painter order.
@@ -68,6 +88,7 @@ void CriticalCore2DRenderService::Render()
         renderable->Draw(mRender2D);
     }
     context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
+    context->OMSetDepthStencilState(nullptr, 0);
     mRenderTarget.EndScene();
 
     // Letterboxed POINT upscale to the backbuffer.

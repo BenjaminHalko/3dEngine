@@ -84,10 +84,16 @@ void PlayBlip()
 bool MenuComponent::sMenuActive = false;
 bool MenuComponent::sStartRequested = false;
 bool MenuComponent::sGameOverLeaderboardRequest = false;
+bool MenuComponent::sInGame = false;
+
+void MenuComponent::SetInGame(bool inGame)
+{
+    sInGame = inGame;
+}
 
 bool MenuComponent::IsMenuActive()
 {
-    return sMenuActive;
+    return sMenuActive && !sInGame;
 }
 
 bool MenuComponent::IsStartPending()
@@ -158,7 +164,6 @@ void MenuComponent::Initialize()
     mLeaderboard.Load();
     mUsername = mLeaderboard.GetUsername();
     mVolume = mLeaderboard.GetVolume();
-    mRender = mLeaderboard.GetRender();
 
     // Create_0 guard: clamp an over-long persisted name.
     if (mUsername.size() > static_cast<std::size_t>(kMaxUsername))
@@ -216,7 +221,10 @@ void MenuComponent::Update(float deltaTime)
         mUsername = mLeaderboard.GetUsername();
     }
 
-    if (!sMenuActive)
+    // Flow-authoritative gate: the menu never owns the screen while a game is
+    // running (it hides + stops consuming input the instant GameStart flips
+    // sInGame), regardless of how START was reached.
+    if (sInGame || !sMenuActive)
     {
         return;
     }
@@ -249,16 +257,6 @@ void MenuComponent::Update(float deltaTime)
         }
         mUsernameFlash = Approach(mUsernameFlash, 0.0f, 0.04f);
         return;
-    }
-
-    // Render/FX toggle (global.render) - the CONTROL key combo, faithful to
-    // oGlobalController/Step_0.gml:22 (keyboard_check_pressed(vk_control)); NOT a
-    // menu list item. Persisted immediately.
-    if (EdgePressed(KeyCode::LCONTROL) || EdgePressed(KeyCode::RCONTROL))
-    {
-        mRender = !mRender;
-        mLeaderboard.SetRender(mRender);
-        mLeaderboard.Save();
     }
 
     UpdateNavigation();
@@ -432,8 +430,9 @@ void MenuComponent::Draw(Render2D& render2D)
 {
     EnsureAssets(render2D);
 
-    // Once START fires the flow owns the screen; draw nothing until destroyed.
-    if (!sMenuActive)
+    // While a game runs (sInGame) or the menu has been dismissed, draw nothing -
+    // the menu only paints the title and the post-game leaderboard.
+    if (sInGame || !sMenuActive)
     {
         return;
     }
@@ -494,7 +493,11 @@ void MenuComponent::DrawMenu(Render2D& render2D)
     menuY += 18.0f; // 175 — volume slider (sAudioLine track + knob + sAudio icon).
     render2D.DrawSprite(mAudioLineBgTex, kMenuX, menuY, 0.0f, 2.0f, 1.0f, 1.0f, 0.0f, kWhite);
     const float knobX = kMenuX + std::round(kSliderPixels * mVolume);
-    render2D.DrawSprite(mAudioLineFillTex, knobX, menuY, 0.0f, 2.0f, 1.0f, 1.0f, 0.0f, kWhite);
+    // sAudioLine frame 1 is a single 1px column at the texture's left edge; the
+    // sprite quad's leftmost texel does not rasterize through DrawSprite, so the
+    // moving handle is drawn as the equivalent 1px x 5px vertical tick (sAudioLine
+    // is 5px tall, origin y=2 => spans menuY-2 .. menuY+2).
+    render2D.DrawLine(knobX, menuY - 2.0f, knobX, menuY + 3.0f, 1.0f, kWhite);
     render2D.DrawSprite(mAudioIconTex, kMenuX + 62.0f, menuY, 0.0f, 3.0f, 1.0f, 1.0f, 0.0f, kWhite);
 }
 
@@ -543,7 +546,7 @@ void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
 void MenuComponent::DebugUI()
 {
     ImGui::Text("Menu  option=%d  active=%d  start=%d", mOption, sMenuActive ? 1 : 0, sStartRequested ? 1 : 0);
-    ImGui::Text("user='%s'  vol=%.2f  fx=%d", mUsername.c_str(), mVolume, mRender ? 1 : 0);
+    ImGui::Text("user='%s'  vol=%.2f  inGame=%d", mUsername.c_str(), mVolume, sInGame ? 1 : 0);
     if (mShowLeaderboard)
     {
         ImGui::Text("[leaderboard screen]");

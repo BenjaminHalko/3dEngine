@@ -205,6 +205,12 @@ void CoreComponent::Update(float deltaTime)
         mDashLineAmount = ApproachFade(mDashLineAmount, 1.0f, 0.1f, 0.85f);
     }
 
+    // --- Boss-wall cage grows out of the Core on round start ---
+    if (!mGameOver)
+    {
+        mBossWallExpand = Approach(mBossWallExpand, 1.0f, 0.04f);
+    }
+
     // --- Boss-wall scaling (oCore/Step_0.gml:77-84) ---
     UpdateBossWalls();
 
@@ -385,7 +391,7 @@ void CoreComponent::UpdateBossWalls()
     // oCore/Step_0.gml:77-84. Each boss wall grows from the Core centre toward its
     // matching outer wall by _scale = core.scale + 0.12, scaling its length too.
     const std::array<WallSegment, 8>& outer = OuterWalls();
-    const float growth = mScale + 0.12f;
+    const float growth = (mScale + 0.12f) * mBossWallExpand;
     for (int i = 0; i < 8; ++i)
     {
         const float outerScaleX = outer[i].length / Arena::kWallSpriteThickness; // length/4
@@ -449,6 +455,8 @@ void CoreComponent::BeginRound(int round)
     mHp = 1.0f;
     mHpHit = 0.0f;
 
+    mBossWallExpand = 0.0f;
+
     // Reset the dash to ease back to centre (GameOver/NextRound reset semantics).
     mStartX = mX;
     mStartY = mY;
@@ -476,26 +484,19 @@ void CoreComponent::Draw(Render2D& render2D)
         render2D.DrawLine(drawX, drawY, endX, endY, 1.0f, Graphics::Colors::White);
     }
 
-    // --- shCore nebula octagon (oCore/Draw_0.gml:11-27): white, intensity 0.5. The
-    //     Core BODY is the raymarched nebula, drawn whenever HP is not yet full. ---
-    if (mHpDraw < 0.995f)
-    {
-        DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White, viewScale);
-    }
+    // Core BODY: the white volumetric shCore nebula at full scale, always shown.
+    DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White, viewScale);
 
-    // --- HP octagon (oCore/Draw_0.gml:29-43): the SAME shCore octagon at intensity
-    //     0, tinted merge_color(#FF005E, red, pulse) and scaled by hpDraw, so the HP
-    //     indicator is the nebula MODULATED by pink - NOT a flat filled circle. ---
-    if (mHpDraw > 0.01f)
+    // Damage overlay: the red/pink octagon represents DAMAGE TAKEN, growing from
+    // the centre as HP drops (red proportion = 1 - hp). A full-HP Core shows no
+    // red; near death it fills the Core. Tint pulses #FF005E -> red on the beat.
+    const float damage = Math::Clamp(1.0f - mHpDraw, 0.0f, 1.0f);
+    if (damage > 0.01f)
     {
-        float hpScale = mScale * mHpDraw;
-        if (mHp != 1.0f && mHp != 0.0f)
-        {
-            hpScale = Math::Max(0.05f, hpScale);
-        }
+        const float damageScale = mScale * damage;
         const Graphics::Color hpBase = {1.0f, 0.0f, 94.0f / 255.0f, 1.0f}; // #FF005E
         const Graphics::Color hpColor = MergeColor(hpBase, Graphics::Colors::Red, mPulse);
-        DrawCoreOctagon(drawX, drawY, hpScale, 0.0f, hpColor, viewScale);
+        DrawCoreOctagon(drawX, drawY, damageScale, 0.0f, hpColor, viewScale);
     }
 
     // --- Boss walls (oCore creates oWall bossWall instances at depth-1; their
@@ -519,9 +520,9 @@ void CoreComponent::DrawBossWalls(Render2D& render2D)
     blend = MergeColor(blend, pulseColor, healFraction);
     blend.a = 1.0f;
 
-    // oWall/Draw_0.gml — drawn thickness pulses from the 4px sprite (here a thin
-    // inner cage scaled down): 3px at rest, ~6px on the beat pulse.
-    const float thickness = 3.0f + 3.0f * colorPulse;
+    // oWall/Draw_0.gml — drawn thickness = 4px sWall * (min(1,beatPulse)+1):
+    // 4px at rest, 8px on the beat pulse (matches the chunkier original walls).
+    const float thickness = 4.0f * (Math::Min(1.0f, colorPulse) + 1.0f);
 
     for (const WallSegment& seg : mBossWalls)
     {

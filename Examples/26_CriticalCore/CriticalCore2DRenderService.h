@@ -119,6 +119,9 @@ class CriticalCore2DRenderService final : public Engine::Service
     // Lazily creates mAlphaBlendState on first Render().
     void EnsureAlphaBlendState();
 
+    // Lazily creates mDepthDisabledState on first Render().
+    void EnsureDepthDisabledState();
+
     Render2D mRender2D;
     RenderTarget2D mRenderTarget;
 
@@ -126,6 +129,12 @@ class CriticalCore2DRenderService final : public Engine::Service
     // engine Graphics::BlendState: that couples a NOT_EQUAL depth state which
     // would reject the coplanar (z=0) painter's-order overdraw of this scene.
     ID3D11BlendState* mAlphaBlendState = nullptr;
+
+    // Depth test/write DISABLED: the 2D scene is coplanar (z=0) and ordered by
+    // the painter's algorithm (depth-sorted registry). With the default LESS
+    // depth state the RenderTarget's attached depth buffer would reject every
+    // later same-z overdraw (outline behind its fill, bubbles over the player).
+    ID3D11DepthStencilState* mDepthDisabledState = nullptr;
 
     // Registry of renderables, kept sorted by depth DESCENDING (GameMaker order:
     // higher depth drawn first / behind, lower depth drawn last / in front).

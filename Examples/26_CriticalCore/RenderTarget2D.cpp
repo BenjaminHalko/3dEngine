@@ -32,6 +32,11 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     mGlowRT0.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
     mGlowRT1.Initialize(static_cast<uint32_t>(internalW), static_cast<uint32_t>(internalH), RenderTarget::Format::RGBA_U8);
 
+    const std::filesystem::path brightFile = L"Assets/Shaders/CriticalCore_BrightExtract.hlsl";
+    mBrightVertexShader.Initialize<VertexPX>(brightFile);
+    mBrightPixelShader.Initialize(brightFile);
+    mBrightBuffer.Initialize();
+
     const std::filesystem::path blurFile = L"Assets/Shaders/CriticalCore_Blur.hlsl";
     mBlurVertexShader.Initialize<VertexPX>(blurFile);
     mBlurPixelShader.Initialize(blurFile);
@@ -40,10 +45,11 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     // LINEAR for the glow (interpolated, unlike the POINT scene upscale).
     mLinearSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Clamp);
 
-    // dst = glow * blendFactor + dst
+    // Pure additive: dst += glow. The glow is bright-extracted (dark everywhere
+    // except the bright core/title/walls), so adding it only blooms those.
     D3D11_BLEND_DESC blendDesc{};
     blendDesc.RenderTarget[0].BlendEnable = TRUE;
-    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
     blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
     blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
@@ -60,6 +66,9 @@ void RenderTarget2D::Terminate()
     mBlurBuffer.Terminate();
     mBlurPixelShader.Terminate();
     mBlurVertexShader.Terminate();
+    mBrightBuffer.Terminate();
+    mBrightPixelShader.Terminate();
+    mBrightVertexShader.Terminate();
     mGlowRT1.Terminate();
     mGlowRT0.Terminate();
 
@@ -107,34 +116,54 @@ RenderTarget2D::LetterboxRect RenderTarget2D::ComputeLetterbox(int windowW, int 
 
 void RenderTarget2D::BloomPass()
 {
-    const float texelX = 1.0f / static_cast<float>(mInternalWidth);
-    const float texelY = 1.0f / static_cast<float>(mInternalHeight);
+    // Spread > 1 widens the 5-tap gaussian so the glow reads as a bloom halo
+    // rather than a 5px smudge (the taps step spread*texel each).
+    constexpr float kSpread = 2.5f;
+    const float texelX = kSpread / static_cast<float>(mInternalWidth);
+    const float texelY = kSpread / static_cast<float>(mInternalHeight);
 
-    mBlurVertexShader.Bind();
-    mBlurPixelShader.Bind();
+    // Pass 0 - bright-extract the scene RT into mGlowRT0 (keep only bright px).
+    mBrightVertexShader.Bind();
+    mBrightPixelShader.Bind();
     mLinearSampler.BindPS(0);
-
-    BlurData horizontal;
-    horizontal.blurVector = {1.0f, 0.0f};
-    horizontal.texelSize = {texelX, texelY};
+    BrightData bright;
+    bright.threshold = 0.35f;
+    bright.knee = 0.25f;
+    bright.intensity = 1.0f;
     mGlowRT0.BeginRender(Colors::Black);
-    mBlurBuffer.Update(horizontal);
-    mBlurBuffer.BindPS(0);
+    mBrightBuffer.Update(bright);
+    mBrightBuffer.BindPS(0);
     mRenderTarget.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
     mGlowRT0.EndRender();
 
-    BlurData vertical;
-    vertical.blurVector = {0.0f, 1.0f};
-    vertical.texelSize = {texelX, texelY};
+    // Pass 1 - horizontal blur of the extracted glow (mGlowRT0 -> mGlowRT1).
+    mBlurVertexShader.Bind();
+    mBlurPixelShader.Bind();
+    mLinearSampler.BindPS(0);
+    BlurData horizontal;
+    horizontal.blurVector = {1.0f, 0.0f};
+    horizontal.texelSize = {texelX, texelY};
     mGlowRT1.BeginRender(Colors::Black);
-    mBlurBuffer.Update(vertical);
+    mBlurBuffer.Update(horizontal);
     mBlurBuffer.BindPS(0);
     mGlowRT0.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
     mGlowRT1.EndRender();
+
+    // Pass 2 - vertical blur (mGlowRT1 -> mGlowRT0). mGlowRT0 holds the bloom.
+    BlurData vertical;
+    vertical.blurVector = {0.0f, 1.0f};
+    vertical.texelSize = {texelX, texelY};
+    mGlowRT0.BeginRender(Colors::Black);
+    mBlurBuffer.Update(vertical);
+    mBlurBuffer.BindPS(0);
+    mGlowRT1.BindPS(0);
+    mScreenQuad.Render();
+    Texture::UnbindPS(0);
+    mGlowRT0.EndRender();
 }
 
 void RenderTarget2D::Present(int windowW, int windowH)
@@ -169,13 +198,11 @@ void RenderTarget2D::Present(int windowW, int windowH)
     // target next frame without a read/write hazard.
     Texture::UnbindPS(0);
 
-    // Additive glow: linear-upscale the blurred mGlowRT1 over the scene, scaled by
-    // the blend factor so bright areas (title/core/walls) bloom without washing out
-    // the navy backdrop. Reuses the passthrough upscale VS/PS.
-    const float glowFactor[4] = {0.4f, 0.4f, 0.4f, 0.4f};
-    context->OMSetBlendState(mGlowBlendState, glowFactor, 0xffffffffu);
+    // mGlowRT0 holds the bright-extracted + blurred bloom; a pure ADD only
+    // brightens the glowing core/title/walls and leaves the navy backdrop dark.
+    context->OMSetBlendState(mGlowBlendState, nullptr, 0xffffffffu);
     mLinearSampler.BindPS(0);
-    mGlowRT1.BindPS(0);
+    mGlowRT0.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
     context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
