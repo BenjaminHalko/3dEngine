@@ -246,7 +246,7 @@ int IRandom(int n)
 // Self test
 //==================================================================================
 
-bool SelfTest(std::string& csvOut)
+bool HelpersSelfTest(std::string& csvOut)
 {
     bool ok = true;
     std::ostringstream csv;

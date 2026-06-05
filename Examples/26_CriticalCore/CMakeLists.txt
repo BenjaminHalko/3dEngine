@@ -8,5 +8,8 @@ add_executable(26_CriticalCore
     Render2D.cpp
     GameClock.cpp
     CustomRegistration.cpp
-    StubComponent.cpp)
+    StubComponent.cpp
+    RoundConfig.cpp
+    Collision.cpp
+    RenderTarget2D.cpp)
 target_set_windows_application(26_CriticalCore)

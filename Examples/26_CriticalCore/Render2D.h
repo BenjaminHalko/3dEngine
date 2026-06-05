@@ -57,6 +57,24 @@ class Render2D final
                     float rotDeg,
                     const Graphics::Color& tint);
 
+    // ---- Color primitives (VertexPC, no texture) -------------------------
+    // All coordinates are in 256x224 source-pixel space (same ortho as the
+    // sprite path). These reproduce HelperFunctions.gml drawCircle /
+    // drawCircleOutline (:113-137): the GameMaker pixel-center offset is baked
+    // into the circle center, and the optional filled-circle outline uses a
+    // reduced-saturation copy of the fill color (GmHelpers HSV).
+
+    // GameMaker draw_circle(filled). When outline=true, also strokes a 1px ring
+    // in the desaturated fill color (drawCircle bubble branch, :117-128).
+    void DrawCircleFilled(float x, float y, float radius, const Graphics::Color& color, bool outline = false);
+
+    // GameMaker draw_circle(outline-only): a 1px ring in the given color, no
+    // desaturation (drawCircleOutline, :134-137).
+    void DrawCircleOutline(float x, float y, float radius, const Graphics::Color& color);
+
+    // Thick line as a single quad from (x0,y0) to (x1,y1).
+    void DrawLine(float x0, float y0, float x1, float y1, float thickness, const Graphics::Color& color);
+
   private:
     struct SpriteData
     {
@@ -66,6 +84,38 @@ class Render2D final
 
     using SpriteBuffer = Graphics::TypedConstantBuffer<SpriteData>;
 
+    // Color-path cbuffer: just the transposed ortho (world is identity because
+    // color geometry is authored directly in source-pixel space). 64 bytes,
+    // already 16-byte aligned.
+    struct ColorData
+    {
+        Math::Matrix4 wvp;
+    };
+
+    using ColorBuffer = Graphics::TypedConstantBuffer<ColorData>;
+
+    // Triangle-fan slice count for the filled circle and the outline ring.
+    static constexpr int kCircleSlices = 24;
+    // Largest single submit: the outline ring = kCircleSlices segment quads * 6
+    // verts. The filled fan (kCircleSlices * 3) and a line (6) are both smaller.
+    static constexpr uint32_t kMaxColorVertices = static_cast<uint32_t>(kCircleSlices) * 6u;
+
+    // Appends one thickness-wide quad (two triangles) spanning (ax,ay)->(bx,by).
+    void AppendSegmentQuad(std::vector<Graphics::VertexPC>& verts,
+                           float ax,
+                           float ay,
+                           float bx,
+                           float by,
+                           float thickness,
+                           const Graphics::Color& color) const;
+
+    // Strokes a 1px-thick ring of kCircleSlices segment quads about (cx,cy).
+    void DrawRing(float cx, float cy, float radius, float thickness, const Graphics::Color& color);
+
+    // Binds the color shader/cbuffer, uploads verts into the reused dynamic
+    // mesh, and issues the draw. No-op on empty input.
+    void SubmitColorMesh(const std::vector<Graphics::VertexPC>& verts);
+
     Math::Matrix4 mOrtho = Math::Matrix4::Identity;
 
     Graphics::MeshBuffer mQuad;
@@ -73,5 +123,12 @@ class Render2D final
     Graphics::PixelShader mPixelShader;
     Graphics::Sampler mSampler;
     SpriteBuffer mSpriteBuffer;
+
+    // Color path: reused dynamic mesh (no per-frame realloc) + dedicated VS/PS
+    // and wvp cbuffer.
+    Graphics::MeshBuffer mColorMesh;
+    Graphics::VertexShader mColorVertexShader;
+    Graphics::PixelShader mColorPixelShader;
+    ColorBuffer mColorBuffer;
 };
 } // namespace Engine::CriticalCore

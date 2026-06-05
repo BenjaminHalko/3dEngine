@@ -1,0 +1,12 @@
+{
+    "mMusic": { "file": "mMusic.ogg", "duration": 195.692313 },
+    "snBlip": { "file": "snBlip.wav", "duration": 0.131542 },
+    "snCollect": { "file": "snCollect.wav", "duration": 0.039660 },
+    "snExplode": { "file": "snExplode.wav", "duration": 1.686893 },
+    "snFireHit": { "file": "snFireHit.wav", "duration": 0.892721 },
+    "snFireShoot": { "file": "snFireShoot.wav", "duration": 0.548934 },
+    "snHit": { "file": "snHit.wav", "duration": 0.411315 },
+    "snPointBoost": { "file": "snPointBoost.wav", "duration": 1.180272 },
+    "snPointLoss": { "file": "snPointLoss.wav", "duration": 1.180159 },
+    "snStart": { "file": "snStart.wav", "duration": 1.265601 }
+}

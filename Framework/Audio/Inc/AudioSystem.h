@@ -1,6 +1,7 @@
 #pragma once
 
 struct ma_engine;
+struct ma_resource_manager;
 
 namespace Engine::Audio
 {
@@ -30,5 +31,6 @@ class AudioSystem final
   private:
     friend class SoundEffectManager;
     ma_engine* mAudioEngine = nullptr;
+    ma_resource_manager* mResourceManager = nullptr;
 };
 } // namespace Engine::Audio

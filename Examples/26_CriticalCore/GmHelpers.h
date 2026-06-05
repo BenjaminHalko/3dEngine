@@ -129,5 +129,5 @@ template <typename T> T Choose(std::initializer_list<T> options)
 // Self test (emits helpers.csv rows; asserts hand-computed values). Task 35's
 // --selftest writes the result to .omo/evidence/task-8-helpers.csv.
 //==================================================================================
-bool SelfTest(std::string& csvOut);
+bool HelpersSelfTest(std::string& csvOut);
 } // namespace Engine::CriticalCore
