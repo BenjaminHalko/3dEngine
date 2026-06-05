@@ -16,5 +16,14 @@ add_executable(26_CriticalCore
     CriticalCore2DRenderService.cpp
     Render2DComponent.cpp
     MusicController.cpp
-    Leaderboard.cpp)
+    Leaderboard.cpp
+    EntityComponent.cpp
+    CoreComponent.cpp
+    WallComponent.cpp
+    TrailComponent.cpp
+    SparkleComponent.cpp
+    BackgroundComponent.cpp
+    ScoreComponent.cpp
+    GuiComponent.cpp
+    MenuComponent.cpp)
 target_set_windows_application(26_CriticalCore)

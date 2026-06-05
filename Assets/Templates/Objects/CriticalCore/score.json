@@ -1,0 +1,15 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 128.0, 112.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "ScoreComponent": {
+      "Depth": -900.0,
+      "amount": 0,
+      "negative": false,
+      "double": false
+    }
+  }
+}

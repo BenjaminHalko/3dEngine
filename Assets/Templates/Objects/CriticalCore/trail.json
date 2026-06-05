@@ -1,0 +1,17 @@
+{
+  "Components": {
+    "TransformComponent": {
+      "Position": [ 0.0, 0.0, 0.0 ],
+      "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
+      "Scale": [ 1.0, 1.0, 1.0 ]
+    },
+    "TrailComponent": {
+      "Depth": 1.0,
+      "Radius": 4.0,
+      "Outline": true,
+      "DriftSpeed": 0.0,
+      "Direction": 0.0,
+      "Color": [ 0.75294, 0.75294, 0.75294, 1.0 ]
+    }
+  }
+}
