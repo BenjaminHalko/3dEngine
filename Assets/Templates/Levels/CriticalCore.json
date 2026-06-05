@@ -159,19 +159,6 @@
         }
       }
     },
-    "Gui": {
-      "Template": "Assets/Templates/Objects/CriticalCore/gui.json",
-      "Components": {
-        "TransformComponent": {
-          "Position": [ 0.0, 0.0, 0.0 ],
-          "Rotation": [ 0.0, 0.0, 0.0, 1.0 ],
-          "Scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "GuiComponent": {
-          "Depth": -1000.0
-        }
-      }
-    },
     "Menu": {
       "Template": "Assets/Templates/Objects/CriticalCore/menu.json",
       "Components": {
