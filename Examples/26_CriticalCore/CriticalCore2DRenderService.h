@@ -116,8 +116,16 @@ class CriticalCore2DRenderService final : public Engine::Service
     // Re-sorts mRenderables by depth descending (higher depth first) if dirty.
     void SortIfNeeded();
 
+    // Lazily creates mAlphaBlendState on first Render().
+    void EnsureAlphaBlendState();
+
     Render2D mRender2D;
     RenderTarget2D mRenderTarget;
+
+    // Blend-only SrcAlpha/InvSrcAlpha state for the in-RT 2D scene. NOT the
+    // engine Graphics::BlendState: that couples a NOT_EQUAL depth state which
+    // would reject the coplanar (z=0) painter's-order overdraw of this scene.
+    ID3D11BlendState* mAlphaBlendState = nullptr;
 
     // Registry of renderables, kept sorted by depth DESCENDING (GameMaker order:
     // higher depth drawn first / behind, lower depth drawn last / in front).

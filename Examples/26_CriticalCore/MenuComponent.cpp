@@ -42,13 +42,8 @@ const Graphics::Color kRed = Graphics::Colors::Red;
 const Graphics::Color kDkGray = Graphics::Color{0.25f, 0.25f, 0.25f, 1.0f}; // c_dkgray (64,64,64)
 const Graphics::Color kHighlight = Graphics::Color{0.38f, 1.0f, 0.63f, 1.0f}; // #61FFA0 player row
 
-// Convenience: one-shot key press this fixed step.
-bool Pressed(KeyCode key)
-{
-    const InputSystem* in = InputSystem::Get();
-    return (in != nullptr) && in->IsKeyPressed(key);
-}
-
+// Held = current level key state (true for the whole press). Used directly for
+// modifier keys (shift) and as the basis for the menu's own edge detection.
 bool Held(KeyCode key)
 {
     const InputSystem* in = InputSystem::Get();
@@ -90,6 +85,37 @@ bool MenuComponent::ConsumeStartRequest()
     const bool requested = sStartRequested;
     sStartRequested = false;
     return requested;
+}
+
+bool MenuComponent::EdgePressed(KeyCode key) const
+{
+    const InputSystem* in = InputSystem::Get();
+    if (in == nullptr)
+    {
+        return false;
+    }
+    const int idx = static_cast<int>(key);
+    if (idx < 0 || idx >= static_cast<int>(mPrevKeyDown.size()))
+    {
+        return false;
+    }
+    // Edge vs the menu's previous fixed-step tick (NOT IsKeyPressed's render-frame
+    // edge, which the sparse fixed-step loop drops): down now, up last menu tick.
+    return in->IsKeyDown(key) && !mPrevKeyDown[idx];
+}
+
+void MenuComponent::SnapshotKeys()
+{
+    const InputSystem* in = InputSystem::Get();
+    if (in == nullptr)
+    {
+        mPrevKeyDown.fill(false);
+        return;
+    }
+    for (int i = 0; i < static_cast<int>(mPrevKeyDown.size()); ++i)
+    {
+        mPrevKeyDown[i] = in->IsKeyDown(static_cast<KeyCode>(i));
+    }
 }
 
 void MenuComponent::Initialize()
@@ -146,6 +172,17 @@ void MenuComponent::Update(float deltaTime)
 {
     (void)deltaTime; // fixed-step logic; menu input is edge-driven, not dt-scaled.
 
+    // Refresh the previous-tick key snapshot on EVERY exit path so EdgePressed()
+    // stays correct no matter which branch returns (see MenuComponent.h).
+    struct SnapshotGuard
+    {
+        MenuComponent* self;
+        ~SnapshotGuard()
+        {
+            self->SnapshotKeys();
+        }
+    } snapshotGuard{this};
+
     // Once START fires the menu stops responding (the flow destroys this object).
     if (!sMenuActive)
     {
@@ -155,7 +192,7 @@ void MenuComponent::Update(float deltaTime)
     // Leaderboard sub-screen: ENTER or ESC returns to the menu.
     if (mShowLeaderboard)
     {
-        if (Pressed(KeyCode::RETURN) || Pressed(KeyCode::ESCAPE))
+        if (EdgePressed(KeyCode::RETURN) || EdgePressed(KeyCode::ESCAPE))
         {
             mShowLeaderboard = false;
         }
@@ -165,7 +202,7 @@ void MenuComponent::Update(float deltaTime)
 
     // Render/FX toggle (global.render). Bound to TAB so it never collides with
     // username typing; persisted immediately.
-    if (Pressed(KeyCode::TAB))
+    if (EdgePressed(KeyCode::TAB))
     {
         mRender = !mRender;
         mLeaderboard.SetRender(mRender);
@@ -192,8 +229,8 @@ void MenuComponent::UpdateNavigation()
     // Arrows always navigate; W/S also navigate EXCEPT while editing the username
     // (Step_0.gml:10 — on the username row, W/S type instead of moving).
     const bool allowLetters = (mOption != kOptUsername);
-    const bool up = Pressed(KeyCode::UP) || (allowLetters && Pressed(KeyCode::W));
-    const bool down = Pressed(KeyCode::DOWN) || (allowLetters && Pressed(KeyCode::S));
+    const bool up = EdgePressed(KeyCode::UP) || (allowLetters && EdgePressed(KeyCode::W));
+    const bool down = EdgePressed(KeyCode::DOWN) || (allowLetters && EdgePressed(KeyCode::S));
 
     const int delta = (down ? 1 : 0) - (up ? 1 : 0);
     if (delta != 0)
@@ -213,7 +250,7 @@ void MenuComponent::UpdateNavigation()
         PlayBlip(); // Step_0.gml:25 - nav blip on option change.
     }
 
-    const bool select = Pressed(KeyCode::RETURN);
+    const bool select = EdgePressed(KeyCode::RETURN);
 
     if (mOption == kOptStart && select)
     {
@@ -259,7 +296,7 @@ void MenuComponent::UpdateUsername()
     }
 
     // Backspace removes the last character (Step_0.gml:57 vk_backspace branch).
-    if (Pressed(KeyCode::BACKSPACE) && !mUsername.empty())
+    if (EdgePressed(KeyCode::BACKSPACE) && !mUsername.empty())
     {
         mUsername.pop_back();
     }
@@ -274,7 +311,7 @@ void MenuComponent::UpdateUsername()
     // Letters A..Z (case follows shift; fScore atlas is full ASCII).
     for (int c = 'A'; c <= 'Z'; ++c)
     {
-        if (Pressed(static_cast<KeyCode>(c)))
+        if (EdgePressed(static_cast<KeyCode>(c)))
         {
             const char ch = shift ? static_cast<char>(c)
                                   : static_cast<char>(c - 'A' + 'a');
@@ -285,14 +322,14 @@ void MenuComponent::UpdateUsername()
     // Digits 0..9.
     for (int c = '0'; c <= '9'; ++c)
     {
-        if (Pressed(static_cast<KeyCode>(c)))
+        if (EdgePressed(static_cast<KeyCode>(c)))
         {
             mUsername.push_back(static_cast<char>(c));
         }
     }
 
     // Space allowed only after at least one character (Step_0.gml:57 vk_space guard).
-    if (Pressed(KeyCode::SPACE) && !mUsername.empty())
+    if (EdgePressed(KeyCode::SPACE) && !mUsername.empty())
     {
         mUsername.push_back(' ');
     }
@@ -301,8 +338,8 @@ void MenuComponent::UpdateUsername()
 void MenuComponent::UpdateVolume()
 {
     // LEFT/RIGHT (and A/D) adjust the slider (Step_0.gml:72-84).
-    const bool left = Pressed(KeyCode::LEFT) || Pressed(KeyCode::A);
-    const bool right = Pressed(KeyCode::RIGHT) || Pressed(KeyCode::D);
+    const bool left = EdgePressed(KeyCode::LEFT) || EdgePressed(KeyCode::A);
+    const bool right = EdgePressed(KeyCode::RIGHT) || EdgePressed(KeyCode::D);
 
     const int delta = (right ? 1 : 0) - (left ? 1 : 0);
     if (delta == 0)

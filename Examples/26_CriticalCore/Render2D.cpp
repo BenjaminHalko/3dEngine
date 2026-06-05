@@ -344,12 +344,15 @@ void Render2D::AppendGlyphQuad(std::vector<VertexPX>& verts,
                                const Glyph& glyph,
                                const FontData& fontData) const
 {
-    // Normalized atlas sub-rect. Source pixels are y-DOWN like the ortho, so
-    // v increases downward and no flip is needed (unlike DrawSprite).
-    const float u0 = glyph.u / fontData.atlasWidth;
-    const float v0 = glyph.v / fontData.atlasHeight;
-    const float u1 = (glyph.u + glyph.w) / fontData.atlasWidth;
-    const float v1 = (glyph.v + glyph.h) / fontData.atlasHeight;
+    // Normalized atlas sub-rect, inset half a texel on every edge so point
+    // sampling at the quad borders stays strictly inside this glyph's cell and
+    // never picks up a white texel from the neighbouring atlas cell. Source
+    // pixels are y-DOWN like the ortho, so v increases downward (no flip).
+    constexpr float inset = 0.5f;
+    const float u0 = (glyph.u + inset) / fontData.atlasWidth;
+    const float v0 = (glyph.v + inset) / fontData.atlasHeight;
+    const float u1 = (glyph.u + glyph.w - inset) / fontData.atlasWidth;
+    const float v1 = (glyph.v + glyph.h - inset) / fontData.atlasHeight;
 
     const Vector3 topLeft(gx, gy, 0.0f);
     const Vector3 topRight(gx + glyph.w, gy, 0.0f);
@@ -408,7 +411,12 @@ void Render2D::DrawText(
         }
 
         const Glyph& glyph = it->second;
-        AppendGlyphQuad(verts, penX + glyph.xoffset, y + glyph.yoffset, glyph, fontData);
+        const bool isSpace = (code == 32);
+        const bool emptyCell = (glyph.w <= 0.0f || glyph.h <= 0.0f);
+        if (!isSpace && !emptyCell)
+        {
+            AppendGlyphQuad(verts, penX + glyph.xoffset, y + glyph.yoffset, glyph, fontData);
+        }
         penX += glyph.xadvance;
     }
 

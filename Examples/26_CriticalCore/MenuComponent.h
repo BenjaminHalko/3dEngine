@@ -3,6 +3,7 @@
 #include "Leaderboard.h"
 #include "Render2DComponent.h"
 
+#include <array>
 #include <string>
 
 namespace Engine::CriticalCore
@@ -80,6 +81,27 @@ class MenuComponent final : public Render2DComponent
     // initialized by then; idempotent if another component also loads them).
     void EnsureAssets(Render2D& render2D);
 
+    // --- Per-fixed-step key edge detection (the input-fix core) ---
+    //
+    // The engine's InputSystem::IsKeyPressed() is a RENDER-FRAME edge: it is true
+    // for EXACTLY ONE render frame (the frame after a key transitions down). The
+    // menu, however, only ticks inside GameState's fixed-step subloop, which runs
+    // ZERO fixed steps on most render frames (uncapped FPS => dt < 1/60, so the
+    // 60Hz accumulator yields a step on only ~1 of every N render frames). The
+    // single render frame carrying the IsKeyPressed edge almost never coincides
+    // with a step frame, so the press is consumed by InputSystem::Update() and
+    // lost before the menu ever runs => "input does not work on the title".
+    //
+    // Fix: edge-detect against the LEVEL key state (IsKeyDown, which stays true
+    // for the WHOLE press ~ several fixed steps) sampled at the MENU's own update
+    // rate. EdgePressed() reports a key that is down now but was not down at the
+    // previous menu tick; SnapshotKeys() refreshes that previous-tick snapshot at
+    // the end of every Update (via an RAII guard, so every early-return path keeps
+    // it current). A human keypress spans multiple fixed steps, so it is caught
+    // exactly once, regardless of render framerate.
+    bool EdgePressed(Engine::Input::KeyCode key) const;
+    void SnapshotKeys();
+
     // Per-fixed-step input handlers (Step_0.gml).
     void UpdateNavigation();   // option wrap + select dispatch
     void UpdateUsername();     // inline text entry while option == 2
@@ -110,6 +132,11 @@ class MenuComponent final : public Render2DComponent
     Graphics::TextureId mAudioLineBgTex = 0;   // sAudioLine frame 0 (track)
     Graphics::TextureId mAudioLineFillTex = 0; // sAudioLine frame 1 (knob)
     Graphics::TextureId mAudioIconTex = 0;     // sAudio
+
+    // Previous-tick key-down snapshot for EdgePressed()/SnapshotKeys() (indexed by
+    // KeyCode; 512 matches InputSystem's internal key array). Refreshed at the end
+    // of every Update so edges are computed at the menu's fixed-step rate.
+    std::array<bool, 512> mPrevKeyDown{};
 
     // --- Shared signals (single-menu game) ---
     static bool sMenuActive;
