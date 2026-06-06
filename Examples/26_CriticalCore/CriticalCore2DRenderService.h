@@ -44,13 +44,13 @@ class Render2DComponent;
 //   query this service), so the whole scene tracks the camera follow + shake
 //   inside the 256x224 RT, before the point upscale.
 //
-// RENDER() SEQUENCE (called from GameState::Render via mGameWorld.Render(),
-// wired by task 34):
+// RENDER() SEQUENCE (called from GameState::Render via mGameWorld.Render()) -
+// two-phase so the bloom blurs ONLY the world, never the screen-space UI:
 //   1. sort the registry if dirty (depth descending)
-//   2. mRenderTarget.BeginScene(clearColor)         // bind + clear the 256x224 RT
-//   3. for each component (highest depth -> lowest): comp->Draw(mRender2D)
-//   4. mRenderTarget.EndScene()                      // restore prev target/viewport
-//   5. mRenderTarget.Present(backBufferW, backBufferH)  // letterboxed POINT upscale
+//   2. BeginScene -> draw WORLD (non-screen-space) components + void mask -> EndScene
+//   3. BloomAndBeginUI()  // bloom the world, composite it, bind the UI buffer
+//   4. draw UI (screen-space: HUD / score / menu) SHARP on top, un-zoomed
+//   5. EndUIAndPresent(backBufferW, backBufferH)  // letterboxed POINT upscale
 //      (window size from Graphics::GraphicsSystem::Get()->GetBackBufferWidth/Height)
 //
 // Constructed via GameWorld::AddService<CriticalCore2DRenderService>() through
@@ -124,14 +124,17 @@ class CriticalCore2DRenderService final : public Engine::Service
 
     // Paints the black void around the octagonal arena hole (oBackground mask:
     // inside the octagon = navy backdrop + game, outside = solid black). Drawn in
-    // world space at the given zoom so the hole tracks the arena; injected
-    // between the world layer and the screen-space HUD (see kVoidMaskDepth).
+    // world space at the given zoom so the hole tracks the arena; injected right
+    // after the background and BEFORE the walls (see kVoidMaskDepth).
     void DrawVoidMask(float worldViewScale);
 
-    // GameMaker depth at which the void mask is painted: ABOVE the navy bubbles
-    // (depth 50) so they are clipped to the octagon, BELOW the HUD (score 20 /
-    // gui 10 / menu 0) so the UI stays on top of the void.
-    static constexpr float kVoidMaskDepth = 30.0f;
+    // GameMaker depth at which the void mask is painted: BETWEEN the background
+    // (depth 100, drawn first / furthest behind) and the walls (depth 90). Since
+    // GameMaker draws HIGHER depth first, a void at 95 paints right AFTER the
+    // background's navy bubbles (clipping them to the octagon) but BEFORE the
+    // walls/core/entities, so the octagon walls render clearly IN FRONT of the
+    // black exterior instead of being overpainted by it.
+    static constexpr float kVoidMaskDepth = 95.0f;
 
     Render2D mRender2D;
     RenderTarget2D mRenderTarget;

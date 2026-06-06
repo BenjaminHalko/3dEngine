@@ -14,18 +14,22 @@ namespace Engine::CriticalCore
 // using a POINT sampler (no linear filtering) and an aspect-correct letterbox
 // (black bars; never stretched).
 //
-// Usage (wired by task 34, GameState):
-//   mRT.Initialize();                       // 256x224 by default
+// Usage (CriticalCore2DRenderService::Render, two-phase so the screen-space UI
+// is NOT blurred by the bloom):
+//   mRT.Initialize();
 //   ...
-//   mRT.BeginScene(Colors::Black);          // bind RT + clear
-//       render2D.DrawSprite(...);           // all gameplay draws land 1:1
-//       service.Render();                   //   in the 256x224 RT space
-//   mRT.EndScene();                         // restore previous target/viewport
-//   mRT.Present(winW, winH);                // letterboxed POINT upscale to window
+//   mRT.BeginScene(Colors::Black);          // bind scene RT + clear
+//       <draw WORLD (non-screen-space) components + void mask, 1:1 in 256x224>
+//   mRT.EndScene();
+//   mRT.BloomAndBeginUI();                  // bloom the world, composite it into
+//                                           //   the UI buffer, leave it bound
+//       <draw UI (screen-space) components SHARP on top of the bloomed world>
+//   mRT.EndUIAndPresent(winW, winH);        // unbind + letterboxed POINT upscale
 //
-// Self-contained: this class owns its RenderTarget, screen-quad, POINT sampler,
-// and upscale VS/PS (Assets/Shaders/CriticalCore_Upscale.hlsl). It does NOT
-// touch Render2D or GameState.
+// Self-contained: this class owns its RenderTargets, screen-quad, POINT/LINEAR
+// samplers, the separable blur (CriticalCore_Blur.hlsl), the bloom composite
+// (CriticalCore_Bloom.hlsl) and the final upscale (CriticalCore_Upscale.hlsl).
+// It does NOT touch Render2D or GameState.
 // ---------------------------------------------------------------------------
 
 class RenderTarget2D final
@@ -51,11 +55,17 @@ class RenderTarget2D final
     // Unbind the internal RenderTarget (restores the previous target/viewport).
     void EndScene();
 
-    // Draw a fullscreen quad sampling the internal RenderTarget with POINT
-    // filtering, scaled to the largest aspect-correct fit inside windowW x
-    // windowH and centered (letterboxed). Restores the full-window viewport
-    // afterwards so later passes (ImGui, etc.) render normally.
-    void Present(int windowW, int windowH);
+    // Bloom the WORLD that was drawn between BeginScene/EndScene: run the
+    // separable blur, composite (scene + blur) * 0.7 into the UI buffer at native
+    // 256x224, and LEAVE that buffer bound so the caller can draw the sharp
+    // screen-space UI on top of the bloomed world. Pair with EndUIAndPresent.
+    void BloomAndBeginUI();
+
+    // Unbind the UI buffer and draw it (bloomed world + sharp UI) to the window
+    // with a POINT-sampled, aspect-correct letterbox upscale. Restores the
+    // full-window viewport afterwards so later passes (ImGui, etc.) render
+    // normally. Pair with BloomAndBeginUI.
+    void EndUIAndPresent(int windowW, int windowH);
 
     // Pure letterbox math (preserve internalW:internalH aspect, center). Exposed
     // for callers/tests that need the rect without issuing a draw.
@@ -81,12 +91,10 @@ class RenderTarget2D final
     }
 
   private:
-    // Faithful reproduction of GM oRender Draw_64: the WHOLE scene is blurred via
-    // two separable shBlur passes (vertical then horizontal) into mBlurRT. There
-    // is NO bright-extract / threshold — the full scene is blurred. The composite
-    // (in Present) is: blurred * 0.7 (opaque base) + scene * 0.7 (additive), so
-    // the result is a soft glow over the whole scene, brightest where the scene
-    // is bright (because of the additive sharp copy), not a thresholded bloom.
+    // Faithful reproduction of GM oRender Draw_64: the WORLD scene RT is blurred
+    // via two separable shBlur passes (vertical then horizontal) into mBlurRT.
+    // There is NO bright-extract / threshold — the full world is blurred. The
+    // composite (BloomAndBeginUI) is (scene + blur) * 0.7 in one opaque pass.
     void BlurScene();
 
     // Mirrors CriticalCore_Blur.hlsl BlurBuffer (register b0): pass direction in
@@ -98,9 +106,9 @@ class RenderTarget2D final
     };
     using BlurBuffer = Graphics::TypedConstantBuffer<BlurData>;
 
-    // Mirrors CriticalCore_Upscale.hlsl UpscaleBuffer (register b0): a per-draw
-    // RGBA tint. The composite draws both the blurred base and the additive sharp
-    // copy with a 0.7 grey tint (GM make_color_hsv(0,0,255*0.7)).
+    // Per-draw RGBA tint shared by both b0-tint shaders: the bloom composite
+    // (CriticalCore_Bloom.hlsl) uses 0.7 grey (GM make_color_hsv(0,0,255*0.7));
+    // the final upscale (CriticalCore_Upscale.hlsl) uses 1.0 (passthrough).
     struct UpscaleData
     {
         Math::Vector4 tint{1.0f, 1.0f, 1.0f, 1.0f};
@@ -117,16 +125,20 @@ class RenderTarget2D final
     Graphics::Sampler mSampler;
     UpscaleBuffer mUpscaleBuffer;
 
+    // Bloom composite shader (CriticalCore_Bloom.hlsl): two-texture opaque pass
+    // that sums the sharp world (POINT) and its blurred copy (LINEAR).
+    Graphics::VertexShader mBloomVertexShader;
+    Graphics::PixelShader mBloomPixelShader;
+
     // Full-scene blur resources (two separable shBlur passes, no bright-extract).
-    //   mPongRT = VBlur(scene)               (the GM "surfacePong")
-    //   mBlurRT = HBlur(VBlur(scene))        (the fully blurred scene)
+    //   mPongRT = VBlur(scene), then REUSED as the bloom+UI composite buffer
+    //             (the bloomed world is drawn here, the sharp UI on top of it).
+    //   mBlurRT = HBlur(VBlur(scene))        (the fully blurred world)
     Graphics::RenderTarget mPongRT;
     Graphics::RenderTarget mBlurRT;
     Graphics::VertexShader mBlurVertexShader;
     Graphics::PixelShader mBlurPixelShader;
     BlurBuffer mBlurBuffer;
     Graphics::Sampler mLinearSampler;
-    // Additive (One/One) blend state for the sharp-scene add pass.
-    ID3D11BlendState* mAddBlendState = nullptr;
 };
 } // namespace Engine::CriticalCore

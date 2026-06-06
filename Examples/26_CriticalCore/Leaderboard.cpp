@@ -207,7 +207,22 @@ namespace Engine::CriticalCore
 
     void Leaderboard::Post(const std::string& name, int score)
     {
-        mScores.push_back({name, score});
+        // One row per name (GM oLeaderboardAPI LeaderboardPost): find an existing
+        // entry for this name; if present keep only the BETTER (higher) score,
+        // otherwise insert. Never store a duplicate name.
+        auto existing = std::find_if(
+            mScores.begin(), mScores.end(), [&name](const Entry& e) { return e.name == name; });
+        if (existing != mScores.end())
+        {
+            if (score > existing->score)
+            {
+                existing->score = score;
+            }
+        }
+        else
+        {
+            mScores.push_back({name, score});
+        }
 
         // Sort DESC by score. stable_sort keeps insertion order for ties so the
         // newest run does not leapfrog an equal-scoring earlier entry.
@@ -341,6 +356,27 @@ namespace Engine::CriticalCore
             check("trimmed to 10 entries", board.Entries().size() == 10);
             check("top entry is highest (140)", board.Entries().front().score == 140);
             check("last kept entry is 50", board.Entries().back().score == 50);
+        }
+
+        // --- One row per name: re-posting a name updates to the BETTER score ---
+        {
+            Leaderboard board(tempPath);
+            board.Post("SAM", 100);
+            board.Post("SAM", 300); // higher -> updates
+            board.Post("SAM", 200); // lower  -> ignored
+            board.Post("KIM", 250);
+            check("dedup: SAM appears once", board.PlayerRowIndex("SAM", 300) >= 0);
+            int samCount = 0;
+            for (const auto& e : board.Entries())
+            {
+                if (e.name == "SAM")
+                {
+                    ++samCount;
+                }
+            }
+            check("dedup: exactly one SAM row", samCount == 1);
+            check("dedup: SAM kept best score 300", board.Entries().front().score == 300);
+            check("dedup: two distinct names total", board.Entries().size() == 2);
         }
 
         std::remove(tempPath.c_str());

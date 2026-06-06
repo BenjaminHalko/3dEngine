@@ -1,6 +1,7 @@
 #include "CriticalCore2DRenderService.h"
 #include "CameraShakeService.h"
 #include "Render2DComponent.h"
+#include "WallComponent.h"
 
 #include <algorithm>
 
@@ -76,30 +77,33 @@ void CriticalCore2DRenderService::Render()
 
     auto context = GraphicsSystem::Get()->GetContext();
 
-    // Render the whole 2D scene into the 256x224 offscreen target.
+    // Phase 1: the WORLD (non-screen-space) layer + void mask into the scene RT.
+    // mRenderables is sorted by depth DESCENDING, so iterating front-to-back of
+    // the vector draws the HIGHEST depth first (behind) and the LOWEST depth last
+    // (in front) - exactly GameMaker's painter order. World components zoom with
+    // the camera; the screen-space UI is skipped here and drawn sharp in phase 3
+    // so the bloom never blurs it.
     mRenderTarget.BeginScene(mClearColor);
     context->OMSetBlendState(mAlphaBlendState, nullptr, 0xffffffffu);
     context->OMSetDepthStencilState(mDepthDisabledState, 0);
-    // mRenderables is sorted by depth DESCENDING, so iterating front-to-back of
-    // the vector draws the HIGHEST depth first (behind) and the LOWEST depth
-    // last (in front) - exactly GameMaker's painter order. The view zoom is set
-    // per component: world components get the camera zoom, UI (screen-space)
-    // components get a fixed 1.0 so the HUD/menu/leaderboard never scale.
     float appliedScale = -1.0f;
     bool voidDrawn = false;
     for (Render2DComponent* renderable : mRenderables)
     {
+        if (renderable->IsScreenSpace())
+        {
+            continue;
+        }
         if (!voidDrawn && renderable->GetDepth() <= kVoidMaskDepth)
         {
             DrawVoidMask(worldViewScale);
             appliedScale = worldViewScale;
             voidDrawn = true;
         }
-        const float scale = renderable->IsScreenSpace() ? 1.0f : worldViewScale;
-        if (scale != appliedScale)
+        if (worldViewScale != appliedScale)
         {
-            mRender2D.SetViewScale(scale);
-            appliedScale = scale;
+            mRender2D.SetViewScale(worldViewScale);
+            appliedScale = worldViewScale;
         }
         renderable->Draw(mRender2D);
     }
@@ -112,11 +116,31 @@ void CriticalCore2DRenderService::Render()
     context->OMSetDepthStencilState(nullptr, 0);
     mRenderTarget.EndScene();
 
-    // Letterboxed POINT upscale to the backbuffer.
+    // Phase 2: bloom the world and composite it into the UI buffer (kept bound).
+    mRenderTarget.BloomAndBeginUI();
+
+    // Phase 3: the screen-space UI (HUD / score / menu / leaderboard) drawn SHARP
+    // and un-zoomed on top of the bloomed world. Sorted depth DESCENDING (score
+    // 20 -> gui 10 -> menu 0), so the HUD/menu paint over the score popups.
+    context->OMSetBlendState(mAlphaBlendState, nullptr, 0xffffffffu);
+    context->OMSetDepthStencilState(mDepthDisabledState, 0);
+    mRender2D.SetViewScale(1.0f);
+    for (Render2DComponent* renderable : mRenderables)
+    {
+        if (!renderable->IsScreenSpace())
+        {
+            continue;
+        }
+        renderable->Draw(mRender2D);
+    }
+    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
+    context->OMSetDepthStencilState(nullptr, 0);
+
+    // Phase 4: unbind the UI buffer + letterboxed POINT upscale to the backbuffer.
     GraphicsSystem* graphicsSystem = GraphicsSystem::Get();
     const int windowWidth = static_cast<int>(graphicsSystem->GetBackBufferWidth());
     const int windowHeight = static_cast<int>(graphicsSystem->GetBackBufferHeight());
-    mRenderTarget.Present(windowWidth, windowHeight);
+    mRenderTarget.EndUIAndPresent(windowWidth, windowHeight);
 }
 
 void CriticalCore2DRenderService::DrawVoidMask(float worldViewScale)
@@ -132,13 +156,18 @@ void CriticalCore2DRenderService::DrawVoidMask(float worldViewScale)
                                           {-104.0f, 24.0f},
                                           {-104.0f, -24.0f}};
 
+    // Expand the hole about the arena center by the SAME factor the outer walls
+    // apply (lerp(1,2,scaleMenu)) so the void edge tracks the wall inner faces at
+    // every moment of the expand animation (Bug A).
+    const float arenaScale = WallComponent::CurrentArenaScale();
+
     Math::Vector2 octagon[8];
     for (int i = 0; i < 8; ++i)
     {
         const float signX = (kPoly[i][0] > 0.0f) ? 1.0f : ((kPoly[i][0] < 0.0f) ? -1.0f : 0.0f);
         const float signY = (kPoly[i][1] > 0.0f) ? 1.0f : ((kPoly[i][1] < 0.0f) ? -1.0f : 0.0f);
-        octagon[i].x = kCenterX + kPoly[i][0] - signX - mCameraOffsetX;
-        octagon[i].y = kCenterY + kPoly[i][1] - signY - mCameraOffsetY;
+        octagon[i].x = kCenterX + (kPoly[i][0] - signX) * arenaScale - mCameraOffsetX;
+        octagon[i].y = kCenterY + (kPoly[i][1] - signY) * arenaScale - mCameraOffsetY;
     }
 
     mRender2D.SetViewScale(worldViewScale);

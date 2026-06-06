@@ -91,6 +91,12 @@ class WallComponent final : public Render2DComponent
         return mBossWall;
     }
 
+    // Live arena expansion scale = lerp(1, 2, scaleMenu). All outer walls ease
+    // identically (same target/rate/start), so one process-global mirror tracks
+    // it; the render service reads this to expand the void-mask octagon in
+    // lockstep. Defaults to 1 (menu framing) before any wall has updated.
+    static float CurrentArenaScale();
+
   private:
     // Per-step beat-pulse selection ported from oMusicController/Step_0.gml:21-49.
     void ApplyBeatPulse(const BeatService& beat);

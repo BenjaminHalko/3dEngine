@@ -19,11 +19,16 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     MeshPX screenQuadMesh = MeshBuilder::CreateScreenQuadPX();
     mScreenQuad.Initialize(screenQuadMesh);
 
-    // Self-contained upscale shaders (passthrough VS + tinted texture-sampling PS).
+    // Final upscale shader (single-texture POINT passthrough + tint).
     const std::filesystem::path shaderFile = L"Assets/Shaders/CriticalCore_Upscale.hlsl";
     mVertexShader.Initialize<VertexPX>(shaderFile);
     mPixelShader.Initialize(shaderFile);
     mUpscaleBuffer.Initialize();
+
+    // Bloom composite shader (two-texture: scene POINT + blur LINEAR).
+    const std::filesystem::path bloomFile = L"Assets/Shaders/CriticalCore_Bloom.hlsl";
+    mBloomVertexShader.Initialize<VertexPX>(bloomFile);
+    mBloomPixelShader.Initialize(bloomFile);
 
     // POINT sampling only -> crisp pixel-art upscale (NO linear filtering).
     // Clamp avoids edge bleed when the upscaled quad samples the RT borders.
@@ -41,23 +46,10 @@ void RenderTarget2D::Initialize(int internalW, int internalH)
     // LINEAR for the blur taps (interpolates between texels, like the GM default
     // sampler in shBlur), unlike the POINT scene upscale.
     mLinearSampler.Initialize(Sampler::Filter::Linear, Sampler::AddressMode::Clamp);
-
-    // dst += src: the additive sharp-scene pass (GM gpu_set_blendmode(bm_add)).
-    D3D11_BLEND_DESC blendDesc{};
-    blendDesc.RenderTarget[0].BlendEnable = TRUE;
-    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    GraphicsSystem::Get()->GetDevice()->CreateBlendState(&blendDesc, &mAddBlendState);
 }
 
 void RenderTarget2D::Terminate()
 {
-    SafeRelease(mAddBlendState);
     mLinearSampler.Terminate();
     mBlurBuffer.Terminate();
     mBlurPixelShader.Terminate();
@@ -65,6 +57,8 @@ void RenderTarget2D::Terminate()
     mBlurRT.Terminate();
     mPongRT.Terminate();
 
+    mBloomPixelShader.Terminate();
+    mBloomVertexShader.Terminate();
     mUpscaleBuffer.Terminate();
     mSampler.Terminate();
     mPixelShader.Terminate();
@@ -140,10 +134,46 @@ void RenderTarget2D::BlurScene()
     mBlurRT.EndRender();
 }
 
-void RenderTarget2D::Present(int windowW, int windowH)
+void RenderTarget2D::BloomAndBeginUI()
 {
-    // mBlurRT = HBlur(VBlur(scene)): the soft full-scene blur (no bright-extract).
+    // mBlurRT = HBlur(VBlur(scene)): the soft full-world blur (no bright-extract).
+    // mPongRT held the VBlur intermediate and is now free to reuse below.
     BlurScene();
+
+    auto context = GraphicsSystem::Get()->GetContext();
+
+    // Composite the bloomed world into mPongRT at native 256x224, OPAQUE:
+    //   mPongRT = (scene[POINT] + blur[LINEAR]) * 0.7   (GM make_color_hsv(0,0,255*0.7)).
+    // Faithful Draw_64: sharp world *0.7 + blurred world *0.7 summed in one PS so
+    // no additive backbuffer blend is needed (that renders unreliably on dxmt).
+    UpscaleData tint;
+    tint.tint = {0.7f, 0.7f, 0.7f, 1.0f};
+
+    mPongRT.BeginRender(Colors::Black);
+    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
+
+    mBloomVertexShader.Bind();
+    mBloomPixelShader.Bind();
+    mUpscaleBuffer.Update(tint);
+    mUpscaleBuffer.BindPS(0);
+
+    mRenderTarget.BindPS(0);
+    mSampler.BindPS(0);
+    mBlurRT.BindPS(1);
+    mLinearSampler.BindPS(1);
+    mScreenQuad.Render();
+    Texture::UnbindPS(0);
+    Texture::UnbindPS(1);
+
+    // Leave mPongRT bound (256x224 viewport): the render service now draws the
+    // screen-space UI SHARP on top of this bloomed world, before EndUIAndPresent
+    // unbinds it and point-upscales the composite to the window.
+}
+
+void RenderTarget2D::EndUIAndPresent(int windowW, int windowH)
+{
+    // Unbind mPongRT (restores the backbuffer); it now holds bloomed world + UI.
+    mPongRT.EndRender();
 
     const LetterboxRect rect = ComputeLetterbox(windowW, windowH);
 
@@ -161,31 +191,20 @@ void RenderTarget2D::Present(int windowW, int windowH)
     viewport.MaxDepth = 1.0f;
     context->RSSetViewports(1, &viewport);
 
-    // Both composite draws use the POINT upscale shader with a 0.7 grey tint
-    // (GM make_color_hsv(0,0,255*0.7)). The GM order is blurred-base (normal) then
-    // sharp (additive); since the scene is opaque, normal-blend equals an opaque
-    // write, so the two draws are reordered to sharp-opaque-base + blurred-additive
-    // (addition commutes) — identical pixels, drawn in the proven upscale order.
+    // Final upscale: POINT-sample the composite (mPongRT) at a 1.0 passthrough
+    // tint -> crisp pixel-art (the bloom's 0.7 grey lives in the composite).
     UpscaleData tint;
-    tint.tint = {0.7f, 0.7f, 0.7f, 1.0f};
+    tint.tint = {1.0f, 1.0f, 1.0f, 1.0f};
     mVertexShader.Bind();
     mPixelShader.Bind();
     mUpscaleBuffer.Update(tint);
     mUpscaleBuffer.BindPS(0);
+
+    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
+    mPongRT.BindPS(0);
     mSampler.BindPS(0);
-
-    // BASE (GM Draw_64:16 term) - the sharp scene * 0.7, opaque.
-    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
-    mRenderTarget.BindPS(0);
     mScreenQuad.Render();
     Texture::UnbindPS(0);
-
-    // GLOW (GM Draw_64:12 term) - the blurred scene * 0.7, additive (bm_add).
-    context->OMSetBlendState(mAddBlendState, nullptr, 0xffffffffu);
-    mBlurRT.BindPS(0);
-    mScreenQuad.Render();
-    Texture::UnbindPS(0);
-    context->OMSetBlendState(nullptr, nullptr, 0xffffffffu);
 
     // Restore the full-window viewport for subsequent passes (ImGui, etc.).
     GraphicsSystem::Get()->ResetViewport();

@@ -7,6 +7,7 @@
     },
     "ScoreComponent": {
       "Depth": 20.0,
+      "ScreenSpace": true,
       "amount": 0,
       "negative": false,
       "double": false

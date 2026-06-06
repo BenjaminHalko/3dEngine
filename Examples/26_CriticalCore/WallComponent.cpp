@@ -21,7 +21,14 @@ bool OnWholeBeat(float audioBeat)
 {
     return std::fmod(audioBeat, 1.0f) == 0.0f;
 }
+
+float gCurrentArenaScale = 1.0f;
 } // namespace
+
+float WallComponent::CurrentArenaScale()
+{
+    return gCurrentArenaScale;
+}
 
 void WallComponent::Initialize()
 {
@@ -66,8 +73,21 @@ void WallComponent::Initialize()
     // oWall/Create_0.gml initial state.
     mBeatPulse = 0.0f;
     mColorPulse = 0.0f;
-    mScaleMenu = 0.0f;
     mImageBlend = Engine::Graphics::Colors::White;
+
+    if (!mBossWall)
+    {
+        // Seed the expand factor from the LAST published arena scale (a static that
+        // survives the ESC ReloadLevel teardown). After an in-game return-to-title
+        // the rebuilt walls start at the live expanded scale and EASE back down to
+        // the menu size instead of snapping. lerp(1,2,scaleMenu)=scale => inverse:
+        mScaleMenu = std::clamp(gCurrentArenaScale - 1.0f, 0.0f, 1.0f);
+        gCurrentArenaScale = Math::Lerp(1.0f, 2.0f, mScaleMenu);
+    }
+    else
+    {
+        mScaleMenu = 0.0f;
+    }
 }
 
 void WallComponent::Terminate()
@@ -151,6 +171,9 @@ void WallComponent::Update(float deltaTime)
         const bool inGame = !MenuComponent::IsMenuActive();
         const float target = (inGame || mMenuExpand) ? 1.0f : 0.0f;
         mScaleMenu = ApproachFade(mScaleMenu, target, 0.04f, 0.8f);
+
+        // Publish the live expansion so the void mask tracks the walls (Bug A).
+        gCurrentArenaScale = Math::Lerp(1.0f, 2.0f, mScaleMenu);
     }
 }
 

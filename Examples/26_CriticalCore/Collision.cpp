@@ -81,6 +81,19 @@ const std::array<WallSegment, 8>& OuterWalls()
     return kWalls;
 }
 
+std::array<WallSegment, 8> ScaledOuterWalls(float arenaScale)
+{
+    std::array<WallSegment, 8> a{};
+    for (int i = 0; i < 8; ++i)
+    {
+        const RawWall& r = kOuterRaw[i];
+        const float ox = Arena::kCenterX + arenaScale * (r.x - Arena::kCenterX);
+        const float oy = Arena::kCenterY + arenaScale * (r.y - Arena::kCenterY);
+        a[i] = MakeWall(ox, oy, r.angle, r.scaleX * arenaScale, /*flipped*/ false, /*boss*/ false);
+    }
+    return a;
+}
+
 const std::array<WallSegment, 8>& BossWalls()
 {
     // Boss walls spawn at the CORE center (oCore:44 instance_create_depth(x,y,...))
@@ -138,6 +151,21 @@ WallHit CircleVsOuterWalls(float cx, float cy, float radius)
     best.hit       = false;
     best.wallIndex = -1;
     const auto& walls = OuterWalls();
+    for (const WallSegment& w : walls)
+    {
+        const WallHit h = CircleVsWall(cx, cy, radius, w);
+        if (h.hit && (!best.hit || h.penetration > best.penetration))
+            best = h;
+    }
+    return best;
+}
+
+WallHit CircleVsOuterWalls(float cx, float cy, float radius, float arenaScale)
+{
+    WallHit best{};
+    best.hit       = false;
+    best.wallIndex = -1;
+    const std::array<WallSegment, 8> walls = ScaledOuterWalls(arenaScale);
     for (const WallSegment& w : walls)
     {
         const WallHit h = CircleVsWall(cx, cy, radius, w);

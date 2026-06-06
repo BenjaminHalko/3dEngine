@@ -2,6 +2,7 @@
 
 #include "Collision.h"
 #include "GmHelpers.h"
+#include "WallComponent.h"
 
 #include <cmath>
 
@@ -70,16 +71,20 @@ void EntityComponent::UpdateEntity()
     const float radius = CollisionRadius();
     const bool isPlayer = IsPlayer();
 
-    // place_meeting(x,y,oWall) predicate for the pixel-step marches. Uses the
-    // canonical outer-wall geometry from Collision.h (no duplicated math).
-    const auto inWall = [radius](float px, float py) -> bool {
-        return CircleVsOuterWalls(px, py, radius).hit;
+    // GameMaker tests against the LIVE oWall instances, whose masks scale with
+    // image_xscale (oWall/Step_0.gml). Mirror that by querying the walls at the
+    // current expansion, so the player only dies on walls it can actually SEE.
+    const float arenaScale = WallComponent::CurrentArenaScale();
+
+    // place_meeting(x,y,oWall) predicate for the pixel-step marches.
+    const auto inWall = [radius, arenaScale](float px, float py) -> bool {
+        return CircleVsOuterWalls(px, py, radius, arenaScale).hit;
     };
 
     if (collide)
     {
         // instance_place(x+xSpd, y+ySpd, oWall) (Step_0.gml:5).
-        const WallHit wall = CircleVsOuterWalls(x + xSpd, y + ySpd, radius);
+        const WallHit wall = CircleVsOuterWalls(x + xSpd, y + ySpd, radius, arenaScale);
         if (wall.hit)
         {
             const float dir = PointDirection(0.0f, 0.0f, xSpd, ySpd);

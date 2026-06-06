@@ -66,6 +66,14 @@ WallSegment MakeWall(float x, float y, float angle, float scaleX, bool flipped, 
 // The 8 OUTER arena walls (from rGame.yy oWall instances). CANONICAL.
 const std::array<WallSegment, 8>& OuterWalls();
 
+// The 8 OUTER walls at the LIVE menu/in-game expansion (oWall/Step_0.gml:10-15):
+//   _scale = lerp(1,2,scaleMenu) ; image_xscale = xscaleStart*_scale ;
+//   x = lerp(centerX, xstart, _scale) ; y = lerp(centerY, ystart, _scale)
+// arenaScale is that _scale (1 on the menu, easing to 2 in-game). Pass
+// WallComponent::CurrentArenaScale() so collision tracks the VISIBLE wall scale.
+// arenaScale == 1 reproduces OuterWalls() exactly.
+std::array<WallSegment, 8> ScaledOuterWalls(float arenaScale);
+
 // The 8 BOSS walls at SPAWN (center-spawned, image_xscale 0 => length 0). They
 // share the outer walls' 8 angles; task 20/21 grows image_xscale at runtime, so
 // call MakeWall(centerX, centerY, angle, runtimeScale, true, true) per-frame to
@@ -92,6 +100,11 @@ WallHit CircleVsWall(float cx, float cy, float radius, const WallSegment& w);
 
 // Circle vs ALL OuterWalls() — returns the DEEPEST penetration hit (or hit=false).
 WallHit CircleVsOuterWalls(float cx, float cy, float radius);
+
+// Same, but against the LIVE expanded walls (ScaledOuterWalls(arenaScale)), so the
+// hit tracks where the walls are actually DRAWN in-game. arenaScale == 1 matches
+// the canonical overload exactly.
+WallHit CircleVsOuterWalls(float cx, float cy, float radius, float arenaScale);
 
 struct CoreHit
 {

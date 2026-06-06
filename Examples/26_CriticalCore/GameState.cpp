@@ -107,11 +107,12 @@ void GameState::Update(float deltaTime)
         mShowDebugUI = !mShowDebugUI;
     }
 
-    // ESC or Backspace -> clean restart back to the title/menu. Both keys are
-    // bound (the user tried Backspace too). Checked every render frame (NOT inside
-    // the fixed-step subloop), so IsKeyPressed's render-frame edge is reliable here
-    // (App::SetQuitOnEscape(false) in Initialize stops the App from quitting first).
-    if (input != nullptr &&
+    // ESC/Backspace returns to the title ONLY while a game is running (GameMaker
+    // oGlobalController/Step_0.gml honors the back key only when global.inGame).
+    // On the title ESC must do nothing; on the post-game leaderboard MenuComponent
+    // owns the back key, so gating on IsInGame() stops this from stomping either.
+    // Checked per render frame (App::SetQuitOnEscape(false) lets us see the edge).
+    if (input != nullptr && mGameFlow.IsInGame() &&
         (input->IsKeyPressed(Input::KeyCode::ESCAPE) || input->IsKeyPressed(Input::KeyCode::BACKSPACE)))
     {
         ReloadLevel();
