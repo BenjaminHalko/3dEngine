@@ -7,6 +7,7 @@
 #include "Render2D.h"
 #include "ScoreComponent.h"
 #include "TrailComponent.h"
+#include "WallComponent.h"
 
 #include <algorithm>
 #include <cmath>
@@ -210,7 +211,7 @@ void BubbleComponent::Update(float deltaTime)
     // --- Squish (Step_0.gml:107-125): bursting when caught between an inner
     // (flipped/boss) wall and an outer (non-flipped) wall. ---
     {
-        const bool outer = CircleVsOuterWalls(x, y, mDrawRadius).hit;
+        const bool outer = CircleVsOuterWalls(x, y, mDrawRadius, WallComponent::CurrentArenaScale()).hit;
         bool inner = false;
         if (gBossWalls != nullptr)
         {
