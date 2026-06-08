@@ -9,6 +9,7 @@
 #include "PlayerComponent.h"
 #include "Render2D.h"
 #include "TrailComponent.h"
+#include "WallComponent.h"
 
 #include <cmath>
 
@@ -157,7 +158,15 @@ void FireballComponent::Update(float deltaTime)
             }
         }
     }
-    const bool outerHit = CircleVsOuterWalls(x, y, kFireballCollisionRadius).hit;
+    // Query the outer walls at their LIVE in-game expansion (oWall/Step_0.gml:10-15:
+    // the walls ease outward to _scale==2 once the menu closes). The fireball spawns
+    // at the player (the VISIBLE scale-2 arena edge) and marches inward to the Core,
+    // so it must only meet an outer wall at that VISIBLE boundary. Using the canonical
+    // scale-1 overload tested the un-expanded octagon — which now sits HALFWAY between
+    // center and the visible edge — so the fireball tripped a phantom mid-arena wall
+    // and self-destructed long before reaching the Core. Match EntityComponent.cpp:77.
+    const float arenaScale = WallComponent::CurrentArenaScale();
+    const bool outerHit = CircleVsOuterWalls(x, y, kFireballCollisionRadius, arenaScale).hit;
 
     if (bossHit || outerHit)
     {
