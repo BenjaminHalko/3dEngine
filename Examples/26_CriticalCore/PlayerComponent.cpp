@@ -205,11 +205,6 @@ void PlayerComponent::OnWallTouched(const WallHit& hit)
     }
 }
 
-void PlayerComponent::OnCoreTouched()
-{
-    TriggerGameOver();
-}
-
 void PlayerComponent::TriggerGameOver()
 {
     if (mGameOverRequested)

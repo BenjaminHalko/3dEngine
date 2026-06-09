@@ -114,6 +114,10 @@ namespace Engine::CriticalCore
                 {
                     entry.score = row["score"].GetInt();
                 }
+                if (row.HasMember("level") && row["level"].IsInt())
+                {
+                    entry.level = row["level"].GetInt();
+                }
                 mScores.push_back(entry);
             }
         }
@@ -158,6 +162,8 @@ namespace Engine::CriticalCore
             writer.String(entry.name.c_str(), static_cast<rapidjson::SizeType>(entry.name.size()));
             writer.Key("score");
             writer.Int(entry.score);
+            writer.Key("level");
+            writer.Int(entry.level);
             writer.EndObject();
         }
         writer.EndArray();
@@ -205,11 +211,13 @@ namespace Engine::CriticalCore
         return mPB;
     }
 
-    void Leaderboard::Post(const std::string& name, int score)
+    void Leaderboard::InsertOrUpdate(const std::string& name, int score, int level)
     {
         // One row per name (GM oLeaderboardAPI LeaderboardPost): find an existing
         // entry for this name; if present keep only the BETTER (higher) score,
-        // otherwise insert. Never store a duplicate name.
+        // otherwise insert. Never store a duplicate name. level rides along with
+        // the winning score - oLeaderboardAPI LeaderboardPost.gml:66-67 replaces
+        // BOTH points and level when the new submission beats the stored row.
         auto existing = std::find_if(
             mScores.begin(), mScores.end(), [&name](const Entry& e) { return e.name == name; });
         if (existing != mScores.end())
@@ -217,11 +225,21 @@ namespace Engine::CriticalCore
             if (score > existing->score)
             {
                 existing->score = score;
+                existing->level = level;
+            }
+            else if (score == existing->score && existing->level == 0 && level > 0)
+            {
+                // Retroactive level patch: pre-v2 local rows were saved without
+                // the level field and read back as 0. When the remote (Firebase
+                // is always level >= 1) supplies the same score for this name,
+                // adopt the round-number it represents so the displayed ROUND
+                // column heals on the first remote merge.
+                existing->level = level;
             }
         }
         else
         {
-            mScores.push_back({name, score});
+            mScores.push_back({name, score, level});
         }
 
         // Sort DESC by score. stable_sort keeps insertion order for ties so the
@@ -234,12 +252,21 @@ namespace Engine::CriticalCore
         {
             mScores.resize(kMaxScores);
         }
+    }
 
+    void Leaderboard::Post(const std::string& name, int score, int level)
+    {
+        InsertOrUpdate(name, score, level);
         // PB = max(pb, best submitted).
         if (score > mPB)
         {
             mPB = score;
         }
+    }
+
+    void Leaderboard::MergeRemoteEntry(const std::string& name, int score, int level)
+    {
+        InsertOrUpdate(name, score, level);
     }
 
     const std::vector<Leaderboard::Entry>& Leaderboard::Entries() const

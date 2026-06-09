@@ -1,12 +1,14 @@
 #pragma once
 
+#include "Collision.h"
 #include "Render2DComponent.h"
 
 #include <Engine/Inc/Engine.h>
 
+#include <array>
+
 namespace Engine::CriticalCore
 {
-struct WallHit; // Collision.h
 
 // ---------------------------------------------------------------------------
 // EntityComponent - shared motion + collision base (port of GameMaker pEntity).
@@ -85,6 +87,13 @@ class EntityComponent : public Render2DComponent
     // before entities update; UpdateEntity()'s motion term and core test read it.
     static void SetCoreScale(float scale);
     static float GetCoreScale();
+
+    // Live boss-wall cage (CoreComponent::BossWalls()). The flow publishes the
+    // Core's segment pointer each fixed step (and clears it on teardown) so the
+    // shared per-entity wall test reflects/kills off the boss cage just like the
+    // outer walls. nullptr -> no boss walls (pre-spawn / post-teardown).
+    static void SetBossWalls(const std::array<WallSegment, 8>* bossWalls);
+    static const std::array<WallSegment, 8>* GetBossWalls();
 
   protected:
     // Fired AFTER push-out/reflection when a wall is touched, ONLY for IsPlayer()

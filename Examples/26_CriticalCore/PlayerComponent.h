@@ -141,11 +141,10 @@ class PlayerComponent final : public EntityComponent
   protected:
     // Fired by EntityComponent AFTER push-out when the player touches a wall.
     // Evaluates PlayerWallDeath() (needs playerHasMoved + deathDelay) and raises
-    // the GameOver signal (oPlayer is the player-context for pEntity:44-48).
+    // the GameOver signal (oPlayer is the player-context for pEntity:44-48). For
+    // a boss-wall touch this kicks in once the spawn deathDelay (30 steps) runs
+    // out - the player must clear the cage before it grows around them.
     void OnWallTouched(const WallHit& hit) override;
-
-    // Fired by EntityComponent when the player overlaps the Core; kills the player.
-    void OnCoreTouched() override;
 
   private:
     void TriggerGameOver();

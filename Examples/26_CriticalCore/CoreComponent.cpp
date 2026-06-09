@@ -1,6 +1,7 @@
 #include "CoreComponent.h"
 
 #include "CameraShakeService.h"
+#include "EntityComponent.h"
 #include "GmHelpers.h"
 #include "MusicController.h"
 #include "Render2D.h"
@@ -115,6 +116,7 @@ void CoreComponent::Initialize()
     UpdateBossWalls();
 
     gCoreScale = mScale;
+    EntityComponent::SetCoreScale(mScale);
 
     // shCore visual resources (mirrors BalatroEffect's VS/PS/cbuffer pattern).
     mCoreVertexShader.Initialize<Graphics::VertexPX>(kCoreShaderPath);
@@ -216,6 +218,7 @@ void CoreComponent::Update(float deltaTime)
 
     SyncTransform();
     gCoreScale = mScale;
+    EntityComponent::SetCoreScale(mScale);
     gCoreEffectTime = (mBeatService != nullptr) ? mBeatService->CoreEffectTime() : 0.0f;
 }
 

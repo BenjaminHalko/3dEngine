@@ -17,6 +17,12 @@ namespace
 
 float EntityComponent::sCoreScale = 0.0f;
 
+namespace
+{
+// Live boss-wall cage pointer (CoreComponent::BossWalls()), published by the flow.
+const std::array<WallSegment, 8>* sBossWalls = nullptr;
+} // namespace
+
 void EntityComponent::Initialize()
 {
     // Base caches the CONST transform (for drawing) + registers with the render
@@ -49,6 +55,16 @@ float EntityComponent::GetCoreScale()
     return sCoreScale;
 }
 
+void EntityComponent::SetBossWalls(const std::array<WallSegment, 8>* bossWalls)
+{
+    sBossWalls = bossWalls;
+}
+
+const std::array<WallSegment, 8>* EntityComponent::GetBossWalls()
+{
+    return sBossWalls;
+}
+
 float EntityComponent::RadiusFromMass(float mass)
 {
     if (mass <= 0.0f)
@@ -75,16 +91,39 @@ void EntityComponent::UpdateEntity()
     // image_xscale (oWall/Step_0.gml). Mirror that by querying the walls at the
     // current expansion, so the player only dies on walls it can actually SEE.
     const float arenaScale = WallComponent::CurrentArenaScale();
+    const std::array<WallSegment, 8>* bossWalls = sBossWalls;
 
-    // place_meeting(x,y,oWall) predicate for the pixel-step marches.
-    const auto inWall = [radius, arenaScale](float px, float py) -> bool {
-        return CircleVsOuterWalls(px, py, radius, arenaScale).hit;
+    // Deepest-pen Circle-vs-(outer + boss) at one probe point. GameMaker's
+    // instance_place(x,y,oWall) hits the FIRST matching oWall regardless of
+    // flipped/bossWall flag; folding boss walls into the same query lets the
+    // base reflect/death/march logic treat the cage and the arena edge alike.
+    auto circleVsAnyWall = [radius, arenaScale, bossWalls](float px, float py) -> WallHit {
+        WallHit best = CircleVsOuterWalls(px, py, radius, arenaScale);
+        if (bossWalls != nullptr)
+        {
+            for (const WallSegment& w : *bossWalls)
+            {
+                const WallHit h = CircleVsWall(px, py, radius, w);
+                if (h.hit && (!best.hit || h.penetration > best.penetration))
+                {
+                    best = h;
+                }
+            }
+        }
+        return best;
+    };
+
+    // place_meeting(x,y,oWall) predicate for the pixel-step marches. Tests BOTH
+    // wall sets so the player/non-player march into the FIRST wall (outer or
+    // boss) along dir, matching the source `while(!place_meeting(...,oWall))`.
+    const auto inWall = [&circleVsAnyWall](float px, float py) -> bool {
+        return circleVsAnyWall(px, py).hit;
     };
 
     if (collide)
     {
         // instance_place(x+xSpd, y+ySpd, oWall) (Step_0.gml:5).
-        const WallHit wall = CircleVsOuterWalls(x + xSpd, y + ySpd, radius, arenaScale);
+        const WallHit wall = circleVsAnyWall(x + xSpd, y + ySpd);
         if (wall.hit)
         {
             const float dir = PointDirection(0.0f, 0.0f, xSpd, ySpd);

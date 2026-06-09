@@ -4,6 +4,7 @@
 #include "CoreComponent.h"
 #include "GmHelpers.h"
 #include "PlayerComponent.h"
+#include "WallComponent.h"
 
 #include <algorithm>
 #include <cmath>
@@ -80,9 +81,14 @@ void CameraShakeService::Update()
     float aimY = std::floor(Math::Lerp(mPlayerY, mCoreY, kFollowLerp));
 
     // Clamp the aim so the zoomed view keeps the arena centred (Step_0.gml:14-15).
+    // The outer octagon expands to lerp(1,2,scaleMenu) once the menu closes
+    // (oWall/Step_0.gml:10-15); the clamp must track that expansion or else the
+    // camera stalls at the scale-1 edge and the player walks off-screen into the
+    // (still-deadly) scale-2 wall - reads as a "random invisible-wall death".
     const float halfW = static_cast<float>(mInternalWidth) * 0.5f;
     const float halfH = static_cast<float>(mInternalHeight) * 0.5f;
-    const float limit = kArenaHalfExtent / mViewScale;
+    const float arenaScale = WallComponent::CurrentArenaScale();
+    const float limit = (kArenaHalfExtent * arenaScale) / mViewScale;
     aimX = Math::Clamp(aimX, halfW - limit, halfW + limit);
     aimY = Math::Clamp(aimY, halfH - limit, halfH + limit);
 

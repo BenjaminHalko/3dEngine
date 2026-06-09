@@ -89,6 +89,7 @@ PlayerComponent* BubbleComponent::Player()
 void BubbleComponent::SetBossWalls(const std::array<WallSegment, 8>* bossWalls)
 {
     gBossWalls = bossWalls;
+    EntityComponent::SetBossWalls(bossWalls);
 }
 
 void BubbleComponent::SetScoreSink(std::function<void(int)> sink)

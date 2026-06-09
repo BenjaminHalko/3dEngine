@@ -1,10 +1,13 @@
 #pragma once
 
 #include "Leaderboard.h"
+#include "LeaderboardFetcher.h"
 #include "Render2DComponent.h"
 
 #include <array>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace Engine::CriticalCore
 {
@@ -136,8 +139,28 @@ class MenuComponent final : public Render2DComponent
 
     // --- Persisted settings (Leaderboard-backed) ---
     Leaderboard mLeaderboard;        // local JSON save (settings + board)
+    AsyncLeaderboardFetcher mFetcher; // off-thread Firebase fetch (poll/consume)
     std::string mUsername;           // live edit buffer (<=10 chars)
     float mVolume = 0.7f;            // 0..1 master gain
+
+    // --- Leaderboard view (decoupled from local top-10) ---
+    // mDisplayEntries holds the FULL union of local rows + raw remote rows,
+    // deduped by name (best score wins), sorted DESC by score. The Leaderboard
+    // class still caps its own mScores at top-10 for the save file - this is the
+    // scroll-friendly browse buffer, rebuilt on Load + every fetch landing.
+    std::vector<Leaderboard::Entry> mDisplayEntries;
+    // Scroll state ported 1:1 from oLeaderboardAPI/Create_0.gml + Step_0.gml.
+    // mScoreOffset (float, smoothed) Approach()es mScoreOffsetTarget (int, the
+    // discrete "where I want to be"); mScrollSpd accelerates while UP/DOWN is
+    // held (+0.05 per step, resets to 1 on release) and scales both the target
+    // step AND the Approach speed; mLeaderboardMoved suppresses recentering on
+    // fetch-land once the user has manually scrolled.
+    float mScoreOffset = 0.0f;
+    int mScoreOffsetTarget = 0;
+    float mScrollSpd = 1.0f;
+    bool mLeaderboardMoved = false;
+    void RebuildDisplayEntries(const std::vector<RemoteEntry>& remote);
+    void PositionLeaderboard();      // GameStart.gml:95 - center on mUsername (or 0)
 
     // --- Loaded assets (lazy) ---
     bool mAssetsLoaded = false;

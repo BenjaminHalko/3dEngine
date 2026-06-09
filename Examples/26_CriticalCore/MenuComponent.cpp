@@ -1,11 +1,13 @@
 #include "MenuComponent.h"
 
 #include "GmHelpers.h"
+#include "LeaderboardFetcher.h"
 #include "Render2D.h"
 
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <unordered_map>
 
 using namespace Engine;
 using Engine::Input::InputSystem;
@@ -35,6 +37,10 @@ constexpr int kMaxUsername = 10;                             // Step_0.gml:57 (<
 constexpr float kVolumeStep = 0.1f;                          // Step_0.gml:76
 constexpr int kBlinkFrames = 30;                             // Alarm_0 reset (Step_0.gml:56)
 constexpr float kSliderPixels = 60.0f;                       // sAudioLine width
+
+// scoresPerPage from oLeaderboardAPI/Create_0.gml:9. Rows beyond this fade out
+// per the alpha-by-distance formula in Draw_64.gml:28.
+constexpr int kLeaderboardVisibleRows = 8;
 
 // GameMaker named colors used by the menu.
 const Graphics::Color kWhite = Graphics::Colors::White;
@@ -218,7 +224,49 @@ void MenuComponent::Update(float deltaTime)
         mGameOverMode = true;
         mSelectDisabled = true; // oLeaderboardAPI disableSelect (ignore stale ENTER)
         mLeaderboard.Load();
+        // Refresh the in-memory username from the freshly-loaded disk state
+        // BEFORE PositionLeaderboard - it matches the row GameFlow::GameEnd just
+        // Posted under, so the centering finds the player on the local board.
         mUsername = mLeaderboard.GetUsername();
+        mLeaderboardMoved = false; // GotoLeaderboard (GameStart.gml:111-117)
+        mScrollSpd = 1.0f;
+        RebuildDisplayEntries({}); // seed local-only view until the fetch lands
+        PositionLeaderboard();
+        mFetcher.Start(kRemoteLeaderboardUrl);
+    }
+
+    // Pull in any completed background fetch BEFORE drawing decisions this tick.
+    // Runs every Update including game-running ticks so a fetch kicked off at
+    // game-over lands the moment the worker finishes, with no extra polling.
+    if (mFetcher.Poll() == AsyncLeaderboardFetcher::State::Ready)
+    {
+        std::vector<RemoteEntry> remote;
+        mFetcher.Consume(remote);
+
+        // Build the display + recenter BEFORE writing remote into the local
+        // board. RebuildDisplayEntries reads mLeaderboard.Entries(), and
+        // MergeRemoteEntry trims that storage to kMaxScores=10 after every
+        // insert - merging 14k+ high-score remote rows first would push the
+        // player's own local rows out of the top-10 and the display would
+        // never see them (and PositionLeaderboard could never find mUsername).
+        RebuildDisplayEntries(remote);
+        // Other_70.gml:34-35 — only recenter on Firebase-Read-complete when the
+        // user has NOT manually scrolled (mLeaderboardMoved == moved in GML).
+        if (!mLeaderboardMoved)
+        {
+            PositionLeaderboard();
+        }
+
+        // After the display is locked in, fold remote into the local board so
+        // the retroactive level-patch heuristic in Leaderboard::InsertOrUpdate
+        // (same name + same score + local level 0 -> adopt remote level) can
+        // heal pre-`level`-field legacy rows on subsequent reloads. The trim
+        // pollution this causes is transient: each menu open does Load() which
+        // reloads the pure local top-10 from disk.
+        for (const RemoteEntry& e : remote)
+        {
+            mLeaderboard.MergeRemoteEntry(e.name, e.score, e.level);
+        }
     }
 
     // Flow-authoritative gate: the menu never owns the screen while a game is
@@ -254,6 +302,46 @@ void MenuComponent::Update(float deltaTime)
         {
             mShowLeaderboard = false;
             mGameOverMode = false;
+        }
+        else
+        {
+            // oLeaderboardAPI/Step_0.gml:9-22 - continuous-held scroll with
+            // scrollSpd acceleration. Target jumps in integer steps only when
+            // the smoothed offset has caught up (line 9 gate); the smoothed
+            // offset Approach()es the target with speed proportional to
+            // scrollSpd; scrollSpd accelerates +0.05/step while UP/DOWN is held
+            // and snaps back to 1 on release.
+            const int keyUp = (Held(KeyCode::UP) || Held(KeyCode::W)) ? 1 : 0;
+            const int keyDown = (Held(KeyCode::DOWN) || Held(KeyCode::S)) ? 1 : 0;
+            const int total = static_cast<int>(mDisplayEntries.size());
+            const int maxTarget = std::max(0, total - kLeaderboardVisibleRows);
+
+            if (std::fabs(mScoreOffset - static_cast<float>(mScoreOffsetTarget)) < 0.001f)
+            {
+                if (maxTarget == 0)
+                {
+                    mScoreOffsetTarget = 0;
+                }
+                else
+                {
+                    const int step = static_cast<int>(std::round(
+                        static_cast<float>(keyDown - keyUp) * std::max(mScrollSpd - 1.0f, 1.0f)));
+                    mScoreOffsetTarget = std::clamp(mScoreOffsetTarget + step, 0, maxTarget);
+                }
+            }
+
+            mScoreOffset = Approach(mScoreOffset, static_cast<float>(mScoreOffsetTarget),
+                                    std::max(mScrollSpd - 1.0f, 1.0f) * 0.4f);
+
+            if (keyDown - keyUp != 0)
+            {
+                mScrollSpd += 0.05f;
+                mLeaderboardMoved = true;
+            }
+            else
+            {
+                mScrollSpd = 1.0f;
+            }
         }
         mUsernameFlash = Approach(mUsernameFlash, 0.0f, 0.04f);
         return;
@@ -309,6 +397,13 @@ void MenuComponent::UpdateNavigation()
         // (play music, snStart SFX, transition + destroy this object).
         if (!mUsername.empty())
         {
+            // Persist the username NOW so GameFlow::GameEnd's disk reload sees
+            // the freshly-typed name. Without this, pressing RETURN from the
+            // START row while a name edit is still in-memory-only would post
+            // the death-screen row under the previous saved name.
+            TrimTrailingSpaces();
+            mLeaderboard.SetUsername(mUsername);
+            mLeaderboard.Save();
             sStartRequested = true;
             sMenuActive = false;
         }
@@ -323,6 +418,11 @@ void MenuComponent::UpdateNavigation()
     {
         // Step_0.gml:50-53 GotoLeaderboard, now a local in-place screen.
         mLeaderboard.Load(); // refresh to show the latest board
+        mLeaderboardMoved = false; // GotoLeaderboard (GameStart.gml:111-117)
+        mScrollSpd = 1.0f;
+        RebuildDisplayEntries({}); // seed local-only view until the fetch lands
+        PositionLeaderboard();
+        mFetcher.Start(kRemoteLeaderboardUrl);
         mShowLeaderboard = true;
         PlayBlip(); // Step_0.gml:52 - blip on the leaderboard select.
     }
@@ -501,43 +601,162 @@ void MenuComponent::DrawMenu(Render2D& render2D)
     render2D.DrawSprite(mAudioIconTex, kMenuX + 62.0f, menuY, 0.0f, 3.0f, 1.0f, 1.0f, 0.0f, kWhite);
 }
 
+void MenuComponent::RebuildDisplayEntries(const std::vector<RemoteEntry>& remote)
+{
+    // Union local top-10 + raw remote into a per-name best-{score,level} map,
+    // then flush to a flat vector and stable-sort DESC by score. unordered_map
+    // iteration order is unspecified, but the post-sort ordering is fully
+    // deterministic for any given (local, remote) pair, so the rendered board
+    // does not flicker. level rides with the winning score (matches
+    // Leaderboard::InsertOrUpdate / oLeaderboardAPI LeaderboardPost.gml:66-67).
+    struct Best
+    {
+        int score;
+        int level;
+    };
+    std::unordered_map<std::string, Best> best;
+    best.reserve(mLeaderboard.Entries().size() + remote.size());
+    for (const Leaderboard::Entry& e : mLeaderboard.Entries())
+    {
+        auto [it, inserted] = best.emplace(e.name, Best{e.score, e.level});
+        if (!inserted && e.score > it->second.score)
+        {
+            it->second = {e.score, e.level};
+        }
+    }
+    for (const RemoteEntry& r : remote)
+    {
+        if (r.name.empty())
+        {
+            continue;
+        }
+        auto [it, inserted] = best.emplace(r.name, Best{r.score, r.level});
+        if (!inserted && r.score > it->second.score)
+        {
+            it->second = {r.score, r.level};
+        }
+    }
+    mDisplayEntries.clear();
+    mDisplayEntries.reserve(best.size());
+    for (const auto& [name, b] : best)
+    {
+        mDisplayEntries.push_back({name, b.score, b.level});
+    }
+    std::stable_sort(
+        mDisplayEntries.begin(), mDisplayEntries.end(),
+        [](const Leaderboard::Entry& a, const Leaderboard::Entry& b) { return a.score > b.score; });
+}
+
+void MenuComponent::PositionLeaderboard()
+{
+    // GameStart.gml:95-109 PositionLeaderboard. Center the viewport on the
+    // player's row at index-5 (so they appear ~5 rows from the top of the
+    // page), clamped to [0, length-perPage]. Snap both offset AND target so
+    // the recenter does NOT animate (matches `scoreOffset = scoreOffsetTarget`
+    // in GameStart.gml:103). If the player is absent, anchor at row 0.
+    int idx = -1;
+    if (!mUsername.empty())
+    {
+        for (int i = 0; i < static_cast<int>(mDisplayEntries.size()); ++i)
+        {
+            if (mDisplayEntries[i].name == mUsername)
+            {
+                idx = i;
+                break;
+            }
+        }
+    }
+    const int total = static_cast<int>(mDisplayEntries.size());
+    const int maxTarget = std::max(0, total - kLeaderboardVisibleRows);
+    if (idx >= 0)
+    {
+        mScoreOffsetTarget = std::clamp(idx - 5, 0, maxTarget);
+    }
+    else
+    {
+        mScoreOffsetTarget = 0;
+    }
+    mScoreOffset = static_cast<float>(mScoreOffsetTarget);
+}
+
 void MenuComponent::DrawLeaderboardScreen(Render2D& render2D) const
 {
-    // Layout anchors traced to oLeaderboardAPI/Draw_64.gml (non-gxGames). Source
-    // _x=72,_y=62; place@_x, name@_x+22, points@_x+70, _scoreY step 9 (line 29).
-    // Local board stores name+score only -> ROUND column dropped, SCORE slot
-    // right-aligned at 256-72=184 so PLACE@72/SCORE@184 center the rows on x=128.
+    // Layout anchors ported 1:1 from oLeaderboardAPI/Draw_64.gml (non-gxGames).
+    // Source _x=72, _y=62. Headers are center-aligned at _x+8/+42/+80; rows are
+    // left-aligned at _x/+22/+70 (lines 12-18 + 21 + 34-49). ROUND column from
+    // line 18/50 is dropped (no `level` field in the local Entry).
     constexpr float kCenterX = static_cast<float>(kInternalWidth) * 0.5f;
-    constexpr float kPlaceX = 72.0f;
-    constexpr float kNameX = 94.0f;
-    constexpr float kScoreRightX = 184.0f;
+    constexpr float kBaseX = 72.0f;
+    constexpr float kPlaceHeaderX = kBaseX + 8.0f;
+    constexpr float kNameHeaderX = kBaseX + 42.0f;
+    constexpr float kScoreHeaderX = kBaseX + 80.0f;
+    constexpr float kRoundHeaderX = kBaseX + 106.0f;
+    constexpr float kRowPlaceX = kBaseX;
+    constexpr float kRowNameX = kBaseX + 22.0f;
+    constexpr float kRowScoreX = kBaseX + 70.0f;
+    constexpr float kRowRoundX = kBaseX + 104.0f;
     constexpr float kHeaderY = 62.0f;
     constexpr float kRowStart = 78.0f;
     constexpr float kRowStep = 9.0f;
+    // Half-width of the full-alpha band (scoresPerPage/2 - 0.5). Rows farther
+    // than this from the viewport center fade per Draw_64.gml:28.
+    constexpr float kFadeHalfWidth = 3.5f;
 
-    render2D.DrawText(Font2D::Score, "PLACE", kPlaceX, kHeaderY, kWhite, TextAlign::Left);
-    render2D.DrawText(Font2D::Score, "NAME", kNameX, kHeaderY, kWhite, TextAlign::Left);
-    render2D.DrawText(Font2D::Score, "SCORE", kScoreRightX, kHeaderY, kWhite, TextAlign::Right);
+    render2D.DrawText(Font2D::Score, "PLACE", kPlaceHeaderX, kHeaderY, kWhite, TextAlign::Center);
+    render2D.DrawText(Font2D::Score, "NAME", kNameHeaderX, kHeaderY, kWhite, TextAlign::Center);
+    render2D.DrawText(Font2D::Score, "SCORE", kScoreHeaderX, kHeaderY, kWhite, TextAlign::Center);
+    render2D.DrawText(Font2D::Score, "ROUND", kRoundHeaderX, kHeaderY, kWhite, TextAlign::Center);
 
-    const std::vector<Leaderboard::Entry>& entries = mLeaderboard.Entries();
-    if (entries.empty())
+    if (mDisplayEntries.empty())
     {
         render2D.DrawText(Font2D::Score, "NO SCORES YET", kCenterX, 110.0f, kDkGray, TextAlign::Center);
     }
     else
     {
-        float rowY = kRowStart;
-        for (std::size_t i = 0; i < entries.size(); ++i)
+        // Draw_64.gml:23 iteration range - overshoot the viewport by round(scrollSpd)
+        // rows on each side so the smooth Approach can slide rows in/out without
+        // popping at the viewport boundaries.
+        const int total = static_cast<int>(mDisplayEntries.size());
+        const int sp = static_cast<int>(std::round(mScrollSpd));
+        const int first = std::max(0, mScoreOffsetTarget - sp);
+        const int last = std::min(total, mScoreOffsetTarget + kLeaderboardVisibleRows + sp);
+        for (int i = first; i < last; ++i)
         {
-            const bool isPlayer = !mUsername.empty() && entries[i].name == mUsername;
-            const Graphics::Color rowCol = isPlayer ? kYellow : kWhite;
+            // Draw_64.gml:28 per-row fade: full alpha within kFadeHalfWidth of
+            // the viewport center (scoreOffset + 3.5), fading linearly to 0 over
+            // the next 1.0 unit, fully transparent beyond.
+            const float dist = std::fabs(static_cast<float>(i) - mScoreOffset - kFadeHalfWidth);
+            const float alpha = 1.0f - std::clamp(dist - kFadeHalfWidth, 0.0f, 1.0f);
 
-            render2D.DrawText(Font2D::Score, Ordinal(static_cast<int>(i) + 1), kPlaceX, rowY, rowCol,
+            const bool isPlayer = !mUsername.empty() && mDisplayEntries[i].name == mUsername;
+            Graphics::Color rowCol = isPlayer ? kYellow : kWhite;
+            rowCol.a = alpha;
+
+            // Draw_64.gml:29 - row Y slides with the smoothed mScoreOffset so the
+            // viewport scrolls sub-pixel-fractionally during the Approach.
+            const float rowY = kRowStart + (static_cast<float>(i) - mScoreOffset) * kRowStep;
+            const int rank = i + 1;
+
+            // Shift the ordinal left as the rank number grows so 4+ digit ranks
+            // don't visually crowd the NAME column. Matches Draw_64.gml:31-32's
+            // `_scoreX -= 4` at i >= 999 and adds a second -4 at the 5-digit
+            // boundary (a port extension; the source has no 10000+ tier).
+            float placeX = kRowPlaceX;
+            if (rank >= 1000)
+            {
+                placeX -= 4.0f;
+            }
+            if (rank >= 10000)
+            {
+                placeX -= 4.0f;
+            }
+            render2D.DrawText(Font2D::Score, Ordinal(rank), placeX, rowY, rowCol, TextAlign::Left);
+            render2D.DrawText(Font2D::Score, mDisplayEntries[i].name, kRowNameX, rowY, rowCol,
                               TextAlign::Left);
-            render2D.DrawText(Font2D::Score, entries[i].name, kNameX, rowY, rowCol, TextAlign::Left);
-            render2D.DrawText(Font2D::Score, std::to_string(entries[i].score), kScoreRightX, rowY, rowCol,
-                              TextAlign::Right);
-            rowY += kRowStep;
+            render2D.DrawText(Font2D::Score, std::to_string(mDisplayEntries[i].score), kRowScoreX, rowY,
+                              rowCol, TextAlign::Left);
+            render2D.DrawText(Font2D::Score, std::to_string(mDisplayEntries[i].level), kRowRoundX, rowY,
+                              rowCol, TextAlign::Left);
         }
     }
 

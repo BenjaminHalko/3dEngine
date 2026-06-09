@@ -26,6 +26,7 @@ namespace Engine::CriticalCore
         {
             std::string name;
             int score = 0;
+            int level = 0; // round reached on this run (oLeaderboardAPI scores[i].level)
         };
 
         // Default save file name (relative to cwd == build/bin). The selftest
@@ -52,8 +53,15 @@ namespace Engine::CriticalCore
         int GetPB() const;
 
         // == GML LeaderboardPost: inserts the run, sorts DESC by score, trims to
-        // top-10, and bumps PB when score > pb.
-        void Post(const std::string& name, int score);
+        // top-10, and bumps PB when score > pb. level == round reached on the
+        // run (oLeaderboardAPI scores[i].level / global.round at GameEnd).
+        void Post(const std::string& name, int score, int level = 0);
+
+        // Insert a row from the REMOTE Firebase board: same dedup/sort/trim as
+        // Post(), but the PB field is NOT touched - PB is the player's own best
+        // run, not the global maximum. Used by LeaderboardFetcher to fold remote
+        // scores into the local top-10 without polluting the personal best.
+        void MergeRemoteEntry(const std::string& name, int score, int level = 0);
 
         // The top-10 rows, sorted DESC by score (for the post-game display).
         const std::vector<Entry>& Entries() const;
@@ -64,6 +72,7 @@ namespace Engine::CriticalCore
 
     private:
         void Reset();
+        void InsertOrUpdate(const std::string& name, int score, int level);
 
         std::string mFilePath;
         std::string mUsername;

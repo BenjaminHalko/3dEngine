@@ -18,6 +18,8 @@ add_executable(26_CriticalCore
     Render2DComponent.cpp
     MusicController.cpp
     Leaderboard.cpp
+    HttpFetch.cpp
+    LeaderboardFetcher.cpp
     EntityComponent.cpp
     CoreComponent.cpp
     WallComponent.cpp
@@ -33,3 +35,25 @@ add_executable(26_CriticalCore
     SpikeComponent.cpp
     GameFlow.cpp)
 target_set_windows_application(26_CriticalCore)
+
+# OpenMP for the LeaderboardFetcher background HTTP dispatch. Apple's stock
+# Clang ships without OpenMP runtime so on macOS we hint at the Homebrew libomp
+# install (`brew install libomp`) before re-running find_package; on Linux/
+# Windows / Homebrew LLVM Clang the first find_package call succeeds directly.
+find_package(OpenMP)
+if(NOT OpenMP_CXX_FOUND AND APPLE)
+    foreach(_libomp_prefix "/opt/homebrew/opt/libomp" "/usr/local/opt/libomp")
+        if(EXISTS "${_libomp_prefix}/include/omp.h")
+            set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${_libomp_prefix}/include")
+            set(OpenMP_CXX_LIB_NAMES "omp")
+            set(OpenMP_omp_LIBRARY "${_libomp_prefix}/lib/libomp.dylib")
+            break()
+        endif()
+    endforeach()
+    find_package(OpenMP)
+endif()
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(26_CriticalCore OpenMP::OpenMP_CXX)
+else()
+    message(WARNING "OpenMP not found - LeaderboardFetcher will fall back to a sequential fetch.")
+endif()

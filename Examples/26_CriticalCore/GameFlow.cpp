@@ -413,7 +413,7 @@ void GameFlow::GameEnd()
     mLeaderboard.Load(); // refresh from disk (the menu may have changed the username)
     const int oldPB = mLeaderboard.GetPB();
     const std::string username = mLeaderboard.GetUsername();
-    mLeaderboard.Post(username, mScore); // == LeaderboardPost
+    mLeaderboard.Post(username, mScore, mRound); // == LeaderboardPost (level = global.round)
     mLeaderboard.Save();
     mGuiState.newPB = (mScore > oldPB);
 
