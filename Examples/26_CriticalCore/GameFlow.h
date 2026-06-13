@@ -78,7 +78,7 @@ class GameFlow
     void GameOver(bool instant = false);            // burst bubbles, snHit, ScreenShake, delayed PlayerExplode/RestartRound
     void RestartRound();                            // delayed: lose a life -> Respawn or GameEnd
     void GameEnd();                                 // destroy + Leaderboard Post + return to the menu/title
-    void PlayerExplode(bool small = false);         // explode + destroy the player (snExplode, particles)
+    void PlayerExplode(bool isSmall = false);       // explode + destroy the player (snExplode, particles)
     void FireballCollect(float x, float y, float radius); // orange burst (parallel to FireballComponent's own)
 
     // ----- Hand-off to task 34 -----
