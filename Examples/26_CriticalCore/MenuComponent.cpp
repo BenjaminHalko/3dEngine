@@ -1,5 +1,6 @@
 #include "MenuComponent.h"
 
+#include "CoreComponent.h"
 #include "GmHelpers.h"
 #include "LeaderboardFetcher.h"
 #include "Render2D.h"
@@ -534,6 +535,50 @@ void MenuComponent::EnsureAssets(Render2D& render2D)
     render2D.LoadFont(Font2D::Score, "Assets/Fonts/CriticalCore/fScore.png", "Assets/Fonts/CriticalCore/fScore.json");
 
     mAssetsLoaded = true;
+
+    // The title's own assets are resident and the device is confirmed live, so warm
+    // the gameplay caches now (while the title is up) - the first START then only
+    // rebinds resident resources instead of compiling the shCore shader + decoding
+    // SFX on the START frame (the first-press lag spike).
+    PrewarmGameplay(render2D);
+}
+
+void MenuComponent::PrewarmGameplay(Render2D& render2D)
+{
+    if (mGameplayPrewarmed)
+    {
+        return;
+    }
+
+    // 1) The dominant cost: compile the shCore VS/PS/cbuffer NOW instead of on the
+    //    first Core spawn inside GameStart. Needs the live GPU device, which the
+    //    render service has provided by this first Draw. No-op once resident.
+    CoreComponent::EnsureSharedResources();
+
+    // 2) Decode every gameplay SFX into the SoundEffectManager cache. The gameplay
+    //    code loads these through load-once static handles on first play; warming
+    //    the manager by the SAME paths here turns those first plays into map hits
+    //    instead of disk reads + ma_sound_init_from_file decodes on the gameplay
+    //    frame (snStart fires on the START frame itself).
+    if (Engine::Audio::SoundEffectManager* sfx = Engine::Audio::SoundEffectManager::Get())
+    {
+        sfx->Load("CriticalCore/snStart.wav");      // GameFlow::GameStart (START frame)
+        sfx->Load("CriticalCore/snHit.wav");        // GameFlow::GameOver
+        sfx->Load("CriticalCore/snExplode.wav");    // GameFlow::PlayerExplode
+        sfx->Load("CriticalCore/snFireHit.wav");    // CoreComponent::DamageCore
+        sfx->Load("CriticalCore/snFireShoot.wav");  // FireballComponent
+        sfx->Load("CriticalCore/snCollect.wav");    // BubbleComponent::Absorb
+        sfx->Load("CriticalCore/snPointBoost.wav"); // BubbleComponent::Absorb (double)
+        sfx->Load("CriticalCore/snPointLoss.wav");  // SpikeComponent
+        sfx->Load("CriticalCore/snBlip.wav");       // menu nav blip (first navigation)
+    }
+
+    // 3) The only gameplay SPRITE the title never touches: sSpike. Load it through
+    //    the SAME Render2D the spikes use so the TextureManager cache key matches
+    //    and the first spike spawn is a refcount bump, not a disk read + GPU upload.
+    render2D.LoadTexture("CriticalCore/sSpike.png");
+
+    mGameplayPrewarmed = true;
 }
 
 void MenuComponent::Draw(Render2D& render2D)

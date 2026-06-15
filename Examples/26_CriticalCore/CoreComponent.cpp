@@ -80,6 +80,23 @@ Graphics::PixelShader CoreComponent::sSharedPS;
 CoreComponent::CoreBuffer CoreComponent::sSharedBuffer;
 bool CoreComponent::sSharedReady = false;
 
+void CoreComponent::EnsureSharedResources()
+{
+    // Compile the shCore VS/PS/cbuffer ONCE process-wide. The Core is spawned and
+    // destroyed every game, so per-Initialize compilation of CriticalCore_Core.hlsl
+    // was the start-game lag spike; caching it here means subsequent Cores (and the
+    // very first START, when the menu prewarms this ahead of time) just borrow the
+    // resident resources instead of recompiling.
+    if (sSharedReady)
+    {
+        return;
+    }
+    sSharedVS.Initialize<Graphics::VertexPX>(kCoreShaderPath);
+    sSharedPS.Initialize(kCoreShaderPath);
+    sSharedBuffer.Initialize();
+    sSharedReady = true;
+}
+
 void CoreComponent::TerminateSharedResources()
 {
     if (!sSharedReady)
@@ -138,16 +155,11 @@ void CoreComponent::Initialize()
     EntityComponent::SetCoreScale(mScale);
 
     // shCore visual resources (mirrors BalatroEffect's VS/PS/cbuffer pattern).
-    // Compile the VS/PS/cbuffer ONCE process-wide - the Core is spawned/destroyed
-    // every game, so per-Initialize compilation of CriticalCore_Core.hlsl was the
-    // start-game lag spike. Subsequent Cores borrow the cached resources.
-    if (!sSharedReady)
-    {
-        sSharedVS.Initialize<Graphics::VertexPX>(kCoreShaderPath);
-        sSharedPS.Initialize(kCoreShaderPath);
-        sSharedBuffer.Initialize();
-        sSharedReady = true;
-    }
+    // Compiled ONCE process-wide (see EnsureSharedResources) - the Core is
+    // spawned/destroyed every game, so per-Initialize compilation of
+    // CriticalCore_Core.hlsl was the start-game lag spike. The menu prewarms this
+    // ahead of the first START; here it is a no-op if already resident.
+    EnsureSharedResources();
     mCoreVertexShader = &sSharedVS;
     mCorePixelShader = &sSharedPS;
     mCoreBuffer = &sSharedBuffer;

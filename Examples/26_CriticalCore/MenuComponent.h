@@ -104,6 +104,14 @@ class MenuComponent final : public Render2DComponent
     // initialized by then; idempotent if another component also loads them).
     void EnsureAssets(Render2D& render2D);
 
+    // One-time prewarm of the gameplay assets the title screen never touches, so
+    // the FIRST START only rebinds resident resources instead of paying for them
+    // on the START frame (the first-press lag spike). Runs while the title is up:
+    // compiles the shCore shader (the dominant cost), decodes every gameplay SFX,
+    // and loads the spike sprite. Called from EnsureAssets with a live GPU device;
+    // every underlying load is load-once so this is safe + idempotent.
+    void PrewarmGameplay(Render2D& render2D);
+
     // --- Per-fixed-step key edge detection (the input-fix core) ---
     //
     // The engine's InputSystem::IsKeyPressed() is a RENDER-FRAME edge: it is true
@@ -172,6 +180,7 @@ class MenuComponent final : public Render2DComponent
 
     // --- Loaded assets (lazy) ---
     bool mAssetsLoaded = false;
+    bool mGameplayPrewarmed = false; // one-shot guard for PrewarmGameplay
     Graphics::TextureId mTitleTex = 0;
     Graphics::TextureId mAudioLineBgTex = 0;   // sAudioLine frame 0 (track)
     Graphics::TextureId mAudioLineFillTex = 0; // sAudioLine frame 1 (knob)

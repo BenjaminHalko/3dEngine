@@ -75,6 +75,14 @@ class CoreComponent final : public Render2DComponent
     // pointer. 0 before the Core spawns (a static nebula, harmless).
     static float EffectTime();
 
+    // Compile + cache the process-shared shCore GPU resources (VS / PS / cbuffer)
+    // if not already done. Initialize() calls this on the first Core spawn, but it
+    // can also be called AHEAD of time (e.g. from the menu's prewarm) so the
+    // runtime CriticalCore_Core.hlsl compilation - the dominant first-START lag
+    // spike - is paid while the title is up instead of on the START frame.
+    // Idempotent + process-wide (guarded by sSharedReady); needs a live GPU device.
+    static void EnsureSharedResources();
+
     // Release the process-shared shCore GPU resources (VS / PS / cbuffer). The
     // Core GameObject is spawned + destroyed every game, so its shader is
     // compiled ONCE and cached process-wide (game-start no longer recompiles
