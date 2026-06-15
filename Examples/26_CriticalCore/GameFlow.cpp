@@ -483,7 +483,7 @@ void GameFlow::ReturnToTitle()
     mGuiState.lives = mLives;
 }
 
-void GameFlow::PlayerExplode(bool small)
+void GameFlow::PlayerExplode(bool isSmall)
 {
     // GameOver.gml:93-116.
     ScreenShake(12.0f, 40);  // GameOver.gml:94
@@ -505,7 +505,7 @@ void GameFlow::PlayerExplode(bool small)
     // repeat(_small ? 20 : clamp(mass/4, 80, 150)) (GameOver.gml:98). BROWSER cap
     // ignored (desktop target).
     const float r = Math::Max(12.0f, playerRadius); // max(12, radius)
-    const int count = small ? 20 : static_cast<int>(Math::Clamp(mass / 4.0f, 80.0f, 150.0f));
+    const int count = isSmall ? 20 : static_cast<int>(Math::Clamp(mass / 4.0f, 80.0f, 150.0f));
     for (int i = 0; i < count; ++i)
     {
         const float dir = RandomRange(0.0f, 360.0f);
@@ -515,7 +515,7 @@ void GameFlow::PlayerExplode(bool small)
 
         float partRadius = RandomRange(r / 5.0f, r / 3.0f);
         float driftSpeed = RandomRange(0.0f, 2.0f); // speed = random(2)
-        if (small)
+        if (isSmall)
         {
             driftSpeed /= 2.0f; // _small halves speed & radius (GameOver.gml:108-111)
             partRadius /= 2.0f;

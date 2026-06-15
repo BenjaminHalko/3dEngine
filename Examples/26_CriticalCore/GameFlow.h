@@ -86,7 +86,7 @@ class GameFlow
     // rebuild, which recompiled 6 HLSL shaders + reallocated RTs + restreamed
     // music every press - the source of the menu-return lag spike.
     void ReturnToTitle();
-    void PlayerExplode(bool small = false);         // explode + destroy the player (snExplode, particles)
+    void PlayerExplode(bool isSmall = false);       // explode + destroy the player (snExplode, particles)
     void FireballCollect(float x, float y, float radius); // orange burst (parallel to FireballComponent's own)
 
     // ----- Hand-off to task 34 -----
