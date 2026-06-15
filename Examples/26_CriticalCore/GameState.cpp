@@ -151,12 +151,32 @@ void GameState::Update(float deltaTime)
         {
             CoreComponent* core = mGameFlow.GetCore();
             PlayerComponent* player = mGameFlow.GetPlayer();
-            const float px = (player != nullptr) ? player->CenterX() : kArenaCenterX;
-            const float py = (player != nullptr) ? player->CenterY() : kArenaCenterY;
             const float cx = (core != nullptr) ? core->CenterX() : kArenaCenterX;
             const float cy = (core != nullptr) ? core->CenterY() : kArenaCenterY;
 
-            mCameraShake->SetTargets(px, py, cx, cy);
+            // Follow-target selection ports oCamera/Step_0.gml:4-22's THREE-way
+            // branch precisely - the middle case is what was wrong before:
+            //   * Player alive            -> aim at lerp(player, core, 0.35).
+            //   * Player gone + out-of-game / leaderboard up -> recenter to the
+            //     arena middle.
+            //   * Player gone but STILL in-game (the death gap, before the
+            //     leaderboard appears) -> the GML runs NEITHER branch, so
+            //     targetPos stays FROZEN at the last player position and the
+            //     camera keeps easing toward where the player died. The prior
+            //     port instead snapped the target to the arena centre the instant
+            //     the player was destroyed, yanking the camera mid-death - the
+            //     "camera position on death seems different" report. We mirror the
+            //     freeze by simply NOT calling SetTargets in that window.
+            if (player != nullptr)
+            {
+                mCameraShake->SetTargets(player->CenterX(), player->CenterY(), cx, cy);
+            }
+            else if (!mGameFlow.IsInGame() || MenuComponent::IsMenuActive())
+            {
+                mCameraShake->SetTargets(kArenaCenterX, kArenaCenterY, cx, cy);
+            }
+            // else: death gap - leave the follow target frozen (GML neither-branch).
+
             mCameraShake->Update();
 
             if (mRenderService != nullptr)

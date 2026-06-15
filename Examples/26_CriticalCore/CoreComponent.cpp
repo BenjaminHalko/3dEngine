@@ -482,6 +482,24 @@ void CoreComponent::DamageCore()
     }
 }
 
+void CoreComponent::EnterNextRound(int round)
+{
+    // GameOver.gml:51-60 `with(oCore)` block, fired the instant HP depletes (the
+    // flow's NextRound), BEFORE the 90-frame-delayed RoundStart -> BeginRound.
+    // Snapping targetScale back to getCoreStart() here is what makes the core
+    // SHRINK on death; without it mScale eases toward the large end-of-round
+    // targetScale during the death animation (the "grows really large" bug).
+    mRound = round;
+    mTargetScale = GetCoreStart(round);
+    mDashLineAmount = 0.0f;
+    mMovementPercent = 0.0f;
+    mStartX = mX;
+    mStartY = mY;
+    mTargetX = Arena::kCenterX;
+    mTargetY = Arena::kCenterY;
+    mHpHit = 0.0f;
+}
+
 void CoreComponent::BeginRound(int round)
 {
     // GameStart RoundStart (GameStart.gml:74-93).
@@ -522,19 +540,36 @@ void CoreComponent::Draw(Render2D& render2D)
         render2D.DrawLine(drawX, drawY, endX, endY, 1.0f, Graphics::Colors::White);
     }
 
-    // Core BODY: the white volumetric shCore nebula at full scale, always shown.
-    DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White, viewScale);
-
-    // Damage overlay: the red/pink octagon represents DAMAGE TAKEN, growing from
-    // the centre as HP drops (red proportion = 1 - hp). A full-HP Core shows no
-    // red; near death it fills the Core. Tint pulses #FF005E -> red on the beat.
-    const float damage = Math::Clamp(1.0f - mHpDraw, 0.0f, 1.0f);
-    if (damage > 0.01f)
+    // Core layers ported 1:1 from oCore/Draw_0.gml:15-46. There are TWO octagons,
+    // and the order/extent below is what makes the death read as the core SHRINKING
+    // into red rather than a red overlay growing over it:
+    //
+    //   1. White nebula BASE (Draw_0.gml:15-26): drawn at FULL scale, intensity
+    //      0.5, but ONLY while damaged (hpDraw < 0.995). At full HP it is skipped
+    //      entirely - the red HP octagon below covers the whole core.
+    //   2. Red HP octagon (Draw_0.gml:28-44): drawn at scale * hpDraw (SHRINKS
+    //      toward the centre as HP drops), FLAT (intensity 0), tinted #FF005E ->
+    //      c_red by pulse, with a 0.05 minimum scale while 0 < hp < 1.
+    //
+    // The prior port inverted this: it drew the white base ALWAYS and scaled the
+    // red by (1 - hpDraw), so the red GREW outward and filled the core at death -
+    // the "weird inverted red thing". hpDraw is the smoothed HP, so as it eases to
+    // 0 the red disc shrinks to a point while the white nebula base is revealed.
+    if (mHpDraw < 0.995f)
     {
-        const float damageScale = mScale * damage;
+        DrawCoreOctagon(drawX, drawY, mScale, 0.5f, Graphics::Colors::White, viewScale);
+    }
+
+    if (mHpDraw > 0.01f)
+    {
+        float hpScale = mScale * mHpDraw;
+        if (mHp != 1.0f && mHp != 0.0f)
+        {
+            hpScale = Math::Max(0.05f, hpScale);
+        }
         const Graphics::Color hpBase = {1.0f, 0.0f, 94.0f / 255.0f, 1.0f}; // #FF005E
         const Graphics::Color hpColor = MergeColor(hpBase, Graphics::Colors::Red, mPulse);
-        DrawCoreOctagon(drawX, drawY, damageScale, 0.0f, hpColor, viewScale);
+        DrawCoreOctagon(drawX, drawY, hpScale, 0.0f, hpColor, viewScale);
     }
 
     // --- Boss walls (oCore creates oWall bossWall instances at depth-1; their

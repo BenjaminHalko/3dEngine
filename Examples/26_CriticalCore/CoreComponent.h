@@ -188,6 +188,13 @@ class CoreComponent final : public Render2DComponent
     // flips the rotation direction, seeds the per-round targetScale, refills HP.
     void BeginRound(int round);
 
+    // NextRound immediate Core reset (GameOver.gml:51-60 `with(oCore)` block).
+    // Fired the instant HP depletes (BEFORE the delayed RoundStart/BeginRound):
+    // snaps targetScale back to getCoreStart() so the dying core SHRINKS to its
+    // fresh small size instead of easing toward the (now-large) end-of-round
+    // targetScale. Skipping this was why the core "grew really large on death".
+    void EnterNextRound(int round);
+
   private:
     void Shoot(int beatIndex);
     void SpawnProjectile(const ShootSpawn& spawn);

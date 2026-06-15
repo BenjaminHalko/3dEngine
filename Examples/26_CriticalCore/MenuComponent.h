@@ -90,6 +90,14 @@ class MenuComponent final : public Render2DComponent
     // leaderboard. ENTER there starts a NEW game (oLeaderboardAPI inGame branch).
     static void RequestGameOverLeaderboard();
 
+    // ESC-in-game abandon (GameFlow::ReturnToTitle): re-arm the dormant menu back
+    // to the PLAIN title (not the post-game leaderboard). Pressing START sets
+    // sMenuActive=false; with the menu object now kept resident across the
+    // in-place title reset (no world rebuild), nothing flips it back on - so the
+    // menu stayed dormant and the screen went blank ("ESC just kills all
+    // objects"). This restores sMenuActive and clears the leaderboard sub-screen.
+    static void RequestTitle();
+
   private:
     // Loads the title / slider sprites + bitmap fonts into the shared Render2D
     // once (lazy, on first Draw — the service-owned Render2D is guaranteed

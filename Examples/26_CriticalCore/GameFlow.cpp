@@ -322,13 +322,15 @@ void GameFlow::NextRound()
     mScore += 10000;                       // GameOver.gml:49
     ++mRound;                              // GameOver.gml:50
 
-    // with(oCore): new round + nextRound mode. The immediate targetScale/dash reset
-    // (GameOver.gml:51-60) has no component setter; the Core eases to centre while
-    // nextRound is set and BeginRound resets targetScale at the delayed RoundStart.
+    // with(oCore) (GameOver.gml:51-60): set the new round + nextRound mode AND
+    // run the immediate Core reset - snap targetScale to getCoreStart() so the
+    // dying core shrinks now, instead of easing toward the large end-of-round
+    // targetScale during the death animation (the "grows really large" bug).
     if (mCore != nullptr)
     {
         mCore->SetRound(mRound);
         mCore->SetNextRound(true);
+        mCore->EnterNextRound(mRound);
     }
 
     PlaySfx(StartSfx());                   // snStart (GameOver.gml:61); pitch 1.2 unsupported
@@ -451,8 +453,7 @@ void GameFlow::ReturnToTitle()
     // (we go straight to the plain title menu). Crucially this does NOT touch
     // the persistent services - the render service, RTs, compiled shaders, and
     // the looping music all stay resident, so no shader recompile / RT realloc /
-    // music restream happens. The menu object is level-placed and already live;
-    // flipping sInGame=false (via Update's MenuComponent::SetInGame) re-arms it.
+    // music restream happens.
     DestroyCore();
     DestroyPlayer();
     BurstAllBubbles();
@@ -461,6 +462,13 @@ void GameFlow::ReturnToTitle()
     SetActivePlayer(nullptr);
     BubbleComponent::SetPlayer(nullptr);
     BubbleComponent::SetBossWalls(nullptr);
+
+    // Re-arm the dormant menu to the PLAIN title. START left sMenuActive=false;
+    // because the menu object is kept resident here (no world rebuild), nothing
+    // else flips it back on - without this the screen goes blank ("ESC just
+    // kills all objects"). The next Update sees sMenuActive=true + !sInGame and
+    // the menu draws + takes input again.
+    MenuComponent::RequestTitle();
 
     // Cancel any in-flight scheduled transitions from the abandoned run so a
     // stale RestartRound/RoundStart callback cannot fire onto the fresh title.

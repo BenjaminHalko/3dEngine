@@ -119,6 +119,16 @@ void MenuComponent::RequestGameOverLeaderboard()
     sGameOverLeaderboardRequest = true;
 }
 
+void MenuComponent::RequestTitle()
+{
+    // Re-arm the resident menu to the plain title after an ESC-in-game abandon.
+    // START left sMenuActive=false; the in-place title reset keeps the menu
+    // object alive (no world rebuild), so we restore the screen gate here and
+    // drop any leaderboard sub-screen + game-over hand-off latch.
+    sMenuActive = true;
+    sGameOverLeaderboardRequest = false;
+}
+
 bool MenuComponent::EdgePressed(KeyCode key) const
 {
     const InputSystem* in = InputSystem::Get();
