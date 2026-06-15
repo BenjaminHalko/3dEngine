@@ -13,3 +13,4 @@ cmake-*/
 build*/
 imgui.ini
 AGENTS.md
+criticalcore_save.json
