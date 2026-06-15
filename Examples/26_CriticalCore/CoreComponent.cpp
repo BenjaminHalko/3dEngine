@@ -73,6 +73,25 @@ bool CoreComponent::ConsumeLaunch(const GameObject* gameObject, LaunchParams& ou
     return true;
 }
 
+// Definitions of the process-shared shCore GPU resources (declared in the
+// header so they can name the private CoreData/CoreBuffer types).
+Graphics::VertexShader CoreComponent::sSharedVS;
+Graphics::PixelShader CoreComponent::sSharedPS;
+CoreComponent::CoreBuffer CoreComponent::sSharedBuffer;
+bool CoreComponent::sSharedReady = false;
+
+void CoreComponent::TerminateSharedResources()
+{
+    if (!sSharedReady)
+    {
+        return;
+    }
+    sSharedBuffer.Terminate();
+    sSharedPS.Terminate();
+    sSharedVS.Terminate();
+    sSharedReady = false;
+}
+
 float CoreComponent::CoreScale()
 {
     return gCoreScale;
@@ -119,9 +138,22 @@ void CoreComponent::Initialize()
     EntityComponent::SetCoreScale(mScale);
 
     // shCore visual resources (mirrors BalatroEffect's VS/PS/cbuffer pattern).
-    mCoreVertexShader.Initialize<Graphics::VertexPX>(kCoreShaderPath);
-    mCorePixelShader.Initialize(kCoreShaderPath);
-    mCoreBuffer.Initialize();
+    // Compile the VS/PS/cbuffer ONCE process-wide - the Core is spawned/destroyed
+    // every game, so per-Initialize compilation of CriticalCore_Core.hlsl was the
+    // start-game lag spike. Subsequent Cores borrow the cached resources.
+    if (!sSharedReady)
+    {
+        sSharedVS.Initialize<Graphics::VertexPX>(kCoreShaderPath);
+        sSharedPS.Initialize(kCoreShaderPath);
+        sSharedBuffer.Initialize();
+        sSharedReady = true;
+    }
+    mCoreVertexShader = &sSharedVS;
+    mCorePixelShader = &sSharedPS;
+    mCoreBuffer = &sSharedBuffer;
+
+    // The mesh is per-instance (24 verts rewritten each Draw from the live Core
+    // transform), so it is owned + (re)built here every spawn.
     mCoreMesh.Initialize(
         nullptr, static_cast<uint32_t>(sizeof(Graphics::VertexPX)), static_cast<uint32_t>(kCoreVertexCount));
     mCoreMesh.SetTopology(Graphics::MeshBuffer::Topology::Triangles);
@@ -129,10 +161,13 @@ void CoreComponent::Initialize()
 
 void CoreComponent::Terminate()
 {
-    mCoreBuffer.Terminate();
+    // Only the per-instance mesh is freed here. The shared VS/PS/cbuffer stay
+    // resident across game restarts (freed once at app shutdown via
+    // TerminateSharedResources) - that residency is the whole point of the cache.
     mCoreMesh.Terminate();
-    mCorePixelShader.Terminate();
-    mCoreVertexShader.Terminate();
+    mCoreVertexShader = nullptr;
+    mCorePixelShader = nullptr;
+    mCoreBuffer = nullptr;
 
     mTransform = nullptr;
     mBeatService = nullptr;
@@ -602,10 +637,10 @@ void CoreComponent::DrawCoreOctagon(
     data.tintB = tint.b;
     data.tintA = tint.a;
 
-    mCoreVertexShader.Bind();
-    mCorePixelShader.Bind();
-    mCoreBuffer.Update(data);
-    mCoreBuffer.BindPS(0);
+    mCoreVertexShader->Bind();
+    mCorePixelShader->Bind();
+    mCoreBuffer->Update(data);
+    mCoreBuffer->BindPS(0);
     mCoreMesh.Render();
 }
 

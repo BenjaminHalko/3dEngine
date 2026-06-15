@@ -75,6 +75,15 @@ class CoreComponent final : public Render2DComponent
     // pointer. 0 before the Core spawns (a static nebula, harmless).
     static float EffectTime();
 
+    // Release the process-shared shCore GPU resources (VS / PS / cbuffer). The
+    // Core GameObject is spawned + destroyed every game, so its shader is
+    // compiled ONCE and cached process-wide (game-start no longer recompiles
+    // CriticalCore_Core.hlsl - the start-game lag spike). This must be called
+    // exactly once at app shutdown (GameState::Terminate) so the cached GPU
+    // objects are freed on the device while it is still alive, not leaked to a
+    // process-static dtor that runs after the device is gone.
+    static void TerminateSharedResources();
+
     void Initialize() override;
     void Terminate() override;
     void Update(float deltaTime) override;
@@ -211,6 +220,14 @@ class CoreComponent final : public Render2DComponent
     };
     using CoreBuffer = Graphics::TypedConstantBuffer<CoreData>;
 
+    // Process-shared shCore GPU resources (compiled ONCE, see Initialize +
+    // TerminateSharedResources). Static members so they can name the private
+    // CoreData/CoreBuffer types. Borrowed by each Core via the m* pointers.
+    static Graphics::VertexShader sSharedVS;
+    static Graphics::PixelShader sSharedPS;
+    static CoreBuffer sSharedBuffer;
+    static bool sSharedReady;
+
     // Octagon nebula fan: 8 triangles * 3 verts (D3D11 has no triangle-fan).
     static constexpr int kCoreVertexCount = 24;
 
@@ -263,10 +280,14 @@ class CoreComponent final : public Render2DComponent
     BeatService* mBeatService = nullptr;
     CameraShakeService* mCameraShake = nullptr;
 
-    // shCore visual resources.
-    Graphics::VertexShader mCoreVertexShader;
-    Graphics::PixelShader mCorePixelShader;
+    // shCore visual resources. The VS / PS / cbuffer are stateless and shared
+    // process-wide (compiled once, see TerminateSharedResources) - the Core
+    // borrows them by pointer. The mesh is per-instance: its 24 verts are
+    // rewritten every Draw from the live Core position/scale, so it cannot be
+    // shared across (hypothetical) concurrent Cores and is owned here.
+    Graphics::VertexShader* mCoreVertexShader = nullptr;
+    Graphics::PixelShader* mCorePixelShader = nullptr;
+    CoreBuffer* mCoreBuffer = nullptr;
     Graphics::MeshBuffer mCoreMesh;
-    CoreBuffer mCoreBuffer;
 };
 } // namespace Engine::CriticalCore

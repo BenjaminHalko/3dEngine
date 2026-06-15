@@ -89,6 +89,11 @@ void GameState::Terminate()
     mGameFlow.Terminate();
     mGameWorld.Terminate();
 
+    // Free the process-shared Core shader cache (compiled once, reused across
+    // games). Must happen here at app shutdown - while the GPU device is still
+    // alive - not in a process-static dtor that would run after teardown.
+    CoreComponent::TerminateSharedResources();
+
     GuiComponent::SetActiveState(nullptr);
     mRenderService = nullptr;
     mCameraShake = nullptr;
@@ -115,7 +120,14 @@ void GameState::Update(float deltaTime)
     if (input != nullptr && mGameFlow.IsInGame() &&
         (input->IsKeyPressed(Input::KeyCode::ESCAPE) || input->IsKeyPressed(Input::KeyCode::BACKSPACE)))
     {
-        ReloadLevel();
+        // In-place abandon: reset run state + drop transient objects WITHOUT a
+        // world rebuild. The old ReloadLevel() here recompiled 6 HLSL shaders +
+        // reallocated the render targets + restreamed the music on the ESC frame
+        // (the menu-return lag spike). ReturnToTitle keeps all persistent
+        // services resident. mClock.Reset() drops the abandoned run's leftover
+        // accumulator so the fresh title starts on a clean step boundary.
+        mGameFlow.ReturnToTitle();
+        mClock.Reset();
         return;
     }
 

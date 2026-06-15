@@ -443,6 +443,46 @@ void GameFlow::GameEnd()
     MenuComponent::RequestGameOverLeaderboard();
 }
 
+void GameFlow::ReturnToTitle()
+{
+    // ESC-in-game abandon. Same transient teardown as GameEnd (destroy Core /
+    // Player / bubbles, drop the live-entity bridges) but NO leaderboard Post
+    // (the run is abandoned, not finished) and NO post-game leaderboard signal
+    // (we go straight to the plain title menu). Crucially this does NOT touch
+    // the persistent services - the render service, RTs, compiled shaders, and
+    // the looping music all stay resident, so no shader recompile / RT realloc /
+    // music restream happens. The menu object is level-placed and already live;
+    // flipping sInGame=false (via Update's MenuComponent::SetInGame) re-arms it.
+    DestroyCore();
+    DestroyPlayer();
+    BurstAllBubbles();
+
+    SetActiveCore(nullptr);
+    SetActivePlayer(nullptr);
+    BubbleComponent::SetPlayer(nullptr);
+    BubbleComponent::SetBossWalls(nullptr);
+
+    // Cancel any in-flight scheduled transitions from the abandoned run so a
+    // stale RestartRound/RoundStart callback cannot fire onto the fresh title.
+    mScheduled.clear();
+
+    // Reset run state to a fresh title (mirrors GameStart.gml:3-8 defaults that
+    // GameStart would otherwise set on the next play).
+    mScore = 0;
+    mRound = 1;
+    mLives = 3;
+    mInGame = false;
+    mGameOver = false;
+    mNextRound = false;
+    mRoundIntro = false;
+    mGuiState.inGame = false;
+    mGuiState.gameOver = false;
+    mGuiState.newPB = false;
+    mGuiState.score = 0;
+    mGuiState.round = mRound;
+    mGuiState.lives = mLives;
+}
+
 void GameFlow::PlayerExplode(bool small)
 {
     // GameOver.gml:93-116.

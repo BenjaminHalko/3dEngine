@@ -78,6 +78,14 @@ class GameFlow
     void GameOver(bool instant = false);            // burst bubbles, snHit, ScreenShake, delayed PlayerExplode/RestartRound
     void RestartRound();                            // delayed: lose a life -> Respawn or GameEnd
     void GameEnd();                                 // destroy + Leaderboard Post + return to the menu/title
+
+    // ESC-in-game abandon: tears down ONLY the transient run objects (Core /
+    // Player / bubbles) and resets run state back to a fresh title, WITHOUT
+    // posting a score or destroying the persistent services (render / RTs /
+    // shaders / music). Replaces the old GameState::ReloadLevel full world
+    // rebuild, which recompiled 6 HLSL shaders + reallocated RTs + restreamed
+    // music every press - the source of the menu-return lag spike.
+    void ReturnToTitle();
     void PlayerExplode(bool small = false);         // explode + destroy the player (snExplode, particles)
     void FireballCollect(float x, float y, float radius); // orange burst (parallel to FireballComponent's own)
 
